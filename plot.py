@@ -8,6 +8,8 @@ Created on Sat Feb 21 18:33:56 2015
 import pandas as pd
 import matplotlib.pyplot as plt
 import os, glob
+from pandas.lib import cache_readonly
+
 
 class Plot:
     """
@@ -22,9 +24,9 @@ class Plot:
         :type star_cat: Text file object..
             		
         """
-        catalogue = pd.read_csv(star_cat, sep=",", names=["ref_x", "ref_y"], header=0)
-        catalogue.plot(kind="scatter", x = "ref_x", y = "ref_y", xlim=(0, 2048), ylim=(0, 2048), fontsize=12, figsize=(10, 10))
-        
+        catxy = pd.read_csv(star_cat, sep=",", names=["ref_x", "ref_y"], header=0)
+        if not catxy.empty:
+            catxy.plot(kind="scatter", x = "ref_x", y = "ref_y", xlim=(0, 2048), ylim=(0, 2048), fontsize=12, figsize=(10, 10))
 
         starcatfile = os.path.basename(star_cat)
         h_starcatfile, e_starcatfile = starcatfile.split(".")
@@ -33,11 +35,14 @@ class Plot:
             pass
         else:
             os.mkdir(target_folder)
-        plt.title("Detected %s stray objects on %s" % (len(catalogue), h_starcatfile))
-        ax = plt.gca()
-        ax.set_aspect('equal', 'datalim')    
-        plt.savefig("%s/%s.png" %(target_folder, h_starcatfile))
-        plt.close()
+        if not catxy.empty:
+            plt.title("Detected %s stray objects on %s" % (len(catxy), h_starcatfile))
+            ax = plt.gca()
+            ax.set_aspect('equal', 'datalim')
+            plt.savefig("%s/%s.png" %(target_folder, h_starcatfile))
+            plt.close()
+        else:
+            print "No objects detected on %s." %(starcatfile)
 
 
     def plotallcat(self, ordered_cats, target_folder):

@@ -116,9 +116,9 @@ def astromods(ordered_cats, target_folder):
     :type catdir: Directory object
         		
     """
-    for refcat in sorted(glob.glob("%s/*affineremap.txt" %(ordered_cats))):
-        detectmovingobject(refcat, "%s/starcat.txt" %(ordered_cats), target_folder)
-        print "Saved all detected stray objects to: %s/%s." %(os.path.basename(catfile))
+    for catfile in sorted(glob.glob("%s/*affineremap.txt" %(ordered_cats))):
+        detectmovingobject(catfile, "%s/starcat.txt" %(ordered_cats), target_folder)
+        print "Saved all detected stray objects to: %s/%s." %(ordered_cats, os.path.basename(catfile))
 
 # Reads FITS file and ident/align stars
 if sys.argv[1] == "-ri":
@@ -228,7 +228,7 @@ elif sys.argv[1] == "-plts":
     except:
         print "Usage error!"
         print "Usage: python asterotrek.py -plts <ordered_cat_folder> <target_folder>"
-        raise SystemExit 
+        raise SystemExit
         
 # Plot all objects to one matplotlib figure
 elif sys.argv[1] == "-pltone":
