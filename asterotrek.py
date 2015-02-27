@@ -11,7 +11,6 @@ except:
     print "Can not load asteractor. Do you have asteractor.py?"
     raise SystemExit
 
-import sys, os
 try:
     import glob
 except:
@@ -30,12 +29,20 @@ except:
     print "Can not load plot. Do you have plot.py?"
     raise SystemExit
 
+try:
+    from detect import *
+except:
+    print "Can not load detect. Do you have detect.py?"
+    raise SystemExit
+    
+import sys, os
+
 def catread(cat_path, target_folder):
     """
     Reads "sextractor\'s" irregular result file and extract just (x, y) coordinate to specified file.
     
-    :param cat_path: The target .pysexcat file
-    :type cat_path: Text object
+    @param cat_path: The target .pysexcat file
+    @type cat_path: Text object
         		
     """    
     readcat = os.popen("cat %s| grep -v '#'| awk '{print $1,$2}'" %(cat_path))
@@ -56,8 +63,8 @@ def catreadall(catdir, target_folder):
     """
     Reads under given all sextractor's irregular result file directory's and extract just (x, y) coordinate to specified file.
     
-    :param catdir: The target directory which contains all .pysexcat files
-    :type catdir: Directory object
+    @param catdir: The target directory which contains all .pysexcat files
+    @type catdir: Directory object
         		
     """    
     for catfile in sorted(glob.glob("%s/*.pysexcat" %(catdir))):
@@ -67,8 +74,8 @@ def makestarcat(ordered_cats):
     """
     Reads all ordered coordinate file under ordered_cats directory and extract just (x, y) coordinate to "one catalogue file" named as "starcat.txt".
     
-    :param ordered_cats: The target directory which contains all corrected(readeble) coordinate files.
-    :type ordered_cats: Directory object.
+    @param ordered_cats: The target directory which contains all corrected(readeble) coordinate files.
+    @type ordered_cats: Directory object.
         		
     """      
     if os.path.exists(ordered_cats):
@@ -79,45 +86,17 @@ def makestarcat(ordered_cats):
                 with open(f, "rb") as infile:
                     outfile.write(infile.read())
 
-def detectmovingobject(reference_cat, star_cat, target_folder):
-        """
-        Reads given ordered (corrected) coordinate file and detect moving object candidate in "starcat.txt".
-        
-        :param reference_cat: Ordered (corrected) star catalogue file for one image.
-        :type reference_cat: Text file object.
-        :param star_cat: Ordered (corrected) star catalogue file for all image.
-        :type star_cat: Text file object..
-            		
-        """ 
-        refcat = pd.read_csv(reference_cat, sep=" ", names=["ref_x", "ref_y"], header=None)
-        starcat = pd.read_csv(star_cat, sep=" ", names=["ref_x", "ref_y"], header=None)
-        
-        strayobjectlist = pd.DataFrame(columns=["ref_x", "ref_y"])
-        for i in range(len(refcat.ref_x)):
-            if len(starcat[(abs(starcat.ref_x - refcat.ref_x[i]) < 1) & (abs(starcat.ref_y - refcat.ref_y[i]) < 1)]) < 2:
-                strayobjectlist = strayobjectlist.append(starcat[(abs(starcat.ref_x - refcat.ref_x[i]) < 1) & (abs(starcat.ref_y - refcat.ref_y[i]) < 1)])
-
-        starcatfile = os.path.basename(reference_cat)
-        h_starcatfile, e_starcatfile = starcatfile.split(".")
-
-        if os.path.exists(target_folder):
-            pass
-        else:
-            os.mkdir(target_folder)        
-
-        strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_starcatfile))
-        return strayobjectlist
-
 def astromods(ordered_cats, target_folder):
     """
     Reads under given all sextractor's irregular result file directory's and extract just (x, y) coordinate to specified file.
     
-    :param catdir: The target directory which contains all .pysexcat files
-    :type catdir: Directory object
+    @param catdir: The target directory which contains all .pysexcat files
+    @type catdir: Directory object
         		
     """
     for catfile in sorted(glob.glob("%s/*affineremap.txt" %(ordered_cats))):
-        detectmovingobject(catfile, "%s/starcat.txt" %(ordered_cats), target_folder)
+        detect = Detect()
+        detect.detectstrayobjects(catfile, "%s/starcat.txt" %(ordered_cats), target_folder)
         print "Saved all detected stray objects to: %s/%s." %(ordered_cats, os.path.basename(catfile))
 
 # Reads FITS file and ident/align stars
@@ -228,6 +207,21 @@ elif sys.argv[1] == "-plts":
     except:
         print "Usage error!"
         print "Usage: python asterotrek.py -plts <ordered_cat_folder> <target_folder>"
+        raise SystemExit
+
+# Detect lines. 
+elif sys.argv[1] == "-dl":
+    """
+    Detect lines from the stray cats.
+    Usage: python asterotrek.py -dl <ordered_cat_folder> <detectedlines.png>   		
+    """
+    try:
+        detectlines = Detect()
+        detectlines.detectlines(sys.argv[2], sys.argv[3])
+        print "Line detection process is completed."
+    except:
+        print "Usage error!"
+        print "Usage: python asterotrek.py -plts <ordered_cat_folder> <detectedlines.png>"
         raise SystemExit
         
 # Plot all objects to one matplotlib figure

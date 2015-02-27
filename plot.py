@@ -7,9 +7,8 @@ Created on Sat Feb 21 18:33:56 2015
 
 import pandas as pd
 import matplotlib.pyplot as plt
-import os, glob
-from pandas.lib import cache_readonly
-
+import os
+import glob
 
 class Plot:
     """
@@ -83,3 +82,17 @@ class Plot:
         ax.set_aspect('equal', 'datalim')    
         plt.savefig("%s/allobjects.png" %(target_folder))
         plt.close()
+
+    def plot(self, coorlist, output_figure = None):
+        coorlist.plot(kind="scatter", x = "ref_x", y = "ref_y", xlim=(0, 2048), ylim=(0, 2048), fontsize=12, figsize=(10, 10))
+        ax = plt.gca()
+        ax.set_aspect('equal', 'datalim')
+        plt.title("Detected %s objects." % (len(coorlist)))
+        if output_figure != "-nosave":
+            plt.savefig("%s" %(output_figure))
+            plt.close()
+        elif output_figure == "-nosave":
+            plt.show()
+            plt.close()
+        
+        
