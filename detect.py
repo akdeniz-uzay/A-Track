@@ -11,13 +11,13 @@ import os
 
 try:
     import pandas as pd
-except:
+except ImportError:
     print "Did you install pandas?"
     raise SystemExit
 
 try:
     from plot import *
-except:
+except ImportError:
     print "Can not load plot. Do you have plot.py?"
     raise SystemExit
 
@@ -188,8 +188,7 @@ class Detect:
                                 lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
                                 area = math.fabs(0.5*((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)))
                                 
-                                if lengh > 1.5 and hei <1 and area <1:
-                                
+                                if lengh > 1.5 and hei <1 and area <1:                                
                                     can.append([i,lst[i][u][0], lst[i][u][1]])
                                     can.append([i+1, lst[i+1][z][0], lst[i+1][z][1]])
                                     can.append([i+2, lst[i+2][x][0], lst[i+2][x][1]])
@@ -197,10 +196,7 @@ class Detect:
         #removing duplicates.
         res = pd.DataFrame(can, columns=["ref_file", "ref_x", "ref_y"])
         res = res.drop_duplicates(["ref_file", "ref_x", "ref_y"])
-        if output_figure:
+        if output_figure != None:
             plotxy = Plot()
             plotxy.plot(res, output_figure)
-        elif output_figure == "-nosave":
-            plotxy = Plot()
-            plotxy.plot(res)
         return res    
