@@ -80,5 +80,3 @@ $ python asterotrek.py -makegif png/ animated
 * **png/**: PNG files directory to be converted.
 * **animated**: Animated GIF file (output).
 
-python asterotrek.py -dl stray_cats/ -nosave
-
