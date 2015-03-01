@@ -54,7 +54,16 @@ $ python asterotrek.py -pltone stray_cats ./
 ```
 * **-pltone**: plot catalogues under specified directory to ONE figure with name "allobject.png".
 
-**Step 8:** Convert FITS images into PNG files. This command draw all detected MOs on PNGs. 
+**Step 8:** Plot detected lines save/nosave mode.
+
+```bash
+$ python asterotrek.py -dl stray_cats/ -nosave
+```
+* **-dl**: detect lines
+* **stray_cats/**: Candidate MO cats.
+* **-nosave**: Do not save figure.
+
+**Step 9:** Convert FITS images into PNG files. This command draw all detected MOs on PNGs. 
 
 ```bash
 $ python asterotrek.py -fits2png ./stray_cats/ ./ png/
@@ -63,11 +72,13 @@ $ python asterotrek.py -fits2png ./stray_cats/ ./ png/
 * **./**: FITS image directory.
 * **png/**: PNG files will be saved in the directory.
 
-**Step 9:** Convert PNG images to animated GIF file.
+**Step 10:** Convert PNG images to animated GIF file.
 
 ```bash
 $ python asterotrek.py -makegif png/ animated
 ```
 * **png/**: PNG files directory to be converted.
 * **animated**: Animated GIF file (output).
+
+python asterotrek.py -dl stray_cats/ -nosave
 
