@@ -9,6 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import glob
+import pyfits
 
 class Plot:
     """
@@ -135,6 +136,12 @@ class Plot:
                 os.makedirs(outdir)
         base_alifilepath = os.path.basename(alifilepath)
         h_alifilepath, e_alifilepath = base_alifilepath.split(".")
+        try:
+            hdulist = pyfits.open(alifilepath)
+            obsdate = hdulist[0].header['date-obs']
+            myimage.writeinfo([obsdate], colour=(255,100,0))
+        except:
+            pass
         myimage.tonet(os.path.join(outdir, h_alifilepath + ".png"))
         
         
