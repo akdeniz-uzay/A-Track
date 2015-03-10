@@ -43,7 +43,7 @@ except ImportError:
     
 import sys, os, time
 
-def catread(cat_path, target_folder):
+def catread(cat_path, target_folder, fluxthreshold = 50000, fwhmmin = 3, fwhmmax = 10):
     """
     Reads "sextractor\'s" irregular result file and extract just (x, y) coordinate to specified file.
     
@@ -51,7 +51,7 @@ def catread(cat_path, target_folder):
     @type cat_path: Text object
         		
     """    
-    readcat = os.popen("cat %s| grep -v '#'| awk '{print $1,$2}'" %(cat_path))
+    readcat = os.popen("cat %s| grep -v '#'| awk '{if ($3 <= %s && $4 >= %s && $4 <= %s) print $1,$2}'" %(cat_path, fluxthreshold, fwhmmin, fwhmmax))
     catname = os.path.basename(cat_path)
     h_catname, e_catname = catname.split(".")
     
@@ -65,7 +65,7 @@ def catread(cat_path, target_folder):
         f.write(satir)
     f.close()
     
-def catreadall(catdir, target_folder):
+def catreadall(catdir, target_folder, fluxthreshold, fwhmmin, fwhmmax):
     """
     Reads under given all sextractor's irregular result file directory's and extract just (x, y) coordinate to specified file.
     
@@ -74,7 +74,7 @@ def catreadall(catdir, target_folder):
         		
     """    
     for catfile in sorted(glob.glob("%s/*.pysexcat" %(catdir))):
-        catread(catfile, target_folder)
+        catread(catfile, target_folder, fluxthreshold, fwhmmin, fwhmmax)
 
 def makestarcat(ordered_cats):
     """
@@ -177,7 +177,7 @@ if __name__ == "__main__":
         		
         """
         try:
-            catreadall(sys.argv[2], sys.argv[3])
+            catreadall(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
             print "Making ordered cats process is completed."
             print "Elapsed time: %s" %(time.time() - start_time)
         except:

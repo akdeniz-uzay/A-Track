@@ -24,7 +24,7 @@ class Filteroid:
         """          
         self.ref_image = ref_image
         self.images_to_align = sorted(glob.glob("*.fits"))  
-        self.identifications = alipy.ident.run(self.ref_image, self.images_to_align, visu=False, sexkeepcat=True)
+        self.identifications = alipy.ident.run(self.ref_image, self.images_to_align, visu=False, skipsaturated=True, sexkeepcat=True)
         # That's it !
         # Put visu=True to get visualizations in form of png files (nice but much slower)
         # On multi-extension data, you will want to specify the hdu (see API doc).
@@ -51,7 +51,7 @@ class Filteroid:
     
     def align(self):
         """
-        FITS fike align for alipy.
+        FITS file align for alipy.
             		
         """   
         # Minimal example of how to align images :

@@ -56,7 +56,7 @@ class Plot:
         """      
         for catfile in sorted(glob.glob("%s/*affineremap.txt" %(ordered_cats))):
             self.catalogue(catfile, target_folder)
-            print "Ploted all detected objects on: %s." %(os.path.basename(catfile))
+            print "Plotted all detected objects on: %s." %(os.path.basename(catfile))
         return
 
     def plotallobjects(self, ordered_cats, target_folder):
@@ -143,5 +143,3 @@ class Plot:
         except:
             pass
         myimage.tonet(os.path.join(outdir, h_alifilepath + ".png"))
-        
-        

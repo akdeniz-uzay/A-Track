@@ -194,9 +194,14 @@ class Detect:
                                     can.append([i+2, lst[i+2][x][0], lst[i+2][x][1]])
         
         #removing duplicates.
-        res = pd.DataFrame(can, columns=["ref_file", "ref_x", "ref_y"])
-        res = res.drop_duplicates(["ref_file", "ref_x", "ref_y"])
-        if output_figure != None:
-            plotxy = Plot()
-            plotxy.plot(res, output_figure)
-        return res    
+        if can:
+            res = pd.DataFrame(can, columns=["ref_file", "ref_x", "ref_y"])
+            res = res.drop_duplicates(["ref_file", "ref_x", "ref_y"])
+            if output_figure != None:
+                plotxy = Plot()
+                plotxy.plot(res, output_figure)
+            print res
+            return res
+        else:
+            print "No lines detected!"
+            return
