@@ -6,7 +6,7 @@ Created on Mon Feb  9 13:26:22 2015
 """
 
 try:
-    from asteractor import *
+    import asteractor
 except ImportError:
     print "Can not load asteractor. Do you have asteractor.py?"
     raise SystemExit
@@ -138,36 +138,33 @@ if __name__ == "__main__":
         """
         Ident stars on all FITS images according to reference image.
         Use this option for you have already aligned images.
-        Usage: python asterotrek.py -ri <reference_img.fits>  
+        Usage: python asterotrek.py -ri <fitsfiles> <catdir>
             		
         """
         try:
-            runFilteroid = Filteroid(sys.argv[2])
-            runFilteroid.ident()
+            asteractor.makecat(sys.argv[2], sys.argv[3])
             print "Please wait until processing is complete."
             print "Identification process is completed."
             print "Elapsed time: %s" %(time.time() - start_time)
         except:
             print "Usage error!"
-            print "Usage: python asterotrek.py -ri <reference_img.fits>"
+            print "Usage: python asterotrek.py -ri <fitsfiles> <catdir>" 
             raise SystemExit
         
     elif sys.argv[1] == "-ra":
         """
         Align stars on all FITS images according to reference image.
-        Usage: python asterotrek.py -ra <reference_img.fits>
+        Usage: python asterotrek.py -ra <images_to_align> <reference_img.fits> <alipy_out>
             		
         """   
         try:
             print "Please wait until processing is complete."
-            runFilteroid = Filteroid(sys.argv[2])
-            runFilteroid.ident()
-            runFilteroid.align()
+            asteractor.align(sys.argv[2], sys.argv[3], sys.argv[4])
             print "Identification and align processes are completed."
             print "Elapsed time: %s" %(time.time() - start_time)
         except:
             print "Usage error!"
-            print "Usage: python asterotrek.py -ra <reference_img.fits>"
+            print "Usage: python asterotrek.py -ra <images_to_align> <reference_img.fits> <alipy_out>"
             raise SystemExit
     # Reads sextractor's output and makes readable catalogue files 
     elif sys.argv[1] == "-moc":
@@ -315,10 +312,10 @@ if __name__ == "__main__":
             print "Usage: python asterotrek.py -cc <fitsimage(s)> <target_folder>" 
             raise SystemExit
     
-    elif sys.argv[1] == "-fits2png":
+    elif sys.argv[1] == "-fits2png" and len(sys.argv) == 5:
         """
-        Converts FITS images into PNG files.
-        Usage: python asterotrek.py -fits2png <fitsimage(s)> <target_folder>    		
+        Converts FITS images into PNG files with detected objects.
+        Usage: python asterotrek.py -fits2png <stray_cats> <fitsimage(s)> <target_folder>    		
         """
         try:
             print "Please wait until processing is complete."
@@ -332,6 +329,27 @@ if __name__ == "__main__":
             elif os.path.isfile(sys.argv[3]):
                 f2n.fits2png(sys.argv[3], sys.argv[4], datalxy[(datalxy.ref_file == i)])
             print "Plotted all detected objects into PNG files."
+            print "Elapsed time: %s" %(time.time() - start_time)
+        except:
+            print "Usage error!"
+            print "Usage: python asterotrek.py -fits2png <stray_cats> <fitsimage(s)> <target_folder>" 
+            raise SystemExit
+            
+    elif sys.argv[1] == "-fits2png" and len(sys.argv) == 4:
+        """
+        Converts FITS images into PNG files.
+        Usage: python asterotrek.py -fits2png <fitsimage(s)> <target_folder>    		
+        """
+        try:
+            print "Please wait until processing is complete."
+            f2n = Plot()
+            
+            if os.path.isdir(sys.argv[2]):
+                for fitsimage in sorted(glob.glob("%s/*.fits" %(sys.argv[2]))):
+                    f2n.fits2png(fitsimage, sys.argv[3])
+            elif os.path.isfile(sys.argv[2]):
+                f2n.fits2png(sys.argv[2], sys.argv[3])
+            print "Converted all FITS files to PNG files."
             print "Elapsed time: %s" %(time.time() - start_time)
         except:
             print "Usage error!"
