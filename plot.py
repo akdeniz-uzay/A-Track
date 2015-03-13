@@ -128,9 +128,12 @@ class Plot:
         myimage.setzscale("auto", "auto")
         myimage.makepilimage("log", negative = False)
 
-        if not datalxy.empty:
-            for i in xrange(len(datalxy)):
-                myimage.drawrectangle(datalxy.values[i][1] - 10, datalxy.values[i][1] + 10, datalxy.values[i][2] - 10, datalxy.values[i][2] + 10, colour=(0,255,0), label="%s" %(i))
+        try:
+            if not datalxy.empty:
+                for i in xrange(len(datalxy)):
+                    myimage.drawrectangle(datalxy.values[i][1] - 10, datalxy.values[i][1] + 10, datalxy.values[i][2] - 10, datalxy.values[i][2] + 10, colour=(0,255,0), label="%s" %(i))
+        except AttributeError:
+            pass
         myimage.writetitle(os.path.basename(alifilepath))
         if not os.path.isdir(outdir):
                 os.makedirs(outdir)
@@ -143,3 +146,4 @@ class Plot:
         except:
             pass
         myimage.tonet(os.path.join(outdir, h_alifilepath + ".png"))
+        return
