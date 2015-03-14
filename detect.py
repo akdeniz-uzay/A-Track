@@ -28,6 +28,25 @@ class Detect:
         		
     """
 
+    def slope(self, xcoor0, ycoor0, xcoor1, ycoor1):
+        '''
+        Get the slope of a line segment.
+        @param xcoor0: x coordinate for first point
+        @type xcoor0: float, integer
+        @param ycoor0: y coordinate for first point
+        @type ycoor0: float, integer
+        @param xcoor1: x coordinate for second point
+        @type xcoor1: float, integer
+        @param ycoor1: y coordinate for second point
+        @type ycoor1: float, integer
+        @return: float, None
+        '''
+        try:
+            return (float(ycoor1)-float(ycoor0))/(float(xcoor1)-float(xcoor0))
+        except ZeroDivisionError:
+            # line is vertical
+            return None
+
     def distance(self, xcoor0, ycoor0, xcoor1, ycoor1):
         """
         distance(xcoor0, ycoor0, xcoor1, ycoor1) -> float
@@ -168,7 +187,6 @@ class Detect:
             if not objtcat.empty:
                 onecatlist = onecatlist.append(objtcat)
                 lst.append(objtcat.values)
-        
         #calculation of a triangle's area and checking points on a same line.
         for i in xrange(len(lst)-2):
             print "Searching lines on %s. file" %(i)
@@ -188,19 +206,20 @@ class Detect:
                                 lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
                                 area = math.fabs(0.5*((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)))
                                 
-                                if lengh > 1.5 and hei <1 and area <1:                                
-                                    can.append([i,lst[i][u][0], lst[i][u][1]])
-                                    can.append([i+1, lst[i+1][z][0], lst[i+1][z][1]])
-                                    can.append([i+2, lst[i+2][x][0], lst[i+2][x][1]])
+                                if lengh > 1.5 and hei <1 and area <1:
+                                    can.append([i,lst[i][u][0], lst[i][u][1], z])
+                                    can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], z])
+                                    can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], z])
         
         #removing duplicates.
         if can:
-            res = pd.DataFrame(can, columns=["ref_file", "ref_x", "ref_y"])
-            res = res.drop_duplicates(["ref_file", "ref_x", "ref_y"])
+            res = pd.DataFrame(can, columns=["ref_file", "ref_x", "ref_y", "line_id"])
+            res = res.drop_duplicates(["ref_file", "ref_x", "ref_y", "line_id"])
             if output_figure != None:
                 plotxy = Plot()
                 plotxy.plot(res, output_figure)
             print res
+            res.to_csv("lines.csv")
             return res
         else:
             print "No lines detected!"
