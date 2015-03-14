@@ -10,21 +10,26 @@
 **Step 1:** Align your scientific images with reference FITS image.
 
 ```bash
-$ python asterotrek.py -ra reference.fits
+$ python asterotrek.py -ra "*.fits" reference.fits aligned/
 ```
 
 **Step 2:** Run the star identification algorithm for aligned images.
 
 ```bash
-$ python asterotrek.py -ri reference.fits
+$ python asterotrek.py -ri "*.fits" cats/
 ```
 
 **Step 3:** Read the sextractor's result files for extracting ordered (x, y) coordinates to specified directory.
 
 ```bash
-$ python asterotrek.py -moc alipy_cats ordered_cats
+$ python asterotrek.py -moc <cats_folder> <ordered_cats_folder> <maxflux> <minfwhm> <maxfwhm>
 ```
 * **-moc**: make ordered catalogue
+* **cats_folder**: SExtractor catalogue directory.
+* **ordered_cats_folder**: Out directory for query.
+* **maxflux**: The maximum FLUX value of object to be searched.
+* **minfwhm**: The minimum FWHM value of object to be searched.
+* **maxfwhm**: The maximum FWHM value of object to be searched.
 
 **Step 4:** Make one object catalogue from all ordered object cats (starcat.txt).
 
@@ -71,6 +76,12 @@ $ python asterotrek.py -fits2png ./stray_cats/ ./ png/
 * **./stray_cats/**: Detected stray object catalogue files directory.
 * **./**: FITS image directory.
 * **png/**: PNG files will be saved in the directory.
+
+Note: You can use directly f2n for converting FITS images to PNG images with following command.
+
+```bash
+$ python asterotrek.py -fits2png fits_images/ png/
+```
 
 **Step 10:** Convert PNG images to animated GIF file.
 
