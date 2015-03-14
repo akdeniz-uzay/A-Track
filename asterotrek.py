@@ -170,7 +170,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "-moc":
         """
         Makes ordered stars cats.
-        Usage: python asterotrek.py -moc <alipy_cats_folder> <ordered_cats_folder>    
+        Usage: python asterotrek.py -moc <alipy_cats_folder> <ordered_cats_folder> <maxflux> <minfwhm> <maxfwhm>  
         		
         """
         try:
@@ -179,7 +179,7 @@ if __name__ == "__main__":
             print "Elapsed time: %s" %(time.time() - start_time)
         except:
             print "Usage error!"
-            print "Usage: python asterotrek.py -moc <alipy_cats_folder> <ordered_cats_folder>"
+            print "python asterotrek.py -moc <alipy_cats_folder> <ordered_cats_folder> <maxflux> <minfwhm> <maxfwhm>"
             raise SystemExit
     # Create readable catalogue file for comparison and check stars    
     elif sys.argv[1] == "-msc":
@@ -275,7 +275,7 @@ if __name__ == "__main__":
             print "Elapsed time: %s" %(time.time() - start_time)
         except:
             print "Usage error!"
-            print "Usage: python asterotrek.py -plts <ordered_cat_folder> <detectedlines.png>"
+            print "Usage: python asterotrek.py -dl <ordered_cat_folder> <detectedlines.png>"
             raise SystemExit
             
     # Plot all objects to one matplotlib figure
@@ -326,8 +326,10 @@ if __name__ == "__main__":
             if os.path.isdir(sys.argv[3]):
                 for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):
                     f2n.fits2png(fitsimage, sys.argv[4], datalxy[(datalxy.ref_file == i)])
+                    print "%s converted into %." %(fitsimage, sys.argv[4])
             elif os.path.isfile(sys.argv[3]):
                 f2n.fits2png(sys.argv[3], sys.argv[4], datalxy[(datalxy.ref_file == i)])
+                print "%s converted into %." %(sys.argv[3], sys.argv[4])
             print "Plotted all detected objects into PNG files."
             print "Elapsed time: %s" %(time.time() - start_time)
         except:
@@ -347,8 +349,10 @@ if __name__ == "__main__":
             if os.path.isdir(sys.argv[2]):
                 for fitsimage in sorted(glob.glob("%s/*.fits" %(sys.argv[2]))):
                     f2n.fits2png(fitsimage, sys.argv[3])
+                    print "%s converted into %." %(fitsimage, sys.argv[4])
             elif os.path.isfile(sys.argv[2]):
                 f2n.fits2png(sys.argv[2], sys.argv[3])
+                print "%s converted into %." %(sys.argv[2], sys.argv[3])
             print "Converted all FITS files to PNG files."
             print "Elapsed time: %s" %(time.time() - start_time)
         except:
