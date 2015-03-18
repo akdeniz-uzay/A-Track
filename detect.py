@@ -165,15 +165,20 @@ class Detect:
         strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_starcatfile))
         return strayobjectlist
 
-    def detectlines(self, ordered_cats, output_figure):
+    def detectlines(self, ordered_cats, output_figure, basepar=1.5, heightpar=1.0, areapar=1.0):
         """
-        Reads given ordered (corrected) coordinate file and detect lines.
+        Reads given ordered (corrected) coordinate file and detect lines with randomized algorithm.
         
         @param ordered_cats: Ordered (corrected) star catalogues folder.
         @type ordered_cats: Directory object.
         @param output_figure: Plot figure path to save.
         @type output_figure: PNG object.
-            		
+        @param basepar: The length of the base.
+        @type basepar: Float            		
+        @param heightpar: The length of the triangle's height.
+        @type heightpar: Float
+        @param areapar: The area of triangle.
+        @type areapar: Float
         """ 
         starcat = sorted(glob.glob("%s/*affineremap.txt" %(ordered_cats)))
         onecatlist = pd.DataFrame(columns=["ref_x", "ref_y"])
@@ -206,7 +211,7 @@ class Detect:
                                 lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
                                 area = math.fabs(0.5*((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)))
                                 
-                                if lengh > 1.5 and hei <1 and area <1:
+                                if lengh > basepar and hei < heightpar and area < areapar:
                                     can.append([i,lst[i][u][0], lst[i][u][1], z])
                                     can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], z])
                                     can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], z])
