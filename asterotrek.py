@@ -326,7 +326,7 @@ if __name__ == "__main__":
             if os.path.isdir(sys.argv[3]):
                 for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):
                     f2n.fits2png(fitsimage, sys.argv[4], datalxy[(datalxy.ref_file == i)])
-                    print "%s converted into %." %(fitsimage, sys.argv[4])
+                    print "%s converted into %s" %(fitsimage, sys.argv[4])
             elif os.path.isfile(sys.argv[3]):
                 f2n.fits2png(sys.argv[3], sys.argv[4], datalxy[(datalxy.ref_file == i)])
                 print "%s converted into %." %(sys.argv[3], sys.argv[4])

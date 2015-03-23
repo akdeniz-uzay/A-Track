@@ -165,7 +165,7 @@ class Detect:
         strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_starcatfile))
         return strayobjectlist
 
-    def detectlines(self, ordered_cats, output_figure, basepar=1.5, heightpar=1.0, areapar=1.0):
+    def detectlines(self, ordered_cats, output_figure, basepar=1.5, heightpar=1.0, areapar=1.0, interval = 20):
         """
         Reads given ordered (corrected) coordinate file and detect lines with randomized algorithm.
         
@@ -193,13 +193,18 @@ class Detect:
                 onecatlist = onecatlist.append(objtcat)
                 lst.append(objtcat.values)
         #calculation of a triangle's area and checking points on a same line.
+        sayac = 0
+        slope1 = 0.0
+        slope2 = 0.0
+        lastcoorx = 0
+        lastcoory = 0
         for i in xrange(len(lst)-2):
             print "Searching lines on %s. file" %(i)
             for u in xrange(len(lst[i])):
                 for z in xrange(len(lst[i+1])):
-                    if self.isClose(lst[i][u], lst[i+1][z], 20):
+                    if self.isClose(lst[i][u], lst[i+1][z], interval):
                         for x in xrange(len(lst[i+2])):
-                            if self.isClose(lst[i+1][z], lst[i+2][x], 20):
+                            if self.isClose(lst[i+1][z], lst[i+2][x], interval):
                                 base = self.longest(lst[i][u], lst[i+1][z], lst[i+2][x])
                                 hei = self.height(base[:-1], base[-1])
                                 x1 = lst[i][u][0]
@@ -212,14 +217,21 @@ class Detect:
                                 area = math.fabs(0.5*((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)))
                                 
                                 if lengh > basepar and hei < heightpar and area < areapar:
-                                    can.append([i,lst[i][u][0], lst[i][u][1], z])
-                                    can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], z])
-                                    can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], z])
+                                    slope1 = self.slope(lst[i][u][0], lst[i][u][1], lst[i+1][z][0], lst[i+1][z][1])
+                                    gapx = lst[i+2][x][0] - lastcoorx
+                                    gapy = lst[i+2][x][1] - lastcoory
+                                    lastcoorx = lst[i+2][x][0]
+                                    lastcoory = lst[i+2][x][1]
+                                    if gapx <= interval and gapy <= interval:
+                                        sayac = sayac + 1
+                                    can.append([i,lst[i][u][0], lst[i][u][1], slope1, sayac])
+                                    can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], slope1, sayac])
+                                    can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], slope1, sayac])
         
         #removing duplicates.
         if can:
-            res = pd.DataFrame(can, columns=["ref_file", "ref_x", "ref_y", "line_id"])
-            res = res.drop_duplicates(["ref_file", "ref_x", "ref_y", "line_id"])
+            res = pd.DataFrame(can, columns=["ref_file", "ref_x", "ref_y", "slope", "line_id"])
+            res = res.drop_duplicates(["ref_file", "ref_x", "ref_y", "slope", "line_id"])
             if output_figure != None:
                 plotxy = Plot()
                 plotxy.plot(res, output_figure)
