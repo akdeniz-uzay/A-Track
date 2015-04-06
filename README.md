@@ -16,7 +16,7 @@ $ python asterotrek.py -ra "*.fits" reference.fits aligned/
 **Step 2:** Run the star identification algorithm for aligned images.
 
 ```bash
-$ python asterotrek.py -ri "*.fits" cats/
+$ python asterotrek.py -ri "fitsfolder/*.fits" cats/
 ```
 
 **Step 3:** Read the sextractor's result files for extracting ordered (x, y) coordinates to specified directory.
