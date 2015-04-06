@@ -223,6 +223,8 @@ class Detect:
                                     lastcoorx = lst[i+2][x][0]
                                     lastcoory = lst[i+2][x][1]
                                     if gapx <= interval and gapy <= interval:
+                                        sayac = sayac
+                                    else:
                                         sayac = sayac + 1
                                     can.append([i,lst[i][u][0], lst[i][u][1], slope1, sayac])
                                     can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], slope1, sayac])
