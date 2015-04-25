@@ -25,7 +25,7 @@ except ImportError:
 class Detect:
     """
     MOD's detection class.
-        		
+                
     """
 
     def slope(self, xcoor0, ycoor0, xcoor1, ycoor1):
@@ -144,7 +144,7 @@ class Detect:
         @type reference_cat: Text file object.
         @param star_cat: Ordered (corrected) star catalogue file for all image.
         @type star_cat: Text file object...
-            		
+                    
         """ 
         refcat = pd.read_csv(reference_cat, sep=" ", names=["ref_x", "ref_y"], header=None)
         starcat = pd.read_csv(star_cat, sep=" ", names=["ref_x", "ref_y"], header=None)
@@ -174,7 +174,7 @@ class Detect:
         @param output_figure: Plot figure path to save.
         @type output_figure: PNG object.
         @param basepar: The length of the base.
-        @type basepar: Float            		
+        @type basepar: Float                    
         @param heightpar: The length of the triangle's height.
         @type heightpar: Float
         @param areapar: The area of triangle.
@@ -185,6 +185,7 @@ class Detect:
         
         lst = []
         can = []
+        line_id = None
         
         #all files copying to list
         for objctlist in starcat:
@@ -193,11 +194,6 @@ class Detect:
                 onecatlist = onecatlist.append(objtcat)
                 lst.append(objtcat.values)
         #calculation of a triangle's area and checking points on a same line.
-        sayac = 0
-        slope1 = 0.0
-        slope2 = 0.0
-        lastcoorx = 0
-        lastcoory = 0
         for i in xrange(len(lst)-2):
             print "Searching lines on %s. file" %(i)
             for u in xrange(len(lst[i])):
@@ -217,29 +213,29 @@ class Detect:
                                 area = math.fabs(0.5*((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)))
                                 
                                 if lengh > basepar and hei < heightpar and area < areapar:
-                                    slope1 = self.slope(lst[i][u][0], lst[i][u][1], lst[i+1][z][0], lst[i+1][z][1])
-                                    gapx = lst[i+2][x][0] - lastcoorx
-                                    gapy = lst[i+2][x][1] - lastcoory
-                                    lastcoorx = lst[i+2][x][0]
-                                    lastcoory = lst[i+2][x][1]
-                                    if gapx <= interval and gapy <= interval:
-                                        sayac = sayac
-                                    else:
-                                        sayac = sayac + 1
-                                    can.append([i,lst[i][u][0], lst[i][u][1], slope1, sayac])
-                                    can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], slope1, sayac])
-                                    can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], slope1, sayac])
+                                    can.append([i,lst[i][u][0], lst[i][u][1]])
+                                    can.append([i+1, lst[i+1][z][0], lst[i+1][z][1]])
+                                    can.append([i+2, lst[i+2][x][0], lst[i+2][x][1]])
         
         #removing duplicates.
         if can:
-            res = pd.DataFrame(can, columns=["ref_file", "ref_x", "ref_y", "slope", "line_id"])
-            res = res.drop_duplicates(["ref_file", "ref_x", "ref_y", "slope", "line_id"])
+            res = pd.DataFrame(can, columns=["ref_file", "ref_x", "ref_y"])
+            res = res.drop_duplicates(["ref_file", "ref_x", "ref_y"])
             if output_figure != None:
                 plotxy = Plot()
                 plotxy.plot(res, output_figure)
-            print res
-            res.to_csv("lines.csv")
-            return res
+            sorted_res = res.sort(['ref_x','ref_y'],ascending=[0,1])
+            line_id = range(len(sorted_res))
+            for i in xrange(len(sorted_res)-1):
+                if self.distance(sorted_res.values[i][1], sorted_res.values[i][2], sorted_res.values[i+1][1], sorted_res.values[i+1][2]) < interval:
+                    line_id[i+1] = line_id[i]
+                else:
+                    line_id[i+1] = line_id[i] + 1
+            pointids = pd.DataFrame(line_id, columns=['line_id'], index=sorted_res.index)
+            linepoints = sorted_res.join(pointids)
+            linepoints.to_csv("lines.csv")
+            print linepoints
+            return linepoints
         else:
             print "No lines detected!"
             return
