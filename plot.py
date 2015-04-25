@@ -131,7 +131,7 @@ class Plot:
         try:
             if not datalxy.empty:
                 for i in xrange(len(datalxy)):
-                    myimage.drawrectangle(datalxy.values[i][1] - 10, datalxy.values[i][1] + 10, datalxy.values[i][2] - 10, datalxy.values[i][2] + 10, colour=(0,255,0), label="%s" %(int(datalxy.values[i][4])))
+                    myimage.drawrectangle(datalxy.values[i][1] - 10, datalxy.values[i][1] + 10, datalxy.values[i][2] - 10, datalxy.values[i][2] + 10, colour=(0,255,0), label="%s" %(int(datalxy.values[i][3])))
         except AttributeError:
             pass
         myimage.writetitle(os.path.basename(alifilepath))
