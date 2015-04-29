@@ -39,7 +39,7 @@ def makecat(fitsfiles, catdir, detect_thresh=3.0, analysis_thresh=3.0, detect_mi
     @type seeing_fwhm: float, integer
     """
     for filepath in sorted(glob.glob(fitsfiles)):
-        pysex.run(filepath, conf_args={'DETECT_THRESH':3.0, 'ANALYSIS_THRESH':3.0, 'DETECT_MINAREA':1,
+        pysex.run(filepath, conf_args={'DETECT_THRESH':1.5, 'ANALYSIS_THRESH':3.0, 'DETECT_MINAREA':1,
         'PIXEL_SCALE':1.0, 'SEEING_FWHM':2.0, "FILTER":"Y", 'VERBOSE_TYPE':'NORMAL' if verbose else 'QUIET'},
         params=['X_IMAGE', 'Y_IMAGE', 'FLUX_AUTO', 'FWHM_IMAGE', 'FLAGS', 'ELONGATION', 'NUMBER', "EXT_NUMBER"],
         rerun=rerun, keepcat=keepcat, catdir=catdir)
@@ -55,7 +55,7 @@ def align(fitsfiles, ref_image, outdir):
     # Minimal example of how to align images :
     images_to_align = sorted(glob.glob(fitsfiles))
 
-    identifications = alipy.ident.run(ref_image, images_to_align, visu=False, skipsaturated=True, sexkeepcat=True)
+    identifications = alipy.ident.run(ref_image, images_to_align, visu=False, sexkeepcat=True)
     # That's it !
     # Put visu=True to get visualizations in form of png files (nice but much slower)
     # On multi-extension data, you will want to specify the hdu (see API doc).
