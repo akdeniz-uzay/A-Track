@@ -8,7 +8,8 @@ Created on Sat Feb 22 19:43:14 2015
 import math
 import glob
 import os
-
+import pyfits
+import time
 try:
     import pandas as pd
 except ImportError:
@@ -165,7 +166,8 @@ class Detect:
         strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_starcatfile))
         return strayobjectlist
 
-    def detectlines(self, ordered_cats, output_figure, basepar=1.5, heightpar=1.0, areapar=1.0, interval = 20):
+    #def detectlines(self, ordered_cats, output_figure, basepar=1.5, heightpar=1.0, areapar=1.0, interval = 40):
+    def detectlines(self, fits_path, ordered_cats, output_figure, basepar=1.0, heightpar=1.0, interval = 30):
         """
         Reads given ordered (corrected) coordinate file and detect lines with randomized algorithm.
         
@@ -180,6 +182,7 @@ class Detect:
         @param areapar: The area of triangle.
         @type areapar: Float
         """ 
+        fitsfiles = sorted(glob.glob("%s/*.fit?" %(fits_path)))
         starcat = sorted(glob.glob("%s/*affineremap.txt" %(ordered_cats)))
         onecatlist = pd.DataFrame(columns=["ref_x", "ref_y"])
         
@@ -196,23 +199,39 @@ class Detect:
         #calculation of a triangle's area and checking points on a same line.
         for i in xrange(len(lst)-2):
             print "Searching lines on %s. file" %(i)
+            hdulist1 = pyfits.open(fitsfiles[i])
+            hdulist2 = pyfits.open(fitsfiles[i+1])
+            hdulist3 = pyfits.open(fitsfiles[i+2])
+            obsdate1 = hdulist1[0].header['date-obs']
+            exptime1 = hdulist1[0].header['exptime']
+            obsdate2 = hdulist2[0].header['date-obs']
+            exptime2 = hdulist2[0].header['exptime']
+            obsdate3 = hdulist3[0].header['date-obs']
+            otime1 =  time.strptime(obsdate1, "%Y-%m-%dT%H:%M:%S.%f")
+            otime2 =  time.strptime(obsdate2, "%Y-%m-%dT%H:%M:%S.%f")
+            otime3 =  time.strptime(obsdate3, "%Y-%m-%dT%H:%M:%S.%f") 
+            radius =  ((time.mktime(otime2) - time.mktime(otime1))/exptime1) * interval
+            radius2 =  ((time.mktime(otime3) - time.mktime(otime2))/exptime2) * interval
+            print radius
+            print radius2
             for u in xrange(len(lst[i])):
-                for z in xrange(len(lst[i+1])):
-                    if self.isClose(lst[i][u], lst[i+1][z], interval):
-                        for x in xrange(len(lst[i+2])):
-                            if self.isClose(lst[i+1][z], lst[i+2][x], interval):
+                for z in xrange(len(lst[i+1])):  
+                    if self.isClose(lst[i][u], lst[i+1][z], radius):
+                        for x in xrange(len(lst[i+2])):                      
+                            if self.isClose(lst[i+1][z], lst[i+2][x], radius2):
                                 base = self.longest(lst[i][u], lst[i+1][z], lst[i+2][x])
                                 hei = self.height(base[:-1], base[-1])
-                                x1 = lst[i][u][0]
-                                y1 = lst[i][u][1]
-                                x2 = lst[i+1][z][0]
-                                y2 = lst[i+1][z][1]
-                                x3 = lst[i+2][x][0]
-                                y3 = lst[i+2][x][1]
+                                #x1 = lst[i][u][0]
+                                #y1 = lst[i][u][1]
+                                #x2 = lst[i+1][z][0]
+                                #y2 = lst[i+1][z][1]
+                                #x3 = lst[i+2][x][0]
+                                #y3 = lst[i+2][x][1]
                                 lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
-                                area = math.fabs(0.5*((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)))
+                                #area = math.fabs(0.5*((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)))
                                 
-                                if lengh > basepar and hei < heightpar and area < areapar:
+                                #if lengh > basepar and hei < heightpar and area < areapar:
+                                if lengh > basepar and hei < heightpar:
                                     can.append([i,lst[i][u][0], lst[i][u][1]])
                                     can.append([i+1, lst[i+1][z][0], lst[i+1][z][1]])
                                     can.append([i+2, lst[i+2][x][0], lst[i+2][x][1]])
