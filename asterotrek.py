@@ -157,15 +157,15 @@ if __name__ == "__main__":
         Usage: python asterotrek.py -ra <images_to_align> <reference_img.fits> <alipy_out>
             		
         """   
-        try:
-            print "Please wait until processing is complete."
-            asteractor.align(sys.argv[2], sys.argv[3], sys.argv[4])
-            print "Identification and align processes are completed."
-            print "Elapsed time: %s" %(time.time() - start_time)
-        except:
-            print "Usage error!"
-            print "Usage: python asterotrek.py -ra <images_to_align> <reference_img.fits> <alipy_out>"
-            raise SystemExit
+        #try:
+        print "Please wait until processing is complete."
+        asteractor.align(sys.argv[2], sys.argv[3], sys.argv[4])
+        print "Identification and align processes are completed."
+        print "Elapsed time: %s" %(time.time() - start_time)
+        #except:
+        #    print "Usage error!"
+        #    print "Usage: python asterotrek.py -ra <images_to_align> <reference_img.fits> <alipy_out>"
+        #    raise SystemExit
     # Reads sextractor's output and makes readable catalogue files 
     elif sys.argv[1] == "-moc":
         """
@@ -267,16 +267,16 @@ if __name__ == "__main__":
         Detect lines from the stray cats.
         Usage: python asterotrek.py -dl <ordered_cat_folder> <detectedlines.png>   		
         """
-        try:
-            print "Please wait until processing is complete."
-            detectlines = Detect()
-            detectlines.detectlines(sys.argv[2], sys.argv[3])
-            print "Line detection process is completed."
-            print "Elapsed time: %s" %(time.time() - start_time)
-        except:
-            print "Usage error!"
-            print "Usage: python asterotrek.py -dl <ordered_cat_folder> <detectedlines.png>"
-            raise SystemExit
+        #try:
+        print "Please wait until processing is complete."
+        detectlines = Detect()
+        detectlines.detectlines(sys.argv[2], sys.argv[3], sys.argv[4])
+        print "Line detection process is completed."
+        print "Elapsed time: %s" %(time.time() - start_time)
+        #except:
+        #    print "Usage error!"
+        #    print "Usage: python asterotrek.py -dl <ordered_cat_folder> <detectedlines.png>"
+        #    raise SystemExit
             
     # Plot all objects to one matplotlib figure
     elif sys.argv[1] == "-pltone":
@@ -317,48 +317,50 @@ if __name__ == "__main__":
         Converts FITS images into PNG files with detected objects.
         Usage: python asterotrek.py -fits2png <stray_cats> <fitsimage(s)> <target_folder>    		
         """
-        try:
-            print "Please wait until processing is complete."
-            f2n = Plot()
-            detectlines = Detect()
-            datalxy = detectlines.detectlines(sys.argv[2], output_figure=None)
-            
-            if os.path.isdir(sys.argv[3]):
-                for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):
-                    f2n.fits2png(fitsimage, sys.argv[4], datalxy[(datalxy.ref_file == i)])
-                    print "%s converted into %s" %(fitsimage, sys.argv[4])
-            elif os.path.isfile(sys.argv[3]):
-                f2n.fits2png(sys.argv[3], sys.argv[4], datalxy[(datalxy.ref_file == i)])
-                print "%s converted into %." %(sys.argv[3], sys.argv[4])
-            print "Plotted all detected objects into PNG files."
-            print "Elapsed time: %s" %(time.time() - start_time)
-        except:
-            print "Usage error!"
-            print "Usage: python asterotrek.py -fits2png <stray_cats> <fitsimage(s)> <target_folder>" 
-            raise SystemExit
+        #try:
+        print "Please wait until processing is complete."
+        f2n = Plot()
+        detectlines = Detect()
+        datalxy = detectlines.detectlines(sys.argv[3], sys.argv[2], output_figure=None)
+        
+        if os.path.isdir(sys.argv[3]):
+            for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):
+                print sys.argv[4]
+                print fitsimage
+                f2n.fits2png(fitsimage, sys.argv[4], datalxy[(datalxy.ref_file == i)])
+                print "%s converted into %s" %(fitsimage, sys.argv[4])
+        elif os.path.isfile(sys.argv[3]):
+            f2n.fits2png(sys.argv[3], sys.argv[4], datalxy[(datalxy.ref_file == i)])
+            print "%s converted into %." %(sys.argv[3], sys.argv[4])
+        print "Plotted all detected objects into PNG files."
+        print "Elapsed time: %s" %(time.time() - start_time)
+        #except:
+        #    print "Usage error!"
+        #    print "Usage: python asterotrek.py -fits2png <stray_cats> <fitsimage(s)> <target_folder>" 
+        #    raise SystemExit
             
     elif sys.argv[1] == "-fits2png" and len(sys.argv) == 4:
         """
         Converts FITS images into PNG files.
         Usage: python asterotrek.py -fits2png <fitsimage(s)> <target_folder>    		
         """
-        try:
-            print "Please wait until processing is complete."
-            f2n = Plot()
-            
-            if os.path.isdir(sys.argv[2]):
-                for fitsimage in sorted(glob.glob("%s/*.fits" %(sys.argv[2]))):
-                    f2n.fits2png(fitsimage, sys.argv[3])
-                    print "%s converted into %." %(fitsimage, sys.argv[4])
-            elif os.path.isfile(sys.argv[2]):
-                f2n.fits2png(sys.argv[2], sys.argv[3])
-                print "%s converted into %." %(sys.argv[2], sys.argv[3])
-            print "Converted all FITS files to PNG files."
-            print "Elapsed time: %s" %(time.time() - start_time)
-        except:
-            print "Usage error!"
-            print "Usage: python asterotrek.py -fits2png <fitsimage(s)> <target_folder>" 
-            raise SystemExit
+        #try:
+        print "Please wait until processing is complete."
+        f2n = Plot()
+        
+        if os.path.isdir(sys.argv[2]):
+            for fitsimage in sorted(glob.glob("%s/*.fits" %(sys.argv[2]))):
+                f2n.fits2png(fitsimage, sys.argv[3])
+                print "%s converted into %s." %(fitsimage, sys.argv[3])
+        elif os.path.isfile(sys.argv[2]):
+            f2n.fits2png(sys.argv[2], sys.argv[3])
+            print "%s converted into %." %(sys.argv[2], sys.argv[3])
+        print "Converted all FITS files to PNG files."
+        print "Elapsed time: %s" %(time.time() - start_time)
+        #except:
+        #    print "Usage error!"
+        #    print "Usage: python asterotrek.py -fits2png <fitsimage(s)> <target_folder>" 
+        #    raise SystemExit
     elif sys.argv[1] == "-makegif":
         """
         Converts PNG images to animated GIF file.
