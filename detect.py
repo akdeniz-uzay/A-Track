@@ -10,8 +10,9 @@ import glob
 import os
 import pyfits
 import time
+
 try:
-    import pandas as pd
+    import numpy as np
 except ImportError:
     print "Did you install pandas?"
     raise SystemExit
@@ -28,6 +29,10 @@ class Detect:
     MOD's detection class.
                 
     """
+    
+    def unique_rows(self, inarray):
+        uniq = np.unique(inarray.view(inarray.dtype.descr * inarray.shape[1]))
+        return uniq.view(inarray.dtype).reshape(-1, inarray.shape[1])
 
     def slope(self, xcoor0, ycoor0, xcoor1, ycoor1):
         '''
@@ -122,7 +127,7 @@ class Detect:
         height(line, xy) -> float
         Returns shortest distance a point to a line.
         
-        @param line: line's coordinates as [[x1, y1], [x2, y2]] 
+        @param line: line's coordinates as [[x1, y1], [x2, y2]]
         @type line: list
         @param xy: coordinates of a point (x, y)
         @type xy: list
@@ -146,14 +151,20 @@ class Detect:
         @param star_cat: Ordered (corrected) star catalogue file for all image.
         @type star_cat: Text file object...
                     
-        """ 
-        refcat = pd.read_csv(reference_cat, sep=" ", names=["ref_x", "ref_y"], header=None)
-        starcat = pd.read_csv(star_cat, sep=" ", names=["ref_x", "ref_y"], header=None)
+        """
+        refcat = np.genfromtxt(reference_cat, dtype='float32', delimiter=' ', skip_header=1)
+        starcat = np.genfromtxt(star_cat, dtype='float32', delimiter=' ', skip_header=1)
+        #refcat = pd.read_csv(reference_cat, sep=" ", names=["ref_x", "ref_y"], header=None)
+        #starcat = pd.read_csv(star_cat, sep=" ", names=["ref_x", "ref_y"], header=None)
         
-        strayobjectlist = pd.DataFrame(columns=["ref_x", "ref_y"])
-        for i in range(len(refcat.ref_x)):
-            if len(starcat[(abs(starcat.ref_x - refcat.ref_x[i]) < 1) & (abs(starcat.ref_y - refcat.ref_y[i]) < 1)]) < 2:
-                strayobjectlist = strayobjectlist.append(starcat[(abs(starcat.ref_x - refcat.ref_x[i]) < 1) & (abs(starcat.ref_y - refcat.ref_y[i]) < 1)])
+        #strayobjectlist = pd.DataFrame(columns=["ref_x", "ref_y"])
+        strayobjectlist = []
+        for i in range(len(refcat)):
+            print (abs(starcat[:,1] - refcat[i, 1]) < 1.0).sum(), (abs(starcat[:, 2] - refcat[i, 2]) < 1.0).sum()
+            if (abs(starcat[:,1] - refcat[i, 1]) < 1.0).sum() < 2 or (abs(starcat[:, 2] - refcat[i, 2]) < 1.0).sum() < 2:
+                #strayobjectlist = strayobjectlist.append(starcat[(abs(starcat.ref_x - refcat.ref_x[i]) < 1) & (abs(starcat.ref_y - refcat.ref_y[i]) < 1)])
+                strayobjectlist.append(refcat[i, :])
+        print strayobjectlist
         
         starcatfile = os.path.basename(reference_cat)
         h_starcatfile, e_starcatfile = starcatfile.split(".")
@@ -163,11 +174,11 @@ class Detect:
         else:
             os.mkdir(target_folder)        
         
-        strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_starcatfile))
+        np.savetxt("%s/stray_%s.cat" %(target_folder, h_starcatfile), np.array(strayobjectlist), delimiter=" ")
         return strayobjectlist
 
-    #def detectlines(self, ordered_cats, output_figure, basepar=1.5, heightpar=1.0, areapar=1.0, interval = 40):
-    def detectlines(self, fits_path, ordered_cats, output_figure, basepar=1.0, heightpar=1.0, interval = 30):
+    #def detectlines(self, fits_path, ordered_cats, output_figure, basepar=1.0, heightpar=2.0, areapar=2.0, interval = 30):
+    def detectlines(self, fits_path, catdir, output_figure, basepar=2.0, heightpar=2.0, interval = 30):
         """
         Reads given ordered (corrected) coordinate file and detect lines with randomized algorithm.
         
@@ -183,19 +194,20 @@ class Detect:
         @type areapar: Float
         """ 
         fitsfiles = sorted(glob.glob("%s/*.fit?" %(fits_path)))
-        starcat = sorted(glob.glob("%s/*affineremap.txt" %(ordered_cats)))
-        onecatlist = pd.DataFrame(columns=["ref_x", "ref_y"])
+        starcat = sorted(glob.glob("%s/*affineremap.cat" %(catdir)))
+        #onecatlist = pd.DataFrame(columns=["ref_x", "ref_y"])
         
         lst = []
         can = []
-        line_id = None
-        
         #all files copying to list
-        for objctlist in starcat:
-            objtcat = pd.read_csv(objctlist, sep=",", names = ["ref_x", "ref_y"], header=0)
-            if not objtcat.empty:
-                onecatlist = onecatlist.append(objtcat)
-                lst.append(objtcat.values)
+        for k, objctlist in enumerate(starcat):
+            objtcat = np.genfromtxt(objctlist, dtype='float32', delimiter=' ')
+            #objtcat = pd.read_csv(objctlist, sep=",", names = ["ref_x", "ref_y"], header=0)
+            if objtcat.size:
+                #onecatlist = onecatlist.append(objtcat)
+                id_col = np.full((len(objtcat), 1),k)
+                objtcatid = np.append(objtcat, id_col, 1)
+                lst.append(objtcatid)
         #calculation of a triangle's area and checking points on a same line.
         for i in xrange(len(lst)-2):
             print "Searching lines on %s. file" %(i)
@@ -215,11 +227,11 @@ class Detect:
             print radius
             print radius2
             for u in xrange(len(lst[i])):
-                for z in xrange(len(lst[i+1])):  
-                    if self.isClose(lst[i][u], lst[i+1][z], radius):
-                        for x in xrange(len(lst[i+2])):                      
-                            if self.isClose(lst[i+1][z], lst[i+2][x], radius2):
-                                base = self.longest(lst[i][u], lst[i+1][z], lst[i+2][x])
+                for z in xrange(len(lst[i+1])):
+                    if self.isClose(lst[i][u, [1,2]], lst[i+1][z, [1,2]], radius):
+                        for x in xrange(len(lst[i+2])):
+                            if self.isClose(lst[i+1][z, [1,2]], lst[i+2][x, [1,2]], radius2):
+                                base = self.longest(lst[i][u, [1,2]], lst[i+1][z, [1,2]], lst[i+2][x, [1,2]])
                                 hei = self.height(base[:-1], base[-1])
                                 #x1 = lst[i][u][0]
                                 #y1 = lst[i][u][1]
@@ -232,29 +244,32 @@ class Detect:
                                 
                                 #if lengh > basepar and hei < heightpar and area < areapar:
                                 if lengh > basepar and hei < heightpar:
-                                    can.append([i,lst[i][u][0], lst[i][u][1]])
-                                    can.append([i+1, lst[i+1][z][0], lst[i+1][z][1]])
-                                    can.append([i+2, lst[i+2][x][0], lst[i+2][x][1]])
-        
+                                    #can.append([i,lst[i][u][0], lst[i][u][1]])
+                                    #can.append([i+1, lst[i+1][z][0], lst[i+1][z][1]])
+                                    #can.append([i+2, lst[i+2][x][0], lst[i+2][x][1]])
+                                    can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lst[i][u][5]])
+                                    can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lst[i+1][z][5]])
+                                    can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lst[i+2][x][5]])        
         #removing duplicates.
         if can:
-            res = pd.DataFrame(can, columns=["ref_file", "ref_x", "ref_y"])
-            res = res.drop_duplicates(["ref_file", "ref_x", "ref_y"])
+            #res = pd.DataFrame(can, columns=["ref_file", "ref_x", "ref_y"])
+            #res = res.drop_duplicates(["ref_file", "ref_x", "ref_y"])
+            coorresultnp = np.array(can)
+            coorresult = self.unique_rows(coorresultnp) 
+            sortedcoor = coorresult[np.lexsort((coorresult[:, 2], ))]
+            sortedcoor[0,0] = 1
+            for i in xrange(len(sortedcoor[:-1])):
+				if self.distance(sortedcoor[i][2], sortedcoor[i][3], sortedcoor[i+1][2], sortedcoor[i+1][3]) < interval:
+					sortedcoor[i+1][0] = sortedcoor[i][0]
+				else:
+					sortedcoor[i+1][0] = sortedcoor[i][0]+1
+            print sortedcoor[:,2]
+            print sortedcoor[:,3]
+            print sortedcoor
             if output_figure != None:
                 plotxy = Plot()
-                plotxy.plot(res, output_figure)
-            sorted_res = res.sort(['ref_x','ref_y'],ascending=[0,1])
-            line_id = range(len(sorted_res))
-            for i in xrange(len(sorted_res)-1):
-                if self.distance(sorted_res.values[i][1], sorted_res.values[i][2], sorted_res.values[i+1][1], sorted_res.values[i+1][2]) < interval:
-                    line_id[i+1] = line_id[i]
-                else:
-                    line_id[i+1] = line_id[i] + 1
-            pointids = pd.DataFrame(line_id, columns=['line_id'], index=sorted_res.index)
-            linepoints = sorted_res.join(pointids)
-            linepoints.to_csv("lines.csv")
-            print linepoints
-            return linepoints
+                plotxy.plot(sortedcoor, output_figure)
+            return sortedcoor
         else:
             print "No lines detected!"
             return
