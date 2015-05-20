@@ -13,9 +13,11 @@ Created on Sat Feb 14 23:16:29 2015
 import alipy
 import glob
 from alipy import pysex
+import os
  
 
-def makecat(fitsfiles, catdir, detect_thresh=3.0, analysis_thresh=3.0, detect_minarea=1, pixel_scale=1.0, seeing_fwhm=2.0, rerun=True, keepcat=True, verbose=True):
+def makecat(fitsfiles, catdir, detect_thresh=3, analysis_thresh=3, detect_minarea=15, pixel_scale=0.31, seeing_fwhm=2.0, 
+            phot_autoparams='\"6.0, 6.0\"', back_size=128, back_filtersize=4, deblend_nthresh=32, deblend_mincont=0.0001, gain=0.55, rerun=True, keepcat=True, verbose=True):
     """
     Makes SExtractor catalogues for files.
     
@@ -39,11 +41,24 @@ def makecat(fitsfiles, catdir, detect_thresh=3.0, analysis_thresh=3.0, detect_mi
     @type seeing_fwhm: float, integer
     """
     for filepath in sorted(glob.glob(fitsfiles)):
-        pysex.run(filepath, conf_args={'DETECT_THRESH':1.5, 'ANALYSIS_THRESH':3.0, 'DETECT_MINAREA':1,
-        'PIXEL_SCALE':1.0, 'SEEING_FWHM':2.0, "FILTER":"Y", 'VERBOSE_TYPE':'NORMAL' if verbose else 'QUIET'},
-        params=['X_IMAGE', 'Y_IMAGE', 'FLUX_AUTO', 'FWHM_IMAGE', 'FLAGS', 'ELONGATION', 'NUMBER', "EXT_NUMBER"],
+        pysex.run(filepath, conf_args={'DETECT_THRESH':detect_thresh, 'ANALYSIS_THRESH':analysis_thresh, 'DETECT_MINAREA':detect_minarea, 
+        'GAIN':gain ,'DEBLEND_NTHRESH':deblend_nthresh, 'DEBLEND_MINCONT':deblend_mincont, 'PIXEL_SCALE':pixel_scale, 'SEEING_FWHM':seeing_fwhm, 
+        "PHOT_AUTOPARAMS":phot_autoparams, "BACK_SIZE":back_size, "BACK_FILTERSIZE":back_filtersize, "FILTER":"Y", 'VERBOSE_TYPE':'NORMAL' if verbose else 'QUIET'},
+        params=['X_IMAGE', 'Y_IMAGE', 'FLUX_AUTO', 'FWHM_IMAGE', 'FLAGS', 'ELONGATION', 'NUMBER', "EXT_NUMBER", 'MAG_AUTO'],
         rerun=rerun, keepcat=keepcat, catdir=catdir)
     return
+    
+def image2xy(fitsfiles, catdir):
+    astrometry = "/usr/local/astrometry/bin/"
+    for filepath in sorted(glob.glob(fitsfiles)):
+        print filepath
+        base_filepath = os.path.basename(filepath)
+        h_filepath, e_filepath = base_filepath.split(".")
+        if not os.path.isdir(catdir):
+                os.makedirs(catdir)                 
+        os.popen("%simage2xy %s -o %s/%s.xy.fits" %(astrometry, filepath, catdir, h_filepath))
+        os.popen("%stablist %s/%s.xy.fits | tail -n +2 | awk '{print $1,$2,$3,$4,$5}' > %s/%s.cat" %(astrometry, catdir, h_filepath, catdir, h_filepath))
+    return True
 
 def align(fitsfiles, ref_image, outdir):
     """
