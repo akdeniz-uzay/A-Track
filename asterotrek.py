@@ -18,12 +18,6 @@ except ImportError:
     raise SystemExit
 
 try:
-    import pandas as pd
-except ImportError:
-    print "Did you install pandas?"
-    raise SystemExit
-
-try:
     from plot import *
 except ImportError:
     print "Can not load plot. Do you have plot.py?"
@@ -43,67 +37,27 @@ except ImportError:
     
 import sys, os, time
 
-def catread(cat_path, target_folder, fluxthreshold = 50000, fwhmmin = 3, fwhmmax = 10):
-    """
-    Reads "sextractor\'s" irregular result file and extract just (x, y) coordinate to specified file.
-    
-    @param cat_path: The target .pysexcat file
-    @type cat_path: Text object
-        		
-    """    
-    readcat = os.popen("cat %s| grep -v '#'| awk '{if ($3 <= %s && $4 >= %s && $4 <= %s) print $1,$2}'" %(cat_path, fluxthreshold, fwhmmin, fwhmmax))
-    catname = os.path.basename(cat_path)
-    h_catname, e_catname = catname.split(".")
-    
-    if os.path.exists("./%s/" %(target_folder)):
-        pass
-    else:
-        os.mkdir("./%s" %(target_folder))
-        
-    f = open("%s/%s.txt" %(target_folder, h_catname),'w')
-    for satir in readcat.readlines():
-        f.write(satir)
-    f.close()
-    
-def catreadall(catdir, target_folder, fluxthreshold, fwhmmin, fwhmmax):
-    """
-    Reads under given all sextractor's irregular result file directory's and extract just (x, y) coordinate to specified file.
-    
-    @param catdir: The target directory which contains all .pysexcat files
-    @type catdir: Directory object
-        		
-    """    
-    for catfile in sorted(glob.glob("%s/*.pysexcat" %(catdir))):
-        catread(catfile, target_folder, fluxthreshold, fwhmmin, fwhmmax)
 
-def makestarcat(ordered_cats):
+def makestarcat(catdir):
     """
-    Reads all ordered coordinate file under ordered_cats directory and extract just (x, y) coordinate to "one catalogue file" named as "starcat.txt".
+    Reads all coordinate file under catalogue directory and extracts all elements to "one catalogue file" named as "starcat.txt".
     
-    @param ordered_cats: The target directory which contains all corrected(readeble) coordinate files.
-    @type ordered_cats: Directory object.
+    @param catdir: The target directory which contains all corrected(readeble) coordinate files.
+    @type catdir: Directory object.
         		
     """      
-    if os.path.exists(ordered_cats):
-        catfiles = glob.glob("%s/*.txt" %(ordered_cats))
-                         
-        with open("%s/starcat.txt" %(ordered_cats), "wb") as outfile:
+    if os.path.exists(catdir):
+        if os.path.isfile("%s/starcat.cat" %(catdir)):
+            print "%s/starcat.cat" %(catdir)
+            os.remove("%s/starcat.cat" %(catdir))
+        catfiles = glob.glob("%s/*.cat" %(catdir))
+        with open("%s/starcat.cat" %(catdir), "a") as outfile:
             for f in catfiles:
-                with open(f, "rb") as infile:
-                    outfile.write(infile.read())
+                objectcat = np.genfromtxt(f, delimiter=' ', skip_header=1)
+                np.savetxt(outfile, objectcat, delimiter=' ')
+    return True
+                    
 
-def astromods(ordered_cats, target_folder):
-    """
-    Reads under given all sextractor's irregular result file directory's and extract just (x, y) coordinate to specified file.
-    
-    @param catdir: The target directory which contains all .pysexcat files
-    @type catdir: Directory object
-        		
-    """
-    for catfile in sorted(glob.glob("%s/*affineremap.txt" %(ordered_cats))):
-        detect = Detect()
-        detect.detectstrayobjects(catfile, "%s/starcat.txt" %(ordered_cats), target_folder)
-        print "Saved all detected stray objects to: %s/%s." %(ordered_cats, os.path.basename(catfile))
 
 def cleancosmics(image, odir, gain=2.2, readnoise=10.0, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0, maxiter = 4):
     """
@@ -134,22 +88,38 @@ def cleancosmics(image, odir, gain=2.2, readnoise=10.0, sigclip = 5.0, sigfrac =
 if __name__ == "__main__":
     start_time = time.time()
     # Reads FITS file and ident/align stars
-    if sys.argv[1] == "-ri":
+    if sys.argv[1] == "-ri -se":
         """
         Ident stars on all FITS images according to reference image.
         Use this option for you have already aligned images.
         Usage: python asterotrek.py -ri <fitsfiles> <catdir>
             		
         """
-        try:
-            asteractor.makecat(sys.argv[2], sys.argv[3])
-            print "Please wait until processing is complete."
-            print "Identification process is completed."
-            print "Elapsed time: %s" %(time.time() - start_time)
-        except:
-            print "Usage error!"
-            print "Usage: python asterotrek.py -ri <fitsfiles> <catdir>" 
-            raise SystemExit
+        #try:
+        asteractor.makecat(sys.argv[2], sys.argv[3])
+        print "Please wait until processing is complete."
+        print "Identification process is completed."
+        print "Elapsed time: %s" %(time.time() - start_time)
+        #except:
+        #    print "Usage error!"
+        #    print "Usage: python asterotrek.py -ri <fitsfiles> <catdir>" 
+        #    raise SystemExit
+    elif sys.argv[1] == "-image2xy":
+        """
+        Ident stars on all FITS images according to reference image.
+        Use this option for you have already aligned images.
+        Usage: python asterotrek.py -ri <fitsfiles> <catdir>
+            		
+        """
+        #try:
+        asteractor.image2xy(sys.argv[2], sys.argv[3])
+        print "Please wait until processing is complete."
+        print "Identification process is completed."
+        print "Elapsed time: %s" %(time.time() - start_time)
+        #except:
+        #    print "Usage error!"
+        #    print "Usage: python asterotrek.py -ri <fitsfiles> <catdir>" 
+        #    raise SystemExit
         
     elif sys.argv[1] == "-ra":
         """
@@ -166,21 +136,6 @@ if __name__ == "__main__":
         #    print "Usage error!"
         #    print "Usage: python asterotrek.py -ra <images_to_align> <reference_img.fits> <alipy_out>"
         #    raise SystemExit
-    # Reads sextractor's output and makes readable catalogue files 
-    elif sys.argv[1] == "-moc":
-        """
-        Makes ordered stars cats.
-        Usage: python asterotrek.py -moc <alipy_cats_folder> <ordered_cats_folder> <maxflux> <minfwhm> <maxfwhm>  
-        		
-        """
-        try:
-            catreadall(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
-            print "Making ordered cats process is completed."
-            print "Elapsed time: %s" %(time.time() - start_time)
-        except:
-            print "Usage error!"
-            print "python asterotrek.py -moc <alipy_cats_folder> <ordered_cats_folder> <maxflux> <minfwhm> <maxfwhm>"
-            raise SystemExit
     # Create readable catalogue file for comparison and check stars    
     elif sys.argv[1] == "-msc":
         """
@@ -188,46 +143,33 @@ if __name__ == "__main__":
         Usage: python asterotrek.py -moc <ordered_cats_folder>
             		
         """
-        try:
-            makestarcat(sys.argv[2])
-            print "Making all in one star catalogue process is completed."
-            print "Elapsed time: %s" %(time.time() - start_time)
-        except:
-            print "Usage error!"
-            print "Usage: python asterotrek.py -moc <ordered_cats_folder>"
-            raise SystemExit
-    # Detect stray objects on given cat file
-    elif sys.argv[1] == "-mod":
-        """
-        Detects stray objects in given catalogue file.
-        Usage: python asterotrek.py -mod <reference_cat> <star_cat> <stray_cat_folder>
-            		
-        """
-        try:
-            print "Please wait until processing is complete."
-            detectmovingobject(sys.argv[2], sys.argv[3], sys.argv[4])
-            print "Candidate objects in catalogue has extracted."
-            print "Elapsed time: %s" %(time.time() - start_time)
-        except:
-            print "Usage error!"
-            print "Usage: python asterotrek.py -mod <reference_cat> <star_cat> <stray_cat_folder>"
-            raise SystemExit
+        #try:
+        makestarcat(sys.argv[2])
+        print "Making all in one star catalogue process is completed."
+        print "Elapsed time: %s" %(time.time() - start_time)
+        #except:
+        #    print "Usage error!"
+        #    print "Usage: python asterotrek.py -moc <ordered_cats_folder>"
+        #    raise SystemExit
     # Detect stray objects in given catalogue folder
-    elif sys.argv[1] == "-mods":
+    elif sys.argv[1] == "-dso":
         """
         Detects all stray stars in given catalogue folder.
         Usage: python asterotrek.py -mods <ordered_cats_folder> <target_folder>
             		
         """
-        try:
-            print "Please wait until processing is complete."
-            astromods(sys.argv[2], sys.argv[3])
-            print "Candidate objects in catalogues has extracted."
-            print "Elapsed time: %s" %(time.time() - start_time)
-        except:
-            print "Usage error!"
-            print "Usage: python asterotrek.py -mods <ordered_cats_folder> <target_folder>"
-            raise SystemExit    
+        #try:
+        print "Please wait until processing is complete."
+        for catfile in sorted(glob.glob("%s/*affineremap.cat" %(sys.argv[2]))):
+            detect = Detect()
+            detect.detectstrayobjects(catfile, "%s/starcat.cat" %(sys.argv[2]), sys.argv[3])
+            print "Saved all detected stray objects to: %s/%s." %(sys.argv[2], os.path.basename(catfile))
+        print "Candidate objects in catalogues has extracted."
+        print "Elapsed time: %s" %(time.time() - start_time)
+        #except:
+        #    print "Usage error!"
+        #    print "Usage: python asterotrek.py -mods <ordered_cats_folder> <target_folder>"
+        #    raise SystemExit    
     # Plot objects in catalogue file    
     elif sys.argv[1] == "-plt":
         """
@@ -327,10 +269,12 @@ if __name__ == "__main__":
             for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):
                 print sys.argv[4]
                 print fitsimage
-                f2n.fits2png(fitsimage, sys.argv[4], datalxy[(datalxy.ref_file == i)])
+                datacatmask = datalxy[:, 5] == i
+                datacat = datalxy[datacatmask]
+                f2n.fits2png(fitsimage, sys.argv[4], datacat)
                 print "%s converted into %s" %(fitsimage, sys.argv[4])
         elif os.path.isfile(sys.argv[3]):
-            f2n.fits2png(sys.argv[3], sys.argv[4], datalxy[(datalxy.ref_file == i)])
+            f2n.fits2png(sys.argv[3], sys.argv[4], datacat)
             print "%s converted into %." %(sys.argv[3], sys.argv[4])
         print "Plotted all detected objects into PNG files."
         print "Elapsed time: %s" %(time.time() - start_time)
@@ -354,6 +298,28 @@ if __name__ == "__main__":
                 print "%s converted into %s." %(fitsimage, sys.argv[3])
         elif os.path.isfile(sys.argv[2]):
             f2n.fits2png(sys.argv[2], sys.argv[3])
+            print "%s converted into %." %(sys.argv[2], sys.argv[3])
+        print "Converted all FITS files to PNG files."
+        print "Elapsed time: %s" %(time.time() - start_time)
+        #except:
+        #    print "Usage error!"
+        #    print "Usage: python asterotrek.py -fits2png <fitsimage(s)> <target_folder>" 
+        #    raise SystemExit
+    elif sys.argv[1] == "-fits2pnm" and len(sys.argv) == 4:
+        """
+        Converts FITS images into PNM files.
+        Usage: python asterotrek.py -fits2png <fitsimage(s)> <target_folder>    		
+        """
+        #try:
+        print "Please wait until processing is complete."
+        f2p = Plot()
+        
+        if os.path.isdir(sys.argv[2]):
+            for fitsimage in sorted(glob.glob(sys.argv[2])):
+                f2p.fits2pnm(fitsimage, sys.argv[3])
+                print "%s converted into %s." %(fitsimage, sys.argv[3])
+        elif os.path.isfile(sys.argv[2]):
+            f2p.fits2pnm(sys.argv[2], sys.argv[3])
             print "%s converted into %." %(sys.argv[2], sys.argv[3])
         print "Converted all FITS files to PNG files."
         print "Elapsed time: %s" %(time.time() - start_time)
