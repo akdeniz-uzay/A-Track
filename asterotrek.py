@@ -269,8 +269,9 @@ if __name__ == "__main__":
             for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):
                 print sys.argv[4]
                 print fitsimage
-                datacatmask = datalxy[:, 5] == i
-                datacat = datalxy[datacatmask]
+                print i
+                datacat = datalxy[datalxy[:, 6].astype(int) == i]
+                print datacat
                 f2n.fits2png(fitsimage, sys.argv[4], datacat)
                 print "%s converted into %s" %(fitsimage, sys.argv[4])
         elif os.path.isfile(sys.argv[3]):

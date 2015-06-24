@@ -139,7 +139,10 @@ class Detect:
         y1 = line[1][1]
         x2 = xy[0]
         y2 = xy[1]
-        h = math.fabs((x1 - x0)*y2 + (y0 - y1)*x2 + x0*y1 - x1*y0) / math.sqrt(math.pow(x1 - x0, 2) + math.pow(y1 -y0, 2))
+        try:
+            h = math.fabs((x1 - x0)*y2 + (y0 - y1)*x2 + x0*y1 - x1*y0) / math.sqrt(math.pow(x1 - x0, 2) + math.pow(y1 -y0, 2))
+        except ZeroDivisionError:
+            h = 0
         return h
 
     def detectstrayobjects(self, reference_cat, star_cat, target_folder):
@@ -153,18 +156,18 @@ class Detect:
                     
         """
         refcat = np.genfromtxt(reference_cat, dtype='float32', delimiter=' ', skip_header=1)
-        starcat = np.genfromtxt(star_cat, dtype='float32', delimiter=' ', skip_header=1)
+        starcat = np.genfromtxt(star_cat, dtype='float32', delimiter=' ')
         #refcat = pd.read_csv(reference_cat, sep=" ", names=["ref_x", "ref_y"], header=None)
         #starcat = pd.read_csv(star_cat, sep=" ", names=["ref_x", "ref_y"], header=None)
         
         #strayobjectlist = pd.DataFrame(columns=["ref_x", "ref_y"])
         strayobjectlist = []
         for i in range(len(refcat)):
-            print (abs(starcat[:,1] - refcat[i, 1]) < 1.0).sum(), (abs(starcat[:, 2] - refcat[i, 2]) < 1.0).sum()
-            if (abs(starcat[:,1] - refcat[i, 1]) < 1.0).sum() < 2 or (abs(starcat[:, 2] - refcat[i, 2]) < 1.0).sum() < 2:
+            if (np.absolute(starcat[:,1] - refcat[i, 1]) < 1.0).sum() < 2 and (np.absolute(starcat[:,2] - refcat[i, 2]) < 1.0).sum() < 2:
+                print (np.absolute(starcat[:,1] - refcat[i, 1]) < 1.0).sum(), (np.absolute(starcat[:,2] - refcat[i, 2]) < 1.0).sum(), "halalallll"
                 #strayobjectlist = strayobjectlist.append(starcat[(abs(starcat.ref_x - refcat.ref_x[i]) < 1) & (abs(starcat.ref_y - refcat.ref_y[i]) < 1)])
                 strayobjectlist.append(refcat[i, :])
-        print strayobjectlist
+        #print strayobjectlist
         
         starcatfile = os.path.basename(reference_cat)
         h_starcatfile, e_starcatfile = starcatfile.split(".")
@@ -175,10 +178,12 @@ class Detect:
             os.mkdir(target_folder)        
         
         np.savetxt("%s/stray_%s.cat" %(target_folder, h_starcatfile), np.array(strayobjectlist), delimiter=" ")
+        #print np.absolute(starcat[:,1] - refcat[i, 1])
+        #print strayobjectlist       
         return strayobjectlist
 
-    #def detectlines(self, fits_path, ordered_cats, output_figure, basepar=1.0, heightpar=2.0, areapar=2.0, interval = 30):
-    def detectlines(self, fits_path, catdir, output_figure, basepar=2.0, heightpar=2.0, interval = 30):
+    def detectlines(self, fits_path, catdir, output_figure, basepar=3.0, heightpar=2.0, areapar=2.0, interval = 30):
+    #def detectlines(self, fits_path, catdir, output_figure, basepar=1.0, heightpar=2.0, interval = 30):
         """
         Reads given ordered (corrected) coordinate file and detect lines with randomized algorithm.
         
@@ -201,14 +206,19 @@ class Detect:
         can = []
         #all files copying to list
         for k, objctlist in enumerate(starcat):
-            objtcat = np.genfromtxt(objctlist, dtype='float32', delimiter=' ')
+            if "stray_" in objctlist:
+                objtcat = np.genfromtxt(objctlist, dtype='float32', delimiter=' ')
+            else:
+                objtcat = np.genfromtxt(objctlist, dtype='float32', delimiter=' ', skip_header=1)                
             #objtcat = pd.read_csv(objctlist, sep=",", names = ["ref_x", "ref_y"], header=0)
             if objtcat.size:
                 #onecatlist = onecatlist.append(objtcat)
                 id_col = np.full((len(objtcat), 1),k)
+                print len(objtcat), len(id_col), "kldjksa"
                 objtcatid = np.append(objtcat, id_col, 1)
                 lst.append(objtcatid)
         #calculation of a triangle's area and checking points on a same line.
+        sayac = 0
         for i in xrange(len(lst)-2):
             print "Searching lines on %s. file" %(i)
             hdulist1 = pyfits.open(fitsfiles[i])
@@ -229,28 +239,29 @@ class Detect:
             for u in xrange(len(lst[i])):
                 for z in xrange(len(lst[i+1])):
                     if self.isClose(lst[i][u, [1,2]], lst[i+1][z, [1,2]], radius):
-                        for x in xrange(len(lst[i+2])):
+                        for x in xrange(len(lst[i+2])):                      
                             if self.isClose(lst[i+1][z, [1,2]], lst[i+2][x, [1,2]], radius2):
                                 base = self.longest(lst[i][u, [1,2]], lst[i+1][z, [1,2]], lst[i+2][x, [1,2]])
                                 hei = self.height(base[:-1], base[-1])
-                                #x1 = lst[i][u][0]
-                                #y1 = lst[i][u][1]
-                                #x2 = lst[i+1][z][0]
-                                #y2 = lst[i+1][z][1]
-                                #x3 = lst[i+2][x][0]
-                                #y3 = lst[i+2][x][1]
+                                x1 = lst[i][u][0]
+                                y1 = lst[i][u][1]
+                                x2 = lst[i+1][z][0]
+                                y2 = lst[i+1][z][1]
+                                x3 = lst[i+2][x][0]
+                                y3 = lst[i+2][x][1]
                                 lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
-                                #area = math.fabs(0.5*((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)))
+                                area = math.fabs(0.5*((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)))
                                 
-                                #if lengh > basepar and hei < heightpar and area < areapar:
-                                if lengh > basepar and hei < heightpar:
-                                    #can.append([i,lst[i][u][0], lst[i][u][1]])
-                                    #can.append([i+1, lst[i+1][z][0], lst[i+1][z][1]])
-                                    #can.append([i+2, lst[i+2][x][0], lst[i+2][x][1]])
+                                if lengh > basepar and hei < heightpar and area < areapar:
+                                #if lengh > basepar and hei < heightpar:
+                                    sayac = sayac + 1
+                                    print sayac
                                     can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lst[i][u][5]])
                                     can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lst[i+1][z][5]])
-                                    can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lst[i+2][x][5]])        
+                                    can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lst[i+2][x][5]])     
         #removing duplicates.
+        #print can
+        i = 0
         if can:
             #res = pd.DataFrame(can, columns=["ref_file", "ref_x", "ref_y"])
             #res = res.drop_duplicates(["ref_file", "ref_x", "ref_y"])
@@ -263,9 +274,7 @@ class Detect:
 					sortedcoor[i+1][0] = sortedcoor[i][0]
 				else:
 					sortedcoor[i+1][0] = sortedcoor[i][0]+1
-            print sortedcoor[:,2]
-            print sortedcoor[:,3]
-            print sortedcoor
+            #print sortedcoor
             if output_figure != None:
                 plotxy = Plot()
                 plotxy.plot(sortedcoor, output_figure)

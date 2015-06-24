@@ -113,8 +113,6 @@ class Plot:
         plt.xlabel("ref x")
         plt.ylabel("ref y")
         plt.title("Detected %s objects." %(len(coorlist)))
-        print coorlist[:,2]
-        print coorlist[:,3]
         plt.scatter(coorlist[:,2], coorlist[:,3], s=coorlist[:,4]/1000, color="red")
         plt.xlim(0, 2048)
         plt.ylim(0, 2048)
@@ -153,7 +151,7 @@ class Plot:
         try:
             if datalxy.size:
                 for i in xrange(len(datalxy)):
-                    myimage.drawrectangle(datalxy[i][2] - 10, datalxy[i][3] + 10, datalxy[i][2] - 10, datalxy[i][3] + 10, colour=(0,255,0), label="%s" %(int(datalxy[i][3])))
+                    myimage.drawrectangle(datalxy[i][2] - 10, datalxy[i][2] + 10, datalxy[i][3] - 10, datalxy[i][3] + 10, colour=(0,255,0), label="%s" %(int(datalxy[i][0])))
         except AttributeError:
             pass
         myimage.writetitle(os.path.basename(alifilepath))
