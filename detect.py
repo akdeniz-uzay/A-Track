@@ -10,6 +10,7 @@ import glob
 import os
 import pyfits
 import time
+import pandas as pd
 
 try:
     import numpy as np
@@ -154,20 +155,14 @@ class Detect:
         @param star_cat: Ordered (corrected) star catalogue file for all image.
         @type star_cat: Text file object...
                     
-        """
-        refcat = np.genfromtxt(reference_cat, dtype='float32', delimiter=' ', skip_header=1)
-        starcat = np.genfromtxt(star_cat, dtype='float32', delimiter=' ')
-        #refcat = pd.read_csv(reference_cat, sep=" ", names=["ref_x", "ref_y"], header=None)
-        #starcat = pd.read_csv(star_cat, sep=" ", names=["ref_x", "ref_y"], header=None)
+        """        
+        refcat = pd.read_csv(reference_cat, sep=" ", names=["id", "x", "y", "flux", "background"], header=0)
+        starcat = pd.read_csv(star_cat, sep=" ", names=["id", "x", "y", "flux", "background"], header=0)
         
-        #strayobjectlist = pd.DataFrame(columns=["ref_x", "ref_y"])
-        strayobjectlist = []
-        for i in range(len(refcat)):
-            if (np.absolute(starcat[:,1] - refcat[i, 1]) < 1.0).sum() < 2 and (np.absolute(starcat[:,2] - refcat[i, 2]) < 1.0).sum() < 2:
-                print (np.absolute(starcat[:,1] - refcat[i, 1]) < 1.0).sum(), (np.absolute(starcat[:,2] - refcat[i, 2]) < 1.0).sum(), "halalallll"
-                #strayobjectlist = strayobjectlist.append(starcat[(abs(starcat.ref_x - refcat.ref_x[i]) < 1) & (abs(starcat.ref_y - refcat.ref_y[i]) < 1)])
-                strayobjectlist.append(refcat[i, :])
-        #print strayobjectlist
+        strayobjectlist = pd.DataFrame(columns=["id", "x", "y", "flux", "background"])
+        for i in range(len(refcat.x)):
+            if len(starcat[(abs(starcat.x - refcat.x[i]) < 1) & (abs(starcat.y - refcat.y[i]) < 1)]) < 2:
+                strayobjectlist = strayobjectlist.append(starcat[(abs(starcat.x - refcat.x[i]) < 1) & (abs(starcat.y - refcat.y[i]) < 1)])
         
         starcatfile = os.path.basename(reference_cat)
         h_starcatfile, e_starcatfile = starcatfile.split(".")
@@ -177,9 +172,7 @@ class Detect:
         else:
             os.mkdir(target_folder)        
         
-        np.savetxt("%s/stray_%s.cat" %(target_folder, h_starcatfile), np.array(strayobjectlist), delimiter=" ")
-        #print np.absolute(starcat[:,1] - refcat[i, 1])
-        #print strayobjectlist       
+        strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_starcatfile), index = False)
         return strayobjectlist
 
     def detectlines(self, fits_path, catdir, output_figure, basepar=3.0, heightpar=2.0, areapar=2.0, interval = 30):
@@ -199,26 +192,20 @@ class Detect:
         @type areapar: Float
         """ 
         fitsfiles = sorted(glob.glob("%s/*.fit?" %(fits_path)))
-        starcat = sorted(glob.glob("%s/*affineremap.cat" %(catdir)))
-        #onecatlist = pd.DataFrame(columns=["ref_x", "ref_y"])
+        starcat = sorted(glob.glob("%s/*affineremap.txt" %(catdir)))
+        onecatlist = pd.DataFrame(columns=["id", "x", "y", "flux", "background"])
         
         lst = []
         can = []
+        line_id = None
+        
         #all files copying to list
-        for k, objctlist in enumerate(starcat):
-            if "stray_" in objctlist:
-                objtcat = np.genfromtxt(objctlist, dtype='float32', delimiter=' ')
-            else:
-                objtcat = np.genfromtxt(objctlist, dtype='float32', delimiter=' ', skip_header=1)                
-            #objtcat = pd.read_csv(objctlist, sep=",", names = ["ref_x", "ref_y"], header=0)
-            if objtcat.size:
-                #onecatlist = onecatlist.append(objtcat)
-                id_col = np.full((len(objtcat), 1),k)
-                print len(objtcat), len(id_col), "kldjksa"
-                objtcatid = np.append(objtcat, id_col, 1)
-                lst.append(objtcatid)
+        for objctlist in starcat:
+            objtcat = pd.read_csv(objctlist, sep=",", names = ["id", "x", "y", "flux", "background"], header=0)
+            if not objtcat.empty:
+                onecatlist = onecatlist.append(objtcat)
+                lst.append(objtcat.values)
         #calculation of a triangle's area and checking points on a same line.
-        sayac = 0
         for i in xrange(len(lst)-2):
             print "Searching lines on %s. file" %(i)
             hdulist1 = pyfits.open(fitsfiles[i])
@@ -243,42 +230,41 @@ class Detect:
                             if self.isClose(lst[i+1][z, [1,2]], lst[i+2][x, [1,2]], radius2):
                                 base = self.longest(lst[i][u, [1,2]], lst[i+1][z, [1,2]], lst[i+2][x, [1,2]])
                                 hei = self.height(base[:-1], base[-1])
-                                x1 = lst[i][u][0]
-                                y1 = lst[i][u][1]
-                                x2 = lst[i+1][z][0]
-                                y2 = lst[i+1][z][1]
-                                x3 = lst[i+2][x][0]
-                                y3 = lst[i+2][x][1]
+                                #x1 = lst[i][u][0]
+                                #y1 = lst[i][u][1]
+                                #x2 = lst[i+1][z][0]
+                                #y2 = lst[i+1][z][1]
+                                #x3 = lst[i+2][x][0]
+                                #y3 = lst[i+2][x][1]
                                 lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
-                                area = math.fabs(0.5*((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)))
+                                #area = math.fabs(0.5*((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)))
                                 
-                                if lengh > basepar and hei < heightpar and area < areapar:
-                                #if lengh > basepar and hei < heightpar:
-                                    sayac = sayac + 1
-                                    print sayac
-                                    can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lst[i][u][5]])
-                                    can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lst[i+1][z][5]])
-                                    can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lst[i+2][x][5]])     
+                                #if lengh > basepar and hei < heightpar and area < areapar:
+                                if lengh > basepar and hei < heightpar:
+                                    can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4]])
+                                    can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4]])
+                                    can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4]])
+        
         #removing duplicates.
-        #print can
-        i = 0
         if can:
-            #res = pd.DataFrame(can, columns=["ref_file", "ref_x", "ref_y"])
-            #res = res.drop_duplicates(["ref_file", "ref_x", "ref_y"])
-            coorresultnp = np.array(can)
-            coorresult = self.unique_rows(coorresultnp) 
-            sortedcoor = coorresult[np.lexsort((coorresult[:, 2], ))]
-            sortedcoor[0,0] = 1
-            for i in xrange(len(sortedcoor[:-1])):
-				if self.distance(sortedcoor[i][2], sortedcoor[i][3], sortedcoor[i+1][2], sortedcoor[i+1][3]) < interval:
-					sortedcoor[i+1][0] = sortedcoor[i][0]
-				else:
-					sortedcoor[i+1][0] = sortedcoor[i][0]+1
-            #print sortedcoor
+            res = pd.DataFrame(can, columns=["file", "id", "x", "y", "flux", "background"])
+            res = res.drop_duplicates(["file", "id", "x", "y", "flux", "background"])
             if output_figure != None:
                 plotxy = Plot()
-                plotxy.plot(sortedcoor, output_figure)
-            return sortedcoor
+                print res
+                plotxy.plot(res.values, output_figure)
+            sorted_res = res.sort(['x','y'],ascending=[0,1])
+            line_id = range(len(sorted_res))
+            for i in xrange(len(sorted_res)-1):
+                if self.distance(sorted_res.values[i][2], sorted_res.values[i][3], sorted_res.values[i+1][2], sorted_res.values[i+1][3]) < interval:
+                    line_id[i+1] = line_id[i]
+                else:
+                    line_id[i+1] = line_id[i] + 1
+            pointids = pd.DataFrame(line_id, columns=['line_id'], index=sorted_res.index)
+            linepoints = sorted_res.join(pointids)
+            linepoints.to_csv("lines.csv")
+            print linepoints.values
+            return linepoints.values
         else:
             print "No lines detected!"
             return

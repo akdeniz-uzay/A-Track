@@ -270,8 +270,7 @@ if __name__ == "__main__":
                 print sys.argv[4]
                 print fitsimage
                 print i
-                datacat = datalxy[datalxy[:, 6].astype(int) == i]
-                print datacat
+                datacat = datalxy[datalxy[:, 0].astype(int) == i]
                 f2n.fits2png(fitsimage, sys.argv[4], datacat)
                 print "%s converted into %s" %(fitsimage, sys.argv[4])
         elif os.path.isfile(sys.argv[3]):
@@ -323,6 +322,20 @@ if __name__ == "__main__":
             f2p.fits2pnm(sys.argv[2], sys.argv[3])
             print "%s converted into %." %(sys.argv[2], sys.argv[3])
         print "Converted all FITS files to PNG files."
+        print "Elapsed time: %s" %(time.time() - start_time)
+        #except:
+        #    print "Usage error!"
+        #    print "Usage: python asterotrek.py -fits2png <fitsimage(s)> <target_folder>" 
+        #    raise SystemExit
+    elif sys.argv[1] == "-plot2ds9" and len(sys.argv) == 4:
+        """
+        Plots catalogue files into ds9.
+        Usage: python asterotrek.py -plot2ds9 <fitsimage> <catfile>    		
+        """
+        #try:
+        print "Please wait until processing is complete."
+        p2ds9 = Plot()
+        p2ds9.plot2ds9(sys.argv[2], sys.argv[3])
         print "Elapsed time: %s" %(time.time() - start_time)
         #except:
         #    print "Usage error!"
