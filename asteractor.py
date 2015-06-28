@@ -16,8 +16,9 @@ from alipy import pysex
 import os
  
 
-def makecat(fitsfiles, catdir, detect_thresh=3, analysis_thresh=3, detect_minarea=15, pixel_scale=0.31, seeing_fwhm=2.0, 
-            phot_autoparams='\"6.0, 6.0\"', back_size=128, back_filtersize=4, deblend_nthresh=32, deblend_mincont=0.0001, gain=0.55, rerun=True, keepcat=True, verbose=True):
+def makecat(fitsfiles, catdir, detect_thresh=5, analysis_thresh=3, detect_minarea=5, pixel_scale=0.31, seeing_fwhm=1.5, 
+            phot_autoparams='\"6.0, 6.0\"', back_size=128, back_filtersize=4, deblend_nthresh=32, 
+            satur_level=60000, deblend_mincont=0.00001, gain=0.55, rerun=True, keepcat=True, verbose=True):
     """
     Makes SExtractor catalogues for files.
     
@@ -41,12 +42,12 @@ def makecat(fitsfiles, catdir, detect_thresh=3, analysis_thresh=3, detect_minare
     @type seeing_fwhm: float, integer
     """
     for filepath in sorted(glob.glob(fitsfiles)):
-        pysex.run(filepath, conf_args={'DETECT_THRESH':detect_thresh, 'ANALYSIS_THRESH':analysis_thresh, 'DETECT_MINAREA':detect_minarea, 
+        pysex.run(filepath, conf_args={'DETECT_THRESH':detect_thresh, 'ANALYSIS_THRESH':analysis_thresh, 'DETECT_MINAREA':detect_minarea, 'SATUR_LEVEL':satur_level, 
         'GAIN':gain ,'DEBLEND_NTHRESH':deblend_nthresh, 'DEBLEND_MINCONT':deblend_mincont, 'PIXEL_SCALE':pixel_scale, 'SEEING_FWHM':seeing_fwhm, 
         "PHOT_AUTOPARAMS":phot_autoparams, "BACK_SIZE":back_size, "BACK_FILTERSIZE":back_filtersize, "FILTER":"Y", 'VERBOSE_TYPE':'NORMAL' if verbose else 'QUIET'},
-        params=['X_IMAGE', 'Y_IMAGE', 'FLUX_AUTO', 'FWHM_IMAGE', 'FLAGS', 'ELONGATION', 'NUMBER', "EXT_NUMBER", 'MAG_AUTO'],
+        params=['FLAGS', 'X_IMAGE', 'Y_IMAGE', 'FLUX_AUTO', 'BACKGROUND', 'FWHM_IMAGE', 'ELONGATION'],
         rerun=rerun, keepcat=keepcat, catdir=catdir)
-    return
+    return True
     
 def image2xy(fitsfiles, catdir):
     astrometry = "/usr/local/astrometry/bin/"
@@ -84,7 +85,7 @@ def align(fitsfiles, ref_image, outdir):
                     # Variant 1, using only scipy and the simple affine transorm :
                     alipy.align.affineremap(id.ukn.filepath, id.trans, shape=outputshape, outdir=outdir, makepng=False)
                     # By default, the aligned images are written into a directory "alipy_out".
-    return
+    return True
 
         
         
