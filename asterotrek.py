@@ -268,6 +268,7 @@ if __name__ == "__main__":
         f2n = Plot()
         detectlines = Detect()
         datalxy = detectlines.detectlines(sys.argv[3], sys.argv[2], output_figure=None)
+        print datalxy
         
         if os.path.isdir(sys.argv[3]):
             for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):

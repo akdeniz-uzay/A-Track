@@ -216,12 +216,15 @@ class Plot:
         catfile = os.path.basename(cat_path)
         h_catfile, e_catfile = catfile.split(".")
         
-        if e_catfile != "cat":
+        if e_catfile == "pysexcat":
             print '\033[1;34mDetecting stars on %s!\033[0m' %(cat_path)
-            coordinate = os.popen("cat %s|grep -v '#'|awk '{print $1,$2}'" %(cat_path))
-        else:
+            coordinate = os.popen("cat %s|grep -v '#'|awk '{print $2,$3}'" %(cat_path))
+        elif e_catfile == "txt":
             print '\033[1;34mDetecting stars on %s!\033[0m' %(cat_path)
-            coordinate = os.popen("cat %s|grep -v 'X'|awk '{print $2,$3}'" %(cat_path))    
+            coordinate = os.popen("cat %s|tail -n +2|awk -F' *, *' '{print $2,$3}'" %(cat_path))
+        elif e_catfile == "cat":
+            print '\033[1;34mDetecting stars on %s!\033[0m' %(cat_path)
+            coordinate = os.popen("cat %s|tail -n +2|awk '{print $2,$3}'" %(cat_path)) 
         
         counter = 0
         for line in coordinate.readlines():

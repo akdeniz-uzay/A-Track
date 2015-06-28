@@ -166,9 +166,9 @@ class Detect:
             reference = pd.DataFrame.from_records(ref_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation"])
             star_catalogue = pd.DataFrame.from_records(star_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation"])
             
-            refcat_all = reference[(reference.id_flags == 0) & (reference.flux > 0) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
+            refcat_all = reference[(reference.id_flags <= 3) & (reference.flux > 0) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
             (reference.fwhm >= min_fwhm) & (reference.elongation <= elongation)]
-            starcat_all = star_catalogue[(star_catalogue.id_flags == 0 ) & (star_catalogue.flux > 0) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
+            starcat_all = star_catalogue[(star_catalogue.id_flags <= 3) & (star_catalogue.flux > 0) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
             (star_catalogue.fwhm >= min_fwhm) & (star_catalogue.elongation <= elongation)]
             
             refcat = refcat_all[["id_flags", "x", "y", "flux", "background"]]
@@ -194,7 +194,7 @@ class Detect:
         strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_catfile), index = False)
         return strayobjectlist
 
-    def detectlines(self, fits_path, catdir, output_figure, basepar=3.0, heightpar=2.0, areapar=2.0, interval = 30):
+    def detectlines(self, fits_path, catdir, output_figure, basepar=1.0, heightpar=2.0, areapar=2.0, interval = 30):
     #def detectlines(self, fits_path, catdir, output_figure, basepar=1.0, heightpar=2.0, interval = 30):
         """
         Reads given ordered (corrected) coordinate file and detect lines with randomized algorithm.
