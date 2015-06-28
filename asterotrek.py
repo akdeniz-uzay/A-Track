@@ -54,7 +54,7 @@ def makestarcat(catdir):
         catfiles = glob.glob("%s/*cat" %(catdir))
         with open("%s/starcat.cat" %(catdir), "a") as outfile:
             for f in catfiles:
-                h_catfile, e_catfile = starcatfile.split(".")
+                h_catfile, e_catfile = f.split(".")
                 if e_catfile == "cat":
                     objectcat = np.genfromtxt(f, delimiter=None, comments='#', skip_header=1)
                 elif e_catfile == "pysexcat":
@@ -92,7 +92,7 @@ def cleancosmics(image, odir, gain=2.2, readnoise=10.0, sigclip = 5.0, sigfrac =
 if __name__ == "__main__":
     start_time = time.time()
     # Reads FITS file and ident/align stars
-    if sys.argv[1] == "-ri -se":
+    if sys.argv[1] == "-sextractor":
         """
         Ident stars on all FITS images according to reference image.
         Use this option for you have already aligned images.
@@ -164,7 +164,7 @@ if __name__ == "__main__":
         """
         #try:
         print "Please wait until processing is complete."
-        for catfile in sorted(glob.glob("%s/*affineremap.cat" %(sys.argv[2]))):
+        for catfile in sorted(glob.glob("%s/*affineremap.*cat" %(sys.argv[2]))):
             detect = Detect()
             detect.detectstrayobjects(catfile, "%s/starcat.cat" %(sys.argv[2]), sys.argv[3])
             print "Saved all detected stray objects to: %s/%s." %(sys.argv[2], os.path.basename(catfile))

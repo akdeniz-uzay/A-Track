@@ -146,7 +146,7 @@ class Detect:
             h = 0
         return h
 
-    def detectstrayobjects(self, reference_cat, star_cat, target_folder):
+    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=10, max_flux=6000000, elongation=2):
         """
         Reads given ordered (corrected) coordinate file and detect stray objects in "starcat.txt".
         
@@ -155,24 +155,43 @@ class Detect:
         @param star_cat: Ordered (corrected) star catalogue file for all image.
         @type star_cat: Text file object...
                     
-        """        
-        refcat = pd.read_csv(reference_cat, sep=" ", names=["id", "x", "y", "flux", "background"], header=0)
-        starcat = pd.read_csv(star_cat, sep=" ", names=["id", "x", "y", "flux", "background"], header=0)
+        """
+        catfile = os.path.basename(reference_cat)
+        h_catfile, e_catfile = catfile.split(".")
         
-        strayobjectlist = pd.DataFrame(columns=["id", "x", "y", "flux", "background"])
+        if e_catfile == "pysexcat":
+            ref_np = np.genfromtxt(reference_cat, delimiter=None, comments='#')
+            star_np = np.genfromtxt(star_cat, delimiter=None, comments='#')
+            
+            reference = pd.DataFrame.from_records(ref_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation"])
+            star_catalogue = pd.DataFrame.from_records(star_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation"])
+            
+            refcat_all = reference[(reference.id_flags == 0) & (reference.flux > 0) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
+            (reference.fwhm >= min_fwhm) & (reference.elongation <= elongation)]
+            starcat_all = star_catalogue[(star_catalogue.id_flags == 0 ) & (star_catalogue.flux > 0) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
+            (star_catalogue.fwhm >= min_fwhm) & (star_catalogue.elongation <= elongation)]
+            
+            refcat = refcat_all[["id_flags", "x", "y", "flux", "background"]]
+            refcat = refcat.reset_index(drop=True)
+            starcat = starcat_all[["id_flags", "x", "y", "flux", "background"]]
+            starcat = starcat.reset_index(drop=True)
+            
+            # flags or id, first column is not important, i added first column for just check.
+        else:
+            refcat = pd.read_csv(reference_cat, sep=" ", names=["id_flags", "x", "y", "flux", "background"], header=0)
+            starcat = pd.read_csv(star_cat, sep=" ", names=["id_flags", "x", "y", "flux", "background"], header=0)
+        
+        strayobjectlist = pd.DataFrame(columns=["id_flags", "x", "y", "flux", "background"])
         for i in range(len(refcat.x)):
             if len(starcat[(abs(starcat.x - refcat.x[i]) < 1) & (abs(starcat.y - refcat.y[i]) < 1)]) < 2:
                 strayobjectlist = strayobjectlist.append(starcat[(abs(starcat.x - refcat.x[i]) < 1) & (abs(starcat.y - refcat.y[i]) < 1)])
-        
-        starcatfile = os.path.basename(reference_cat)
-        h_starcatfile, e_starcatfile = starcatfile.split(".")
-        
+
         if os.path.exists(target_folder):
             pass
         else:
             os.mkdir(target_folder)        
         
-        strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_starcatfile), index = False)
+        strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_catfile), index = False)
         return strayobjectlist
 
     def detectlines(self, fits_path, catdir, output_figure, basepar=3.0, heightpar=2.0, areapar=2.0, interval = 30):
@@ -193,7 +212,7 @@ class Detect:
         """ 
         fitsfiles = sorted(glob.glob("%s/*.fit?" %(fits_path)))
         starcat = sorted(glob.glob("%s/*affineremap.txt" %(catdir)))
-        onecatlist = pd.DataFrame(columns=["id", "x", "y", "flux", "background"])
+        onecatlist = pd.DataFrame(columns=["id_flags", "x", "y", "flux", "background"])
         
         lst = []
         can = []
@@ -201,7 +220,7 @@ class Detect:
         
         #all files copying to list
         for objctlist in starcat:
-            objtcat = pd.read_csv(objctlist, sep=",", names = ["id", "x", "y", "flux", "background"], header=0)
+            objtcat = pd.read_csv(objctlist, sep=",", names = ["id_flags", "x", "y", "flux", "background"], header=0)
             if not objtcat.empty:
                 onecatlist = onecatlist.append(objtcat)
                 lst.append(objtcat.values)
@@ -247,8 +266,8 @@ class Detect:
         
         #removing duplicates.
         if can:
-            res = pd.DataFrame(can, columns=["file", "id", "x", "y", "flux", "background"])
-            res = res.drop_duplicates(["file", "id", "x", "y", "flux", "background"])
+            res = pd.DataFrame(can, columns=["file", "id_flags", "x", "y", "flux", "background"])
+            res = res.drop_duplicates(["file", "id_flags", "x", "y", "flux", "background"])
             if output_figure != None:
                 plotxy = Plot()
                 print res
@@ -267,4 +286,4 @@ class Detect:
             return linepoints.values
         else:
             print "No lines detected!"
-            return
+            return True
