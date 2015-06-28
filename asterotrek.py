@@ -45,18 +45,22 @@ def makestarcat(catdir):
     @param catdir: The target directory which contains all corrected(readeble) coordinate files.
     @type catdir: Directory object.
         		
-    """      
+    """
+    
     if os.path.exists(catdir):
         if os.path.isfile("%s/starcat.cat" %(catdir)):
             print "%s/starcat.cat" %(catdir)
             os.remove("%s/starcat.cat" %(catdir))
-        catfiles = glob.glob("%s/*.cat" %(catdir))
+        catfiles = glob.glob("%s/*cat" %(catdir))
         with open("%s/starcat.cat" %(catdir), "a") as outfile:
             for f in catfiles:
-                objectcat = np.genfromtxt(f, delimiter=' ', skip_header=1)
+                h_catfile, e_catfile = starcatfile.split(".")
+                if e_catfile == "cat":
+                    objectcat = np.genfromtxt(f, delimiter=None, comments='#', skip_header=1)
+                elif e_catfile == "pysexcat":
+                    objectcat = np.genfromtxt(f, delimiter=None, comments='#')                                      
                 np.savetxt(outfile, objectcat, delimiter=' ')
     return True
-                    
 
 
 def cleancosmics(image, odir, gain=2.2, readnoise=10.0, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0, maxiter = 4):
