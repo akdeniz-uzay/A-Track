@@ -146,7 +146,7 @@ class Detect:
             h = 0
         return h
 
-    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=10, max_flux=6000000, elongation=2):
+    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=10, max_flux=6000000, elongation=2, back_sigma=2):
         """
         Reads given ordered (corrected) coordinate file and detect stray objects in "starcat.txt".
         
@@ -166,9 +166,9 @@ class Detect:
             reference = pd.DataFrame.from_records(ref_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation"])
             star_catalogue = pd.DataFrame.from_records(star_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation"])
             
-            refcat_all = reference[(reference.id_flags <= 3) & (reference.flux > 0) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
+            refcat_all = reference[(reference.id_flags <= 0) & (reference.flux > reference.background.mean() * back_sigma) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
             (reference.fwhm >= min_fwhm) & (reference.elongation <= elongation)]
-            starcat_all = star_catalogue[(star_catalogue.id_flags <= 3) & (star_catalogue.flux > 0) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
+            starcat_all = star_catalogue[(star_catalogue.id_flags <= 0) & (star_catalogue.flux > star_catalogue.background.mean() * back_sigma) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
             (star_catalogue.fwhm >= min_fwhm) & (star_catalogue.elongation <= elongation)]
             
             refcat = refcat_all[["id_flags", "x", "y", "flux", "background"]]
