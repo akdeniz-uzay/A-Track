@@ -11,6 +11,7 @@ import os
 import pyfits
 import time
 import pandas as pd
+from itertools import count
 
 try:
     import numpy as np
@@ -19,7 +20,7 @@ except ImportError:
     raise SystemExit
 
 try:
-    from plot import *
+    import plot as pt
 except ImportError:
     print "Can not load plot. Do you have plot.py?"
     raise SystemExit
@@ -194,7 +195,7 @@ class Detect:
         strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_catfile), index = False)
         return strayobjectlist
 
-    def detectlines(self, fits_path, catdir, output_figure, basepar=1.0, heightpar=2.0, areapar=2.0, interval = 30):
+    def detectlines(self, fits_path, catdir, output_figure, basepar=1.0, heightpar=2.0, areapar=2.0, pixel_scale=0.31, vmax=0.1):
     #def detectlines(self, fits_path, catdir, output_figure, basepar=1.0, heightpar=2.0, interval = 30):
         """
         Reads given ordered (corrected) coordinate file and detect lines with randomized algorithm.
@@ -216,7 +217,7 @@ class Detect:
         
         lst = []
         can = []
-        line_id = None
+        lineid = 0
         
         #all files copying to list
         for objctlist in starcat:
@@ -230,6 +231,8 @@ class Detect:
             hdulist1 = pyfits.open(fitsfiles[i])
             hdulist2 = pyfits.open(fitsfiles[i+1])
             hdulist3 = pyfits.open(fitsfiles[i+2])
+            xbin = hdulist1[0].header['xbinning']
+            ybin = hdulist1[0].header['ybinning']
             obsdate1 = hdulist1[0].header['date-obs']
             exptime1 = hdulist1[0].header['exptime']
             obsdate2 = hdulist2[0].header['date-obs']
@@ -238,10 +241,12 @@ class Detect:
             otime1 =  time.strptime(obsdate1, "%Y-%m-%dT%H:%M:%S.%f")
             otime2 =  time.strptime(obsdate2, "%Y-%m-%dT%H:%M:%S.%f")
             otime3 =  time.strptime(obsdate3, "%Y-%m-%dT%H:%M:%S.%f") 
-            radius =  ((time.mktime(otime2) - time.mktime(otime1))/exptime1) * interval
-            radius2 =  ((time.mktime(otime3) - time.mktime(otime2))/exptime2) * interval
-            print radius
-            print radius2
+            #radius =  ((time.mktime(otime2) - time.mktime(otime1))/exptime1) * interval
+            #radius2 =  ((time.mktime(otime3) - time.mktime(otime2))/exptime2) * interval
+            radius =  (time.mktime(otime2) - time.mktime(otime1)) * vmax / (pixel_scale * xbin)
+            radius2 =  (time.mktime(otime3) - time.mktime(otime2)) * vmax / (pixel_scale * xbin)          
+            print "radius: %s %s %s" %(obsdate2, obsdate1, radius)
+            print "radius2: %s %s %s" %(obsdate3, obsdate2, radius2)
             for u in xrange(len(lst[i])):
                 for z in xrange(len(lst[i+1])):
                     if self.isClose(lst[i][u, [1,2]], lst[i+1][z, [1,2]], radius):
@@ -249,41 +254,53 @@ class Detect:
                             if self.isClose(lst[i+1][z, [1,2]], lst[i+2][x, [1,2]], radius2):
                                 base = self.longest(lst[i][u, [1,2]], lst[i+1][z, [1,2]], lst[i+2][x, [1,2]])
                                 hei = self.height(base[:-1], base[-1])
-                                #x1 = lst[i][u][0]
-                                #y1 = lst[i][u][1]
-                                #x2 = lst[i+1][z][0]
-                                #y2 = lst[i+1][z][1]
-                                #x3 = lst[i+2][x][0]
-                                #y3 = lst[i+2][x][1]
                                 lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
-                                #area = math.fabs(0.5*((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)))
-                                
-                                #if lengh > basepar and hei < heightpar and area < areapar:
                                 if lengh > basepar and hei < heightpar:
-                                    can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4]])
-                                    can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4]])
-                                    can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4]])
+                                    x1 = lst[i][u][1]
+                                    y1 = lst[i][u][2]
+                                    x2 = lst[i+1][z][1]
+                                    y2 = lst[i+1][z][2]
+                                    x3 = lst[i+2][x][1]
+                                    y3 = lst[i+2][x][2]
+                                    if can:
+                                        counter1, counter2, counter3 = 0, 0, 0
+                                        for canrow in can:
+                                            if canrow[2] == x1 and canrow[3] == y1:
+                                                counter1 +=1
+                                                lineidrow1 = canrow[6]
+                                            elif canrow[2] == x2 and canrow[3] == y2:
+                                                counter2 +=1
+                                                lineidrow2 = canrow[6]                                       
+                                            elif canrow[2] == x3 and canrow[3] == y3:
+                                                counter3 +=1
+                                                lineidrow3 = canrow[6]
+                                        print "c1: %s c2: %s c3: %s" %(counter1, counter2, counter3)                                                
+                                        if counter1 == 0 and counter2 > 0 and counter3 > 0:
+                                            can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineidrow2])
+                                        elif counter2 == 0 and counter1 > 0 and counter3 > 0:
+                                            can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lineidrow1])
+                                        elif counter3 == 0 and counter1 > 0 and counter2 > 0:
+                                            can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineidrow1])
+                                        else:
+                                            lineid +=1
+                                            can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineid])
+                                            can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lineid])
+                                            can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineid])                                          
+                                    else:
+                                        lineid +=1
+                                        can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineid])
+                                        can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lineid])
+                                        can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineid])
         
         #removing duplicates.
         if can:
-            res = pd.DataFrame(can, columns=["file", "id_flags", "x", "y", "flux", "background"])
-            res = res.drop_duplicates(["file", "id_flags", "x", "y", "flux", "background"])
+            res = pd.DataFrame(can, columns=["file", "id_flags", "x", "y", "flux", "background", "lineid"])
+            res = res.drop_duplicates(["file", "id_flags", "x", "y", "flux", "background", "lineid"])
             if output_figure != None:
-                plotxy = Plot()
-                print res
+                plotxy = pt.Plot()
                 plotxy.plot(res.values, output_figure)
-            sorted_res = res.sort(['x','y'],ascending=[0,1])
-            line_id = range(len(sorted_res))
-            for i in xrange(len(sorted_res)-1):
-                if self.distance(sorted_res.values[i][2], sorted_res.values[i][3], sorted_res.values[i+1][2], sorted_res.values[i+1][3]) < interval:
-                    line_id[i+1] = line_id[i]
-                else:
-                    line_id[i+1] = line_id[i] + 1
-            pointids = pd.DataFrame(line_id, columns=['line_id'], index=sorted_res.index)
-            linepoints = sorted_res.join(pointids)
-            linepoints.to_csv("lines.csv")
-            print linepoints.values
-            return linepoints.values
+            print res.values
+            return res.values
         else:
             print "No lines detected!"
             return True
