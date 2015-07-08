@@ -147,7 +147,7 @@ class Detect:
             h = 0
         return h
 
-    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=10, max_flux=6000000, elongation=2, back_sigma=2):
+    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=10, max_flux=6000000, elongation=2, sigma=2):
         """
         Reads given ordered (corrected) coordinate file and detect stray objects in "starcat.txt".
         
@@ -167,9 +167,9 @@ class Detect:
             reference = pd.DataFrame.from_records(ref_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation"])
             star_catalogue = pd.DataFrame.from_records(star_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation"])
             
-            refcat_all = reference[(reference.id_flags <= 0) & (reference.flux > reference.background.mean() * back_sigma) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
+            refcat_all = reference[(reference.id_flags <= 0) & (reference.flux > reference.background.mean() * sigma) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
             (reference.fwhm >= min_fwhm) & (reference.elongation <= elongation)]
-            starcat_all = star_catalogue[(star_catalogue.id_flags <= 0) & (star_catalogue.flux > star_catalogue.background.mean() * back_sigma) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
+            starcat_all = star_catalogue[(star_catalogue.id_flags <= 0) & (star_catalogue.flux > star_catalogue.background.mean() * sigma) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
             (star_catalogue.fwhm >= min_fwhm) & (star_catalogue.elongation <= elongation)]
             
             refcat = refcat_all[["id_flags", "x", "y", "flux", "background"]]
@@ -195,7 +195,7 @@ class Detect:
         strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_catfile), index = False)
         return strayobjectlist
 
-    def detectlines(self, fits_path, catdir, output_figure, basepar=1.0, heightpar=2.0, areapar=2.0, pixel_scale=0.31, vmax=0.1):
+    def detectlines(self, fits_path, catdir, output_figure, basepar=1.0, heightpar=2.0, areapar=2.0, pixel_scale=0.31, vmax=0.05):
     #def detectlines(self, fits_path, catdir, output_figure, basepar=1.0, heightpar=2.0, interval = 30):
         """
         Reads given ordered (corrected) coordinate file and detect lines with randomized algorithm.
@@ -262,8 +262,8 @@ class Detect:
                                     y2 = lst[i+1][z][2]
                                     x3 = lst[i+2][x][1]
                                     y3 = lst[i+2][x][2]
+                                    counter1, counter2, counter3 = 0, 0, 0
                                     if can:
-                                        counter1, counter2, counter3 = 0, 0, 0
                                         for canrow in can:
                                             if canrow[2] == x1 and canrow[3] == y1:
                                                 counter1 +=1
@@ -274,18 +274,33 @@ class Detect:
                                             elif canrow[2] == x3 and canrow[3] == y3:
                                                 counter3 +=1
                                                 lineidrow3 = canrow[6]
-                                        print "c1: %s c2: %s c3: %s" %(counter1, counter2, counter3)                                                
-                                        if counter1 == 0 and counter2 > 0 and counter3 > 0:
-                                            can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineidrow2])
-                                        elif counter2 == 0 and counter1 > 0 and counter3 > 0:
-                                            can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lineidrow1])
-                                        elif counter3 == 0 and counter1 > 0 and counter2 > 0:
-                                            can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineidrow1])
-                                        else:
+                                        if counter1 == 0 and counter2 == 0 and counter3 == 0:
                                             lineid +=1
+                                            print "c1: %s c2: %s c3: %s" %(counter1, counter2, counter3)
                                             can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineid])
                                             can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lineid])
-                                            can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineid])                                          
+                                            can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineid])                                               
+                                        elif counter1 == 0 and counter2 == 0 and counter3 > 0:
+                                            print "c1: %s c2: %s c3: %s" %(counter1, counter2, counter3)
+                                            can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineidrow3])
+                                            can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lineidrow3])
+                                        elif counter1 == 0 and counter2 > 0 and counter3 == 0:
+                                            print "c1: %s c2: %s c3: %s" %(counter1, counter2, counter3)
+                                            can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineidrow2])
+                                            can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineidrow2])
+                                        elif counter1 > 0 and counter2 == 0 and counter3 == 0:
+                                            print "c1: %s c2: %s c3: %s" %(counter1, counter2, counter3)
+                                            can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lineidrow1])
+                                            can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineidrow1])                                            
+                                        elif counter1 == 0 and counter2 > 0 and counter3 > 0:
+                                            print "c1: %s c2: %s c3: %s" %(counter1, counter2, counter3)
+                                            can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineidrow3])
+                                        elif counter1 > 0 and counter2 == 0 and counter3 > 0:
+                                            print "c1: %s c2: %s c3: %s" %(counter1, counter2, counter3)
+                                            can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lineidrow1])
+                                        elif counter1 > 0 and counter2 > 0 and counter3 == 0:
+                                            print "c1: %s c2: %s c3: %s" %(counter1, counter2, counter3)
+                                            can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineidrow2])                                          
                                     else:
                                         lineid +=1
                                         can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineid])

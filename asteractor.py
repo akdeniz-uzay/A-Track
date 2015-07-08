@@ -16,7 +16,7 @@ from alipy import pysex
 import os
  
 
-def makecat(fitsfiles, catdir, detect_thresh=3, analysis_thresh=3, detect_minarea=1, pixel_scale=0.31, seeing_fwhm=1.5, 
+def makecat(fitsfiles, catdir, detect_thresh=2, analysis_thresh=2, detect_minarea=1, pixel_scale=0.62, seeing_fwhm=1.5, 
             phot_autoparams='\"2.5, 3.5\"', back_size=64, back_filtersize=3, deblend_nthresh=16, 
             satur_level=60000, deblend_mincont=0.00001, gain=0.55, rerun=True, keepcat=True, verbose=True):
     """
