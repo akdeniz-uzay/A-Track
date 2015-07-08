@@ -179,8 +179,7 @@ if __name__ == "__main__":
         if os.path.isdir(sys.argv[3]):
             for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):
                 print sys.argv[4]
-                print fitsimage
-                print i
+                print str(i) + " " + fitsimage
                 datacat = datalxy[datalxy[:, 0].astype(int) == i]
                 f2n.fits2png(fitsimage, sys.argv[4], datacat)
                 print "%s converted into %s" %(fitsimage, sys.argv[4])
