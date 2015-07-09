@@ -167,9 +167,9 @@ class Detect:
             reference = pd.DataFrame.from_records(ref_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation"])
             star_catalogue = pd.DataFrame.from_records(star_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation"])
             
-            refcat_all = reference[(reference.id_flags <= 0) & (reference.flux > reference.background.mean() * sigma) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
+            refcat_all = reference[(reference.id_flags <= 0) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
             (reference.fwhm >= min_fwhm) & (reference.elongation <= elongation)]
-            starcat_all = star_catalogue[(star_catalogue.id_flags <= 0) & (star_catalogue.flux > star_catalogue.background.mean() * sigma) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
+            starcat_all = star_catalogue[(star_catalogue.id_flags <= 0) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
             (star_catalogue.fwhm >= min_fwhm) & (star_catalogue.elongation <= elongation)]
             
             refcat = refcat_all[["id_flags", "x", "y", "flux", "background"]]
@@ -184,8 +184,8 @@ class Detect:
         
         strayobjectlist = pd.DataFrame(columns=["id_flags", "x", "y", "flux", "background"])
         for i in range(len(refcat.x)):
-            if len(starcat[(abs(starcat.x - refcat.x[i]) < 1) & (abs(starcat.y - refcat.y[i]) < 1)]) < 2:
-                strayobjectlist = strayobjectlist.append(starcat[(abs(starcat.x - refcat.x[i]) < 1) & (abs(starcat.y - refcat.y[i]) < 1)])
+            if len(starcat[(abs(starcat.x - refcat.x[i]) <= 0.25) & (abs(starcat.y - refcat.y[i]) <= 0.25)]) < 2:
+                strayobjectlist = strayobjectlist.append(starcat[(abs(starcat.x - refcat.x[i]) <= 0.25) & (abs(starcat.y - refcat.y[i]) <= 0.25)])
 
         if os.path.exists(target_folder):
             pass
@@ -195,7 +195,7 @@ class Detect:
         strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_catfile), index = False)
         return strayobjectlist
 
-    def detectlines(self, fits_path, catdir, output_figure, basepar=1.0, heightpar=2.0, areapar=2.0, pixel_scale=0.31, vmax=0.05):
+    def detectlines(self, fits_path, catdir, output_figure, basepar=0.25, heightpar=2.0, areapar=2.0, pixel_scale=0.31, vmax=0.05, radiusSigma = 5):
     #def detectlines(self, fits_path, catdir, output_figure, basepar=1.0, heightpar=2.0, interval = 30):
         """
         Reads given ordered (corrected) coordinate file and detect lines with randomized algorithm.
@@ -244,14 +244,16 @@ class Detect:
             #radius =  ((time.mktime(otime2) - time.mktime(otime1))/exptime1) * interval
             #radius2 =  ((time.mktime(otime3) - time.mktime(otime2))/exptime2) * interval
             radius =  (time.mktime(otime2) - time.mktime(otime1)) * vmax / (pixel_scale * xbin)
-            radius2 =  (time.mktime(otime3) - time.mktime(otime2)) * vmax / (pixel_scale * xbin)          
-            print "radius: %s %s %s" %(obsdate2, obsdate1, radius)
-            print "radius2: %s %s %s" %(obsdate3, obsdate2, radius2)
             for u in xrange(len(lst[i])):
                 for z in xrange(len(lst[i+1])):
                     if self.isClose(lst[i][u, [1,2]], lst[i+1][z, [1,2]], radius):
-                        for x in xrange(len(lst[i+2])):                      
-                            if self.isClose(lst[i+1][z, [1,2]], lst[i+2][x, [1,2]], radius2):
+                        absRadius1 = self.distance(lst[i][u][1], lst[i][u][2], lst[i+1][z][1], lst[i+1][z][2])
+                        radius2 =  ((time.mktime(otime3) - time.mktime(otime2)) * absRadius1 / ((time.mktime(otime2) - time.mktime(otime1)))) + radiusSigma
+                        for x in xrange(len(lst[i+2])):
+                            absRadius2 = self.distance(lst[i+1][z][1], lst[i+1][z][2], lst[i+2][x][1], lst[i+2][x][2])
+                            #if (radius2 - absRadius2) < radiusSigma and (radius2 - absRadius2) >= 0:
+                            print "radabs: %s, radiuscalc: %s" %(absRadius2, radius2)                                               
+                            if self.isClose(lst[i+1][z, [1,2]], lst[i+2][x, [1,2]], 30):
                                 base = self.longest(lst[i][u, [1,2]], lst[i+1][z, [1,2]], lst[i+2][x, [1,2]])
                                 hei = self.height(base[:-1], base[-1])
                                 lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
