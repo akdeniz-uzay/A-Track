@@ -45,7 +45,7 @@ def makecat(fitsfiles, catdir, detect_thresh=3, analysis_thresh=3, detect_minare
         pysex.run(filepath, conf_args={'DETECT_THRESH':detect_thresh, 'ANALYSIS_THRESH':analysis_thresh, 'DETECT_MINAREA':detect_minarea, 'SATUR_LEVEL':satur_level, 
         'GAIN':gain ,'DEBLEND_NTHRESH':deblend_nthresh, 'DEBLEND_MINCONT':deblend_mincont, 'PIXEL_SCALE':pixel_scale, 'SEEING_FWHM':seeing_fwhm, 
         "PHOT_AUTOPARAMS":phot_autoparams, "BACK_SIZE":back_size, "BACK_FILTERSIZE":back_filtersize, "FILTER":"Y", 'VERBOSE_TYPE':'NORMAL' if verbose else 'QUIET'},
-        params=['FLAGS', 'X_IMAGE', 'Y_IMAGE', 'FLUX_AUTO', 'BACKGROUND', 'FWHM_IMAGE', 'ELONGATION'],
+        params=['FLAGS', 'X_IMAGE', 'Y_IMAGE', 'FLUX_AUTO', 'BACKGROUND', 'FWHM_IMAGE', 'ELONGATION', 'FLUXERR_AUTO'],
         rerun=rerun, keepcat=keepcat, catdir=catdir)
     return True
     
