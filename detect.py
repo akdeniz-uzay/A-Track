@@ -31,30 +31,6 @@ class Detect:
     MOD's detection class.
                 
     """
-    
-    def unique_rows(self, inarray):
-        uniq = np.unique(inarray.view(inarray.dtype.descr * inarray.shape[1]))
-        return uniq.view(inarray.dtype).reshape(-1, inarray.shape[1])
-
-    def slope(self, xcoor0, ycoor0, xcoor1, ycoor1):
-        '''
-        Get the slope of a line segment.
-        @param xcoor0: x coordinate for first point
-        @type xcoor0: float, integer
-        @param ycoor0: y coordinate for first point
-        @type ycoor0: float, integer
-        @param xcoor1: x coordinate for second point
-        @type xcoor1: float, integer
-        @param ycoor1: y coordinate for second point
-        @type ycoor1: float, integer
-        @return: float, None
-        '''
-        try:
-            return (float(ycoor1)-float(ycoor0))/(float(xcoor1)-float(xcoor0))
-        except ZeroDivisionError:
-            # line is vertical
-            return None
-
     def distance(self, xcoor0, ycoor0, xcoor1, ycoor1):
         """
         distance(xcoor0, ycoor0, xcoor1, ycoor1) -> float
@@ -72,6 +48,51 @@ class Detect:
         """
         dist = math.sqrt((ycoor1 - ycoor0)**2 + (xcoor1 - xcoor0)**2)
         return dist
+    """
+    def isConst(self, xcoor0, ycoor0, xcoor1, ycoor1, xcoor2, ycoor2, basepar):
+        dist01 = self.distance(xcoor0, ycoor0, xcoor1, ycoor1)
+        dist12 = self.distance(xcoor1, ycoor1, xcoor2, ycoor2)
+        dist20 = self.distance(xcoor2, ycoor2, xcoor0, ycoor0)
+        if dist01 <= basepar or dist12 <= basepar or dist20 <= basepar*2:
+          return True
+        else:
+          return False
+    """
+    def finalCheck(self, coor0, coor1, coor2):
+        longestt = self.longest(coor0, coor1, coor2)
+        if longestt == (coor0, coor2, coor1):
+          return True
+        else:
+          return False
+    """
+    def isPointBack(self, xcoor0, ycoor0, xcoor1, ycoor1, xcoor2, ycoor2, radius):
+        x1 = xcoor1 - xcoor0
+        x2 = xcoor2 - xcoor1
+        y1 = ycoor1 - ycoor0
+        y2 = ycoor2 - ycoor1
+        
+        if x1*x2 <0 and y1*y2 <0:
+          ret1 = True
+          ret2 = True
+        else:
+          if x1*x2 <= 0:
+            if abs(x1-x2) <= radius:
+              ret1 = False
+            else:
+              ret1 = True
+          else:
+            ret1 = False
+              
+          if y1*y2 <= 0:
+            if abs(y1-y2) <= radius:
+              ret2 = False
+            else:
+              ret2 = True
+          else:
+            ret2 = False
+
+        return ret1 or ret2          
+    """          
     
     def isClose(self, coor1, coor2, r):
         """
@@ -106,23 +127,25 @@ class Detect:
         @type coor3: list
         @return: list
         """
-        d12 = self.distance(coor1[0], coor1[1], coor2[0], coor1[1])
+
+        d12 = self.distance(coor1[0], coor1[1], coor2[0], coor2[1])
         d13 = self.distance(coor1[0], coor1[1], coor3[0], coor3[1])
-        d32 = self.distance(coor3[0], coor3[1], coor2[0], coor1[1])
-        lis = [d12, d13, d32]
+        d23 = self.distance(coor3[0], coor3[1], coor2[0], coor2[1])
+        lis = [d12, d23, d13]
         ref = lis[0]
         index = 0
+                
         for n, i in enumerate(lis):
-            if ref > i:
+            if ref < i:
                 ref = i
                 index = n
         
         if index == 0:
             return coor1, coor2, coor3
         elif index == 1:
-            return coor1, coor3, coor2
+            return coor2, coor3, coor1
         elif index == 2:
-            return coor3, coor2, coor1
+            return coor1, coor3, coor2
     
     def height(self, line, xy):
         """
@@ -147,7 +170,7 @@ class Detect:
             h = 0
         return h
 
-    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=7, max_flux=6000000, elongation=2, snrsigma=10, basepar=0.27):
+    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=7, max_flux=500000, elongation=1.8, snrsigma=15, basepar=0.25):
         """
         Reads given ordered (corrected) coordinate file and detect stray objects in "starcat.txt".
         
@@ -195,9 +218,9 @@ class Detect:
         strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_catfile), index = False)
         return strayobjectlist
 
-    def detectlines(self, fits_path, catdir, output_figure, basepar=0.27, heightpar=2.0, areapar=2.0, pixel_scale=0.31, vmax=0.025, radiusSigma = 3):
-    #def detectlines(self, fits_path, catdir, output_figure, basepar=1.0, heightpar=2.0, interval = 30):
+    def detectlines(self, fits_path, catdir, output_figure, basepar=0.37, heightpar=0.5, pixel_scale=0.31, vmax=0.03, radiusSigma = 1):
         """
+        
         Reads given ordered (corrected) coordinate file and detect lines with randomized algorithm.
         
         @param ordered_cats: Ordered (corrected) star catalogues folder.
@@ -217,7 +240,8 @@ class Detect:
         
         lst = []
         can = []
-        lineid = 0
+        res = []
+        idd = 0
         
         #all files copying to list
         for objctlist in starcat:
@@ -241,80 +265,74 @@ class Detect:
             exptime3 = hdulist3[0].header['exptime']
             otime1 =  time.strptime(obsdate1, "%Y-%m-%dT%H:%M:%S.%f")
             otime2 =  time.strptime(obsdate2, "%Y-%m-%dT%H:%M:%S.%f")
-            otime3 =  time.strptime(obsdate3, "%Y-%m-%dT%H:%M:%S.%f") 
-            #radius =  ((time.mktime(otime2) - time.mktime(otime1))/exptime1) * interval
-            #radius2 =  ((time.mktime(otime3) - time.mktime(otime2))/exptime2) * interval
-            radius =  (time.mktime(otime2) - time.mktime(otime1) + (exptime2 - exptime1)) * vmax / (pixel_scale * xbin)
-            radius2 =  (time.mktime(otime3) - time.mktime(otime2) + (exptime3 - exptime2)) * vmax / (pixel_scale * xbin)
+            otime3 =  time.strptime(obsdate3, "%Y-%m-%dT%H:%M:%S.%f")
+            radius =  (time.mktime(otime2) - time.mktime(otime1) + (exptime2 - exptime1) / 2) * vmax / (pixel_scale * xbin)
+            radius2 =  (time.mktime(otime3) - time.mktime(otime2) + (exptime3 - exptime2) / 2) * vmax / (pixel_scale * xbin)
             for u in xrange(len(lst[i])):
                 for z in xrange(len(lst[i+1])):
                     #ilk çift nokta seçiliyor
                     absRadius1 = self.distance(lst[i][u][1], lst[i][u][2], lst[i+1][z][1], lst[i+1][z][2])
-                    deltaobs1 = (time.mktime(otime2) - time.mktime(otime1)) + (exptime2 - exptime1)
+                    deltaobs1 = (time.mktime(otime2) - time.mktime(otime1)) + (exptime2 - exptime1) / 2
                     if self.isClose(lst[i][u, [1,2]], lst[i+1][z, [1,2]], radius):
                         for x in xrange(len(lst[i+2])):
                             absRadius2 = self.distance(lst[i+1][z][1], lst[i+1][z][2], lst[i+2][x][1], lst[i+2][x][2])
-                            deltaobs2 =  (time.mktime(otime3) - time.mktime(otime2)) + (exptime3 - exptime2)
+                            deltaobs2 =  (time.mktime(otime3) - time.mktime(otime2)) + (exptime3 - exptime2) / 2
                             if self.isClose(lst[i+1][z, [1,2]], lst[i+2][x, [1,2]], radius2):
-                                if ((deltaobs2 * absRadius1 / deltaobs1) - radiusSigma) <= absRadius2 and ((deltaobs2 * absRadius1 / deltaobs1) + radiusSigma) >= absRadius2:
-                                    #print "radabs: %s, radiuscalc: %s" %(absRadius2, radius2)                                               
+                                if ((deltaobs2 * absRadius1 / deltaobs1) - radiusSigma) <= absRadius2 and ((deltaobs2 * absRadius1 / deltaobs1) + radiusSigma) >= absRadius2:                                             
                                     base = self.longest(lst[i][u, [1,2]], lst[i+1][z, [1,2]], lst[i+2][x, [1,2]])
                                     hei = self.height(base[:-1], base[-1])
                                     lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
-                                    if lengh > basepar and hei < heightpar:
-                                        x1 = lst[i][u][1]
-                                        y1 = lst[i][u][2]
-                                        x2 = lst[i+1][z][1]
-                                        y2 = lst[i+1][z][2]
-                                        x3 = lst[i+2][x][1]
-                                        y3 = lst[i+2][x][2]
-                                        counter1, counter2, counter3 = 0, 0, 0
-                                        if can:
-                                            for canrow in can:
-                                                if canrow[2] == x1 and canrow[3] == y1:
-                                                    counter1 +=1
-                                                    lineidrow1 = canrow[6]
-                                                elif canrow[2] == x2 and canrow[3] == y2:
-                                                    counter2 +=1
-                                                    lineidrow2 = canrow[6]                                       
-                                                elif canrow[2] == x3 and canrow[3] == y3:
-                                                    counter3 +=1
-                                                    lineidrow3 = canrow[6]
-                                            if counter1 == 0 and counter2 == 0 and counter3 == 0:
-                                                lineid +=1
-                                                can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineid])
-                                                can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lineid])
-                                                can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineid])                                               
-                                            elif counter1 == 0 and counter2 == 0 and counter3 > 0:
-                                                can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineidrow3])
-                                                can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lineidrow3])
-                                            elif counter1 == 0 and counter2 > 0 and counter3 == 0:
-                                                can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineidrow2])
-                                                can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineidrow2])
-                                            elif counter1 > 0 and counter2 == 0 and counter3 == 0:
-                                                can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lineidrow1])
-                                                can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineidrow1])                                            
-                                            elif counter1 == 0 and counter2 > 0 and counter3 > 0:
-                                                can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineidrow3])
-                                            elif counter1 > 0 and counter2 == 0 and counter3 > 0:
-                                                can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lineidrow1])
-                                            elif counter1 > 0 and counter2 > 0 and counter3 == 0:
-                                                can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineidrow2])                                          
+                                    if lengh > basepar * 1.5 and hei < heightpar:
+                                      p1 = [lst[i][u][1], lst[i][u][2]]
+                                      p2 = [lst[i+1][z][1], lst[i+1][z][2]]
+                                      p3 = [lst[i+2][x][1], lst[i+2][x][2]]
+                                     
+                                      if self.finalCheck(p1, p2, p3):
+                                        if len(res) == 0:
+                                          idd = 1
+                                          res.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], idd])
+                                          res.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], idd])
+                                          res.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], idd])
                                         else:
-                                            lineid +=1
-                                            can.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], lineid])
-                                            can.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], lineid])
-                                            can.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], lineid])
-            
-        #removing duplicates.
-        if can:
-            res = pd.DataFrame(can, columns=["file", "id_flags", "x", "y", "flux", "background", "lineid"])
-            res = res.drop_duplicates(["file", "id_flags", "x", "y", "flux", "background", "lineid"])
-            if output_figure != None:
-                plotxy = pt.Plot()
-                plotxy.plot(res.values, output_figure)
-            print res.values
-            return res.values
+                                          if not [s1 for s1 in res if s1[2:4] == p1]:
+                                            idd = np.amax(np.asarray([row[6] for row in res])) + 1
+                                            res.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], idd])
+                                            res.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], idd])
+                                            res.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], idd])
+                                          else:
+                                            indx1 = [row[6] for row in [s1 for s1 in res if s1[2:4] == p1]]
+                                            if not [s2 for s2 in res if s2[2:4] == p2]:
+                                              idd = np.amax(np.asarray([row[6] for row in res])) + 1
+                                              res.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], idd])
+                                              res.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], idd])
+                                              res.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], idd])
+                                            else:
+                                              indx2 = [row[6] for row in [s2 for s2 in res if s2[2:4] == p2]]
+                                              print "==========="
+                                              print indx1
+                                              print indx2
+                                              
+                                              for k in indx1:
+                                                for s in indx2:
+                                                  if k == s:
+                                                    oldId = k
+                                                  else:
+                                                    print "hataaaaaaaaaaaaa: ", k, s
+                                                    if k == -1:
+                                                      oldId = s
+                                                    elif s ==-1:
+                                                      oldId = k
+                                                    else:
+                                                      if oldId != -1 or oldId != 0:
+                                                        oldId = -1
+                                              if oldId != -1 :
+                                                res.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], oldId])
+                                              print "==========="
+                                      else:
+                                        print "final check failed"
+        if res:
+            print np.asarray(res)
+            return np.asarray(res)
         else:
             print "No lines detected!"
-            return True
+            return False
