@@ -170,7 +170,7 @@ class Detect:
             h = 0
         return h
 
-    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=7, max_flux=500000, elongation=1.8, snrsigma=15, basepar=0.25):
+    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=7, max_flux=500000, elongation=1.8, snrsigma=15, basepar=0.37):
         """
         Reads given ordered (corrected) coordinate file and detect stray objects in "starcat.txt".
         
@@ -190,9 +190,9 @@ class Detect:
             reference = pd.DataFrame.from_records(ref_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
             star_catalogue = pd.DataFrame.from_records(star_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
             
-            refcat_all = reference[((reference.id_flags == 0) | (reference.id_flags == 2) | (reference.id_flags == 3) | (reference.id_flags == 16)) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
+            refcat_all = reference[((reference.id_flags == 0) | (reference.id_flags == 1) | (reference.id_flags == 2) | (reference.id_flags == 3) | (reference.id_flags == 16)) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
             ((reference.flux / reference.fluxerr) > snrsigma) & (reference.fwhm >= min_fwhm) & (reference.elongation <= elongation)]
-            starcat_all = star_catalogue[((star_catalogue.id_flags == 0) | (star_catalogue.id_flags == 2) | (star_catalogue.id_flags == 3) | (star_catalogue.id_flags == 16)) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
+            starcat_all = star_catalogue[((star_catalogue.id_flags == 0) | (star_catalogue.id_flags == 1) | (star_catalogue.id_flags == 2) | (star_catalogue.id_flags == 3) | (star_catalogue.id_flags == 16)) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
             ((star_catalogue.flux / star_catalogue.fluxerr) > snrsigma) & (star_catalogue.fwhm >= min_fwhm) & (star_catalogue.elongation <= elongation)]
             
             refcat = refcat_all[["id_flags", "x", "y", "flux", "background"]]
@@ -207,8 +207,8 @@ class Detect:
         
         strayobjectlist = pd.DataFrame(columns=["id_flags", "x", "y", "flux", "background"])
         for i in range(len(refcat.x)):
-            if len(starcat[(abs(starcat.x - refcat.x[i]) <= basepar) & (abs(starcat.y - refcat.y[i]) <= basepar)]) < 2:
-                strayobjectlist = strayobjectlist.append(starcat[(abs(starcat.x - refcat.x[i]) <= basepar) & (abs(starcat.y - refcat.y[i]) <= basepar)])
+            if len(starcat[((starcat.x - refcat.x[i])**2 + (starcat.y - refcat.y[i])**2)**0.5 <= basepar]) < 2:
+                strayobjectlist = strayobjectlist.append(refcat.iloc[i], ignore_index=True)
 
         if os.path.exists(target_folder):
             pass
@@ -236,7 +236,6 @@ class Detect:
         """ 
         fitsfiles = sorted(glob.glob("%s/*.fit?" %(fits_path)))
         starcat = sorted(glob.glob("%s/*affineremap.txt" %(catdir)))
-        onecatlist = pd.DataFrame(columns=["id_flags", "x", "y", "flux", "background"])
         
         lst = []
         can = []
@@ -247,7 +246,6 @@ class Detect:
         for objctlist in starcat:
             objtcat = pd.read_csv(objctlist, sep=",", names = ["id_flags", "x", "y", "flux", "background"], header=0)
             if not objtcat.empty:
-                onecatlist = onecatlist.append(objtcat)
                 lst.append(objtcat.values)
         #calculation of a triangle's area and checking points on a same line.
         for i in xrange(len(lst)-2):
