@@ -11,7 +11,7 @@ import os
 import pyfits
 import time
 import pandas as pd
-from itertools import count
+import itertools as it
 
 try:
     import numpy as np
@@ -48,52 +48,14 @@ class Detect:
         """
         dist = math.sqrt((ycoor1 - ycoor0)**2 + (xcoor1 - xcoor0)**2)
         return dist
-    """
-    def isConst(self, xcoor0, ycoor0, xcoor1, ycoor1, xcoor2, ycoor2, basepar):
-        dist01 = self.distance(xcoor0, ycoor0, xcoor1, ycoor1)
-        dist12 = self.distance(xcoor1, ycoor1, xcoor2, ycoor2)
-        dist20 = self.distance(xcoor2, ycoor2, xcoor0, ycoor0)
-        if dist01 <= basepar or dist12 <= basepar or dist20 <= basepar*2:
-          return True
-        else:
-          return False
-    """
+
     def finalCheck(self, coor0, coor1, coor2):
         longestt = self.longest(coor0, coor1, coor2)
         if longestt == (coor0, coor2, coor1):
           return True
         else:
           return False
-    """
-    def isPointBack(self, xcoor0, ycoor0, xcoor1, ycoor1, xcoor2, ycoor2, radius):
-        x1 = xcoor1 - xcoor0
-        x2 = xcoor2 - xcoor1
-        y1 = ycoor1 - ycoor0
-        y2 = ycoor2 - ycoor1
-        
-        if x1*x2 <0 and y1*y2 <0:
-          ret1 = True
-          ret2 = True
-        else:
-          if x1*x2 <= 0:
-            if abs(x1-x2) <= radius:
-              ret1 = False
-            else:
-              ret1 = True
-          else:
-            ret1 = False
-              
-          if y1*y2 <= 0:
-            if abs(y1-y2) <= radius:
-              ret2 = False
-            else:
-              ret2 = True
-          else:
-            ret2 = False
 
-        return ret1 or ret2          
-    """          
-    
     def isClose(self, coor1, coor2, r):
         """
         isClose(coor1, coor2, r) -> boolean
@@ -234,25 +196,33 @@ class Detect:
         @param areapar: The area of triangle.
         @type areapar: Float
         """ 
-        fitsfiles = sorted(glob.glob("%s/*.fit?" %(fits_path)))
+        fitsfiles = sorted(glob.glob("%s/*.fit*" %(fits_path)))
         starcat = sorted(glob.glob("%s/*affineremap.txt" %(catdir)))
         
         lst = []
+        fileidlist = []
         can = []
         res = []
-        idd = 0
+        pointid = 0
         
         #all files copying to list
-        for objctlist in starcat:
+        for fileid, objctlist in enumerate(starcat):
             objtcat = pd.read_csv(objctlist, sep=",", names = ["id_flags", "x", "y", "flux", "background"], header=0)
             if not objtcat.empty:
                 lst.append(objtcat.values)
+                fileidlist.append(fileid)
+                
         #calculation of a triangle's area and checking points on a same line.
-        for i in xrange(len(lst)-2):
-            print "Searching lines on %s. file" %(i)
-            hdulist1 = pyfits.open(fitsfiles[i])
-            hdulist2 = pyfits.open(fitsfiles[i+1])
-            hdulist3 = pyfits.open(fitsfiles[i+2])
+        
+        combinatedfileids = it.combinations(fileidlist, 3)
+        
+        for cyc, selectedfileids in enumerate(list(combinatedfileids)):
+        #for i in xrange(len(lst)-2):
+            fileid_i, fileid_j, fileid_k = selectedfileids
+            print "Searching lines in %s., %s., %s. (%s) files" %(fileid_i, fileid_j, fileid_k, cyc)
+            hdulist1 = pyfits.open(fitsfiles[fileid_i])
+            hdulist2 = pyfits.open(fitsfiles[fileid_j])
+            hdulist3 = pyfits.open(fitsfiles[fileid_k])
             xbin = hdulist1[0].header['xbinning']
             ybin = hdulist1[0].header['ybinning']
             obsdate1 = hdulist1[0].header['date-obs']
@@ -266,68 +236,69 @@ class Detect:
             otime3 =  time.strptime(obsdate3, "%Y-%m-%dT%H:%M:%S.%f")
             radius =  (time.mktime(otime2) - time.mktime(otime1) + (exptime2 - exptime1) / 2) * vmax / (pixel_scale * xbin)
             radius2 =  (time.mktime(otime3) - time.mktime(otime2) + (exptime3 - exptime2) / 2) * vmax / (pixel_scale * xbin)
-            for u in xrange(len(lst[i])):
-                for z in xrange(len(lst[i+1])):
+            for u in xrange(len(lst[fileid_i])):
+                for z in xrange(len(lst[fileid_j])):
                     #ilk çift nokta seçiliyor
-                    absRadius1 = self.distance(lst[i][u][1], lst[i][u][2], lst[i+1][z][1], lst[i+1][z][2])
+                    absRadius1 = self.distance(lst[fileid_i][u][1], lst[fileid_i][u][2], lst[fileid_j][z][1], lst[fileid_j][z][2])
                     deltaobs1 = (time.mktime(otime2) - time.mktime(otime1)) + (exptime2 - exptime1) / 2
-                    if self.isClose(lst[i][u, [1,2]], lst[i+1][z, [1,2]], radius):
-                        for x in xrange(len(lst[i+2])):
-                            absRadius2 = self.distance(lst[i+1][z][1], lst[i+1][z][2], lst[i+2][x][1], lst[i+2][x][2])
+                    if self.isClose(lst[fileid_i][u, [1,2]], lst[fileid_j][z, [1,2]], radius):
+                        for x in xrange(len(lst[fileid_k])):
+                            absRadius2 = self.distance(lst[fileid_j][z][1], lst[fileid_j][z][2], lst[fileid_k][x][1], lst[fileid_k][x][2])
                             deltaobs2 =  (time.mktime(otime3) - time.mktime(otime2)) + (exptime3 - exptime2) / 2
-                            if self.isClose(lst[i+1][z, [1,2]], lst[i+2][x, [1,2]], radius2):
+                            if self.isClose(lst[fileid_j][z, [1,2]], lst[fileid_k][x, [1,2]], radius2):
                                 if ((deltaobs2 * absRadius1 / deltaobs1) - radiusSigma) <= absRadius2 and ((deltaobs2 * absRadius1 / deltaobs1) + radiusSigma) >= absRadius2:                                             
-                                    base = self.longest(lst[i][u, [1,2]], lst[i+1][z, [1,2]], lst[i+2][x, [1,2]])
+                                    base = self.longest(lst[fileid_i][u, [1,2]], lst[fileid_j][z, [1,2]], lst[fileid_k][x, [1,2]])
                                     hei = self.height(base[:-1], base[-1])
                                     lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
                                     if lengh > basepar * 1.5 and hei < heightpar:
-                                      p1 = [lst[i][u][1], lst[i][u][2]]
-                                      p2 = [lst[i+1][z][1], lst[i+1][z][2]]
-                                      p3 = [lst[i+2][x][1], lst[i+2][x][2]]
+                                        p1 = [lst[fileid_i][u][1], lst[fileid_i][u][2]]
+                                        p2 = [lst[fileid_j][z][1], lst[fileid_j][z][2]]
+                                        p3 = [lst[fileid_k][x][1], lst[fileid_k][x][2]]
                                      
-                                      if self.finalCheck(p1, p2, p3):
-                                        if len(res) == 0:
-                                          idd = 1
-                                          res.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], idd])
-                                          res.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], idd])
-                                          res.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], idd])
-                                        else:
-                                          if not [s1 for s1 in res if s1[2:4] == p1]:
-                                            idd = np.amax(np.asarray([row[6] for row in res])) + 1
-                                            res.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], idd])
-                                            res.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], idd])
-                                            res.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], idd])
-                                          else:
-                                            indx1 = [row[6] for row in [s1 for s1 in res if s1[2:4] == p1]]
-                                            if not [s2 for s2 in res if s2[2:4] == p2]:
-                                              idd = np.amax(np.asarray([row[6] for row in res])) + 1
-                                              res.append([i,lst[i][u][0], lst[i][u][1], lst[i][u][2], lst[i][u][3], lst[i][u][4], idd])
-                                              res.append([i+1, lst[i+1][z][0], lst[i+1][z][1], lst[i+1][z][2], lst[i+1][z][3], lst[i+1][z][4], idd])
-                                              res.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], idd])
+                                        if self.finalCheck(p1, p2, p3):
+                                            if len(res) == 0:
+                                                pointid = 1
+                                                res.append([fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], lst[fileid_i][u][3], lst[fileid_i][u][4], pointid])
+                                                res.append([fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], lst[fileid_j][z][3], lst[fileid_j][z][4], pointid])
+                                                res.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], lst[fileid_k][x][3], lst[fileid_k][x][4], pointid])
                                             else:
-                                              indx2 = [row[6] for row in [s2 for s2 in res if s2[2:4] == p2]]
-                                              print "==========="
-                                              print indx1
-                                              print indx2
-                                              
-                                              for k in indx1:
-                                                for s in indx2:
-                                                  if k == s:
-                                                    oldId = k
-                                                  else:
-                                                    print "hataaaaaaaaaaaaa: ", k, s
-                                                    if k == -1:
-                                                      oldId = s
-                                                    elif s ==-1:
-                                                      oldId = k
+                                                if not [s1 for s1 in res if s1[2:4] == p1]:
+                                                    pointid = np.amax(np.asarray([row[6] for row in res])) + 1
+                                                    res.append([fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], lst[fileid_i][u][3], lst[fileid_i][u][4], pointid])
+                                                    res.append([fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], lst[fileid_j][z][3], lst[fileid_j][z][4], pointid])
+                                                    res.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], lst[fileid_k][x][3], lst[fileid_k][x][4], pointid])
+                                                else:
+                                                    indx1 = [row[6] for row in [s1 for s1 in res if s1[2:4] == p1]]
+                                                    if not [s2 for s2 in res if s2[2:4] == p2]:
+                                                        pointid = np.amax(np.asarray([row[6] for row in res])) + 1
+                                                        res.append([fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], lst[fileid_i][u][3], lst[fileid_i][u][4], pointid])
+                                                        res.append([fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], lst[fileid_j][z][3], lst[fileid_j][z][4], pointid])
+                                                        res.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], lst[fileid_k][x][3], lst[fileid_k][x][4], pointid])
                                                     else:
-                                                      if oldId != -1 or oldId != 0:
-                                                        oldId = -1
-                                              if oldId != -1 :
-                                                res.append([i+2, lst[i+2][x][0], lst[i+2][x][1], lst[i+2][x][2], lst[i+2][x][3], lst[i+2][x][4], oldId])
-                                              print "==========="
-                                      else:
-                                        print "final check failed"
+                                                        indx2 = [row[6] for row in [s2 for s2 in res if s2[2:4] == p2]]
+                                                        print "==========="
+                                                        print indx1
+                                                        print indx2
+                                                        
+                                                        for k in indx1:
+                                                            for s in indx2:
+                                                                if k == s:
+                                                                    oldpointsid = k
+                                                                else:
+                                                                    print "hataaaaaaaaaaaaa: ", k, s
+                                                                    if k == -1:
+                                                                        oldpointsid = s
+                                                                    elif s ==-1:
+                                                                        oldpointsid = k
+                                                                    else:
+                                                                        if oldpointsid != -1 or oldpointsid != 0:
+                                                                            oldpointsid = -1
+                                                        if oldpointsid != -1 :
+                                                            res.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], lst[fileid_k][x][3], lst[fileid_k][x][4], pointid])
+                                                        print "==========="
+                                        else:
+                                            print "final check failed"
+
         if res:
             print np.asarray(res)
             return np.asarray(res)
