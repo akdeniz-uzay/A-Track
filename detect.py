@@ -4,7 +4,7 @@ Created on Sat Feb 22 19:43:14 2015
 
 @author: ykilic
 """
-
+import dummy as dm
 import math
 import glob
 import os
@@ -12,6 +12,7 @@ import pyfits
 import time
 import pandas as pd
 import itertools as it
+import matplotlib.pyplot as plt
 
 try:
     import numpy as np
@@ -31,6 +32,7 @@ class Detect:
     MOD's detection class.
                 
     """
+
     def distance(self, xcoor0, ycoor0, xcoor1, ycoor1):
         """
         distance(xcoor0, ycoor0, xcoor1, ycoor1) -> float
@@ -130,9 +132,9 @@ class Detect:
             h = math.fabs((x1 - x0)*y2 + (y0 - y1)*x2 + x0*y1 - x1*y0) / math.sqrt(math.pow(x1 - x0, 2) + math.pow(y1 -y0, 2))
         except ZeroDivisionError:
             h = 0
-        return h
+        return h 
 
-    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=7, max_flux=500000, elongation=1.8, snrsigma=15, basepar=0.37):
+    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=7, max_flux=500000, elongation=1.8, snrsigma=5, basepar=0.35):
         """
         Reads given ordered (corrected) coordinate file and detect stray objects in "starcat.txt".
         
@@ -152,9 +154,9 @@ class Detect:
             reference = pd.DataFrame.from_records(ref_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
             star_catalogue = pd.DataFrame.from_records(star_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
             
-            refcat_all = reference[((reference.id_flags == 0) | (reference.id_flags == 1) | (reference.id_flags == 2) | (reference.id_flags == 3) | (reference.id_flags == 16)) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
+            refcat_all = reference[((reference.id_flags <= 16)) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
             ((reference.flux / reference.fluxerr) > snrsigma) & (reference.fwhm >= min_fwhm) & (reference.elongation <= elongation)]
-            starcat_all = star_catalogue[((star_catalogue.id_flags == 0) | (star_catalogue.id_flags == 1) | (star_catalogue.id_flags == 2) | (star_catalogue.id_flags == 3) | (star_catalogue.id_flags == 16)) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
+            starcat_all = star_catalogue[((star_catalogue.id_flags <= 16)) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
             ((star_catalogue.flux / star_catalogue.fluxerr) > snrsigma) & (star_catalogue.fwhm >= min_fwhm) & (star_catalogue.elongation <= elongation)]
             
             refcat = refcat_all[["id_flags", "x", "y", "flux", "background"]]
@@ -180,7 +182,7 @@ class Detect:
         strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_catfile), index = False)
         return strayobjectlist
 
-    def detectlines(self, fits_path, catdir, output_figure, basepar=0.37, heightpar=0.5, pixel_scale=0.31, vmax=0.03, radiusSigma = 1):
+    def detectlines(self, fits_path, catdir, output_figure, basepar=0.35, heightpar=0.1, pixel_scale=0.31, vmax=0.03, radiusSigma = 1):
         """
         
         Reads given ordered (corrected) coordinate file and detect lines with randomized algorithm.
@@ -201,9 +203,10 @@ class Detect:
         
         lst = []
         fileidlist = []
-        can = []
         res = []
+        resultlist = []
         pointid = 0
+        cc = 0
         
         #all files copying to list
         for fileid, objctlist in enumerate(starcat):
@@ -225,6 +228,8 @@ class Detect:
             hdulist3 = pyfits.open(fitsfiles[fileid_k])
             xbin = hdulist1[0].header['xbinning']
             ybin = hdulist1[0].header['ybinning']
+            naxis1 = hdulist1[0].header['NAXIS1']
+            naxis2 = hdulist1[0].header['NAXIS2']
             obsdate1 = hdulist1[0].header['date-obs']
             exptime1 = hdulist1[0].header['exptime']
             obsdate2 = hdulist2[0].header['date-obs']
@@ -251,57 +256,98 @@ class Detect:
                                     hei = self.height(base[:-1], base[-1])
                                     lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
                                     if lengh > basepar * 1.5 and hei < heightpar:
+                                        
                                         p1 = [lst[fileid_i][u][1], lst[fileid_i][u][2]]
                                         p2 = [lst[fileid_j][z][1], lst[fileid_j][z][2]]
                                         p3 = [lst[fileid_k][x][1], lst[fileid_k][x][2]]
                                      
                                         if self.finalCheck(p1, p2, p3):
-                                            if len(res) == 0:
-                                                pointid = 1
-                                                res.append([fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], lst[fileid_i][u][3], lst[fileid_i][u][4], pointid])
-                                                res.append([fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], lst[fileid_j][z][3], lst[fileid_j][z][4], pointid])
-                                                res.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], lst[fileid_k][x][3], lst[fileid_k][x][4], pointid])
+                                            cc +=1
+                                            print "%s line(s) detected (raw)." %(cc)
+                                            if not res:
+                                                res.append([[fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], \
+                                                            lst[fileid_i][u][3], lst[fileid_i][u][4]],\
+                                                            [fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], \
+                                                            lst[fileid_j][z][3], lst[fileid_j][z][4]],\
+                                                            [fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], \
+                                                            lst[fileid_k][x][3], lst[fileid_k][x][4]]])
                                             else:
-                                                if not [s1 for s1 in res if s1[2:4] == p1]:
-                                                    pointid = np.amax(np.asarray([row[6] for row in res])) + 1
-                                                    res.append([fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], lst[fileid_i][u][3], lst[fileid_i][u][4], pointid])
-                                                    res.append([fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], lst[fileid_j][z][3], lst[fileid_j][z][4], pointid])
-                                                    res.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], lst[fileid_k][x][3], lst[fileid_k][x][4], pointid])
-                                                else:
-                                                    indx1 = [row[6] for row in [s1 for s1 in res if s1[2:4] == p1]]
-                                                    if not [s2 for s2 in res if s2[2:4] == p2]:
-                                                        pointid = np.amax(np.asarray([row[6] for row in res])) + 1
-                                                        res.append([fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], lst[fileid_i][u][3], lst[fileid_i][u][4], pointid])
-                                                        res.append([fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], lst[fileid_j][z][3], lst[fileid_j][z][4], pointid])
-                                                        res.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], lst[fileid_k][x][3], lst[fileid_k][x][4], pointid])
-                                                    else:
-                                                        indx2 = [row[6] for row in [s2 for s2 in res if s2[2:4] == p2]]
-                                                        print "==========="
-                                                        print indx1
-                                                        print indx2
-                                                        
-                                                        for k in indx1:
-                                                            for s in indx2:
-                                                                if k == s:
-                                                                    oldpointsid = k
-                                                                else:
-                                                                    print "hataaaaaaaaaaaaa: ", k, s
-                                                                    if k == -1:
-                                                                        oldpointsid = s
-                                                                    elif s ==-1:
-                                                                        oldpointsid = k
-                                                                    else:
-                                                                        if oldpointsid != -1 or oldpointsid != 0:
-                                                                            oldpointsid = -1
-                                                        if oldpointsid != -1 :
-                                                            res.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], lst[fileid_k][x][3], lst[fileid_k][x][4], pointid])
-                                                        print "==========="
+                                                for reslist in res:
+                                                    p1status = (p1 in [xy[2:4] for xy in reslist])
+                                                    p2status = (p2 in [xy[2:4] for xy in reslist])
+                                                    p3status = (p3 in [xy[2:4] for xy in reslist])
+
+                                                    if (p1status, p2status, p3status) == (True, False,False):
+                                                        reslist.append([fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], \
+                                                            lst[fileid_j][z][3], lst[fileid_j][z][4]])                                                                                                               
+                                                        reslist.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], \
+                                                            lst[fileid_k][x][3], lst[fileid_k][x][4]])
+                                                    elif (p1status, p2status, p3status) == (False, True,False):
+                                                        reslist.append([fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], \
+                                                            lst[fileid_i][u][3], lst[fileid_i][u][4]])
+                                                        reslist.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], \
+                                                            lst[fileid_k][x][3], lst[fileid_k][x][4]])                                                         
+                                                    elif (p1status, p2status, p3status) == (False, False,True):
+                                                        reslist.append([fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], \
+                                                            lst[fileid_i][u][3], lst[fileid_i][u][4]])
+                                                        reslist.append([fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], \
+                                                            lst[fileid_j][z][3], lst[fileid_j][z][4]])                                                        
+                                                    elif (p1status, p2status, p3status) == (True, True,False):
+                                                        reslist.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], \
+                                                            lst[fileid_k][x][3], lst[fileid_k][x][4]])                                                                            
+                                                    elif (p1status, p2status, p3status) == (False, True,True):                                                            
+                                                        reslist.append([fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], \
+                                                            lst[fileid_i][u][3], lst[fileid_i][u][4]])                                                            
+                                                    elif (p1status, p2status, p3status) == (True, False,True):                                                            
+                                                        reslist.append([fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], \
+                                                            lst[fileid_j][z][3], lst[fileid_j][z][4]])
+                                                if (p1status, p2status, p3status) == (False, False,False):
+                                                    res.append([[fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], \
+                                                                lst[fileid_i][u][3], lst[fileid_i][u][4]],\
+                                                                [fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], \
+                                                                lst[fileid_j][z][3], lst[fileid_j][z][4]],\
+                                                                [fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], \
+                                                                lst[fileid_k][x][3], lst[fileid_k][x][4]]])                                                                                                                                       
                                         else:
                                             print "final check failed"
 
         if res:
-            print np.asarray(res)
-            return np.asarray(res)
+            resultlist = []
+            #tekrarlı noktaların kontrol işlemi başlıyor
+            for reslist in res:
+                pointid +=1
+                pc = 0
+                for res_row in reslist:
+                    #belirlenen doğrular için id'leme işlemi başlıyor
+                    #seçilen nokta daha önce id'lendi ise bulunduğu dizi içindeki (reslist(i)) tespit sırasını alıyor.
+                    if (res_row in [xy[0:6] for xy in resultlist]) == False:
+                        #resultlist'e son atamalar yapılmış mı kontrol ediliyor.
+                        if resultlist:
+                            #eger resultlist (nihai dizi)'in son elemanı point id'den küçükse,
+                            #reslist içinde gruplanan noktaların tamamı başka noktalarda var demektir.
+                            #bu yüzden reslist grup sırası id'leme için kullanılamaz.
+                            if resultlist[len(resultlist) -1][-1] < pointid:
+                                #yeni bir line id sayacı tanımlanıyor.
+                                pc +=1
+                                #eğer pc 1 ise resultlist'te son verilen id numarasından bir fazlası yeni yeni nokta için id olarak verilir.
+                                #eger 1'den fazla ise o point grubu için resultlist'te en son verilen id yeni point'e verilir.
+                                if pc == 1:
+                                    res_row.append(resultlist[len(resultlist) -1][-1] + 1)
+                                    resultlist.append(res_row)
+                                else:
+                                    res_row.append(resultlist[len(resultlist) -1][-1])
+                                    resultlist.append(res_row)
+                            else:
+                                res_row.append(pointid)
+                                resultlist.append(res_row)
+                        else:
+                            res_row.append(pointid)
+                            resultlist.append(res_row)
+            #resultlist numpy dizine dönüştürülüyor. duplication'lar eleniyor.                          
+            result_array = pd.DataFrame.from_records(np.asarray(resultlist), columns=["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])
+            result_array = result_array.drop_duplicates(["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])  
+            print result_array
+            return result_array.values
         else:
             print "No lines detected!"
             return False
