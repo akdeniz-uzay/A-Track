@@ -4,7 +4,6 @@ Created on Sat Feb 22 19:43:14 2015
 
 @author: ykilic
 """
-import dummy as dm
 import math
 import glob
 import os
@@ -13,6 +12,14 @@ import time
 import pandas as pd
 import itertools as it
 import matplotlib.pyplot as plt
+
+try:
+    import subprocess
+    from multiprocessing.pool import ThreadPool
+    from multiprocessing import cpu_count
+except ImportError:
+    print "Can not load multiprocessing tools!"
+    raise SystemExit
 
 try:
     import numpy as np
@@ -134,7 +141,7 @@ class Detect:
             h = 0
         return h 
 
-    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=7, max_flux=500000, elongation=1.8, snrsigma=5, basepar=0.35):
+    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=10, max_flux=500000, elongation=1.8, snrsigma=5, basepar=0.35):
         """
         Reads given ordered (corrected) coordinate file and detect stray objects in "starcat.txt".
         
@@ -182,7 +189,7 @@ class Detect:
         strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_catfile), index = False)
         return strayobjectlist
 
-    def detectlines(self, fits_path, catdir, output_figure, basepar=0.35, heightpar=0.1, pixel_scale=0.31, vmax=0.03, radiusSigma = 1):
+    def detectlines(self, catdir, fitsdir, combinationindex = None, basepar=0.35, heightpar=0.1, pixel_scale=0.31, vmax=0.03, radiusSigma = 1):
         """
         
         Reads given ordered (corrected) coordinate file and detect lines with randomized algorithm.
@@ -197,9 +204,10 @@ class Detect:
         @type heightpar: Float
         @param areapar: The area of triangle.
         @type areapar: Float
-        """ 
-        fitsfiles = sorted(glob.glob("%s/*.fit*" %(fits_path)))
-        starcat = sorted(glob.glob("%s/*affineremap.txt" %(catdir)))
+        """
+
+        candidatefiles = sorted(glob.glob("%s/*affineremap.txt" %(catdir)))
+        fitsfiles = sorted(glob.glob("%s/*.fit*" %(fitsdir)))
         
         lst = []
         fileidlist = []
@@ -209,17 +217,18 @@ class Detect:
         cc = 0
         
         #all files copying to list
-        for fileid, objctlist in enumerate(starcat):
-            objtcat = pd.read_csv(objctlist, sep=",", names = ["id_flags", "x", "y", "flux", "background"], header=0)
-            if not objtcat.empty:
-                lst.append(objtcat.values)
+        for fileid, candidatefile in enumerate(candidatefiles):
+            candidatelist = pd.read_csv(candidatefile, sep=",", names = ["id_flags", "x", "y", "flux", "background"], header=0)
+            if not candidatelist.empty:
+                lst.append(candidatelist.values)
                 fileidlist.append(fileid)
-                
-        #calculation of a triangle's area and checking points on a same line.
-        
-        combinatedfileids = it.combinations(fileidlist, 3)
-        
-        for cyc, selectedfileids in enumerate(list(combinatedfileids)):
+
+        if combinationindex:
+            combinationlist = self.combinecatfiles(catdir)[int(combinationindex)]
+        else:
+            combinationlist = it.combinations(fileidlist, 3)
+
+        for cyc, selectedfileids in enumerate(combinationlist):
         #for i in xrange(len(lst)-2):
             fileid_i, fileid_j, fileid_k = selectedfileids
             print "Searching lines in %s., %s., %s. (%s) files" %(fileid_i, fileid_j, fileid_k, cyc)
@@ -351,3 +360,58 @@ class Detect:
         else:
             print "No lines detected!"
             return False
+
+    def chunker(self, seq, size):
+        return list(seq[pos:pos + size] for pos in xrange(0, len(seq), size))
+    
+    def combinecatfiles(self, catdir):
+
+        candidatefiles = sorted(glob.glob("%s/*affineremap.txt" %(catdir)))
+        fileidlist = []
+        
+        for fileid, candidatefile in enumerate(candidatefiles):
+            candidatelist = pd.read_csv(candidatefile, sep=",", names = ["id_flags", "x", "y", "flux", "background"], header=0)
+            if not candidatelist.empty:
+                fileidlist.append(fileid)
+        
+        combinatedfiles = it.combinations(fileidlist, 3)
+        combinatedfiles = list(combinatedfiles)
+
+        numberofcpus = cpu_count()
+        quotient = int(len(combinatedfiles) / numberofcpus)
+
+        if (len(combinatedfiles) % numberofcpus) != 0:
+            if len(combinatedfiles) < numberofcpus:
+                sizeofworklist = len(combinatedfiles)
+            else:
+                sizeofworklist = quotient +1
+        else:
+            sizeofworklist = quotient
+
+        return self.chunker(combinatedfiles, sizeofworklist)
+
+
+    def multilinedetector(self, catdir, fitsdir):
+        cmds = list()
+        
+        for i in range(cpu_count()):
+            cmds.append(["python", "asterotrek.py", "-dl", catdir, fitsdir, str(i)])
+        
+        tp = ThreadPool(cpu_count())
+        
+        for cmd in cmds:
+            print cmd
+            tp.apply_async(self.rundl, (cmd,))
+        
+        tp.close()
+        tp.join()
+        
+        return True
+    
+    def rundl(self, cmd):
+        p = subprocess.Popen(cmd)
+        p.wait()
+
+
+
+

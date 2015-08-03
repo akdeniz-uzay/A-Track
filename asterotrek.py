@@ -37,6 +37,13 @@ except ImportError:
 
 import sys, os, time
 
+try:
+    import subprocess
+    from multiprocessing.pool import ThreadPool
+    from multiprocessing import cpu_count
+except ImportError:
+    print "Can not load multiprocessing tools!"
+    raise SystemExit
 
 def makestarcat(catdir):
     """
@@ -156,15 +163,28 @@ if __name__ == "__main__":
         """
         #try:
         print "Please wait until processing is complete."
+
         detectlines = dt.Detect()
-        detectlines.detectlines(sys.argv[2], sys.argv[3], sys.argv[4])
+        if len(sys.argv) == 5:
+            detectlines.detectlines(sys.argv[2], sys.argv[3], sys.argv[4])
+        else:
+            detectlines.detectlines(sys.argv[2], sys.argv[3])
         print "Line detection process is completed."
         print "Elapsed time: %s" %(time.time() - start_time)
         #except:
         #    print "Usage error!"
         #    print "Usage: python asterotrek.py -dl <ordered_cat_folder> <detectedlines.png>"
         #    raise SystemExit
-    
+
+    elif sys.argv[1] == "-mdl":
+
+        print "Please wait until processing is complete (multiprocessing)."
+        detectlines = dt.Detect()
+        detectlines.multilinedetector(sys.argv[2], sys.argv[3])
+
+        print "Line detection process is completed."
+        print "Elapsed time: %s" %(time.time() - start_time)
+
     elif sys.argv[1] == "-fits2png" and len(sys.argv) == 5:
         """
         Converts FITS images into PNG files with detected objects.
@@ -174,7 +194,7 @@ if __name__ == "__main__":
         print "Please wait until processing is complete."
         f2n = plt.Plot()
         detectlines = dt.Detect()
-        datalxy = detectlines.detectlines(sys.argv[3], sys.argv[2], output_figure=None)
+        datalxy = detectlines.detectlines(sys.argv[3], sys.argv[2])
         
         if os.path.isdir(sys.argv[3]):
             for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):
