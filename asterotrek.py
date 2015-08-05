@@ -37,13 +37,6 @@ except ImportError:
 
 import sys, os, time
 
-try:
-    import subprocess
-    from multiprocessing.pool import ThreadPool
-    from multiprocessing import cpu_count
-except ImportError:
-    print "Can not load multiprocessing tools!"
-    raise SystemExit
 
 def makestarcat(catdir):
     """

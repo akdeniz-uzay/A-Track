@@ -12,11 +12,13 @@ import time
 import pandas as pd
 import itertools as it
 import matplotlib.pyplot as plt
+import pickle as pk
 
 try:
     import subprocess
+
     from multiprocessing.pool import ThreadPool
-    from multiprocessing import cpu_count
+    from multiprocessing import cpu_count, Queue
 except ImportError:
     print "Can not load multiprocessing tools!"
     raise SystemExit
@@ -320,46 +322,57 @@ class Detect:
                                         else:
                                             print "final check failed"
 
-        if res:
-            resultlist = []
-            #tekrarlı noktaların kontrol işlemi başlıyor
-            for reslist in res:
-                pointid +=1
-                pc = 0
-                for res_row in reslist:
-                    #belirlenen doğrular için id'leme işlemi başlıyor
-                    #seçilen nokta daha önce id'lendi ise bulunduğu dizi içindeki (reslist(i)) tespit sırasını alıyor.
-                    if (res_row in [xy[0:6] for xy in resultlist]) == False:
-                        #resultlist'e son atamalar yapılmış mı kontrol ediliyor.
-                        if resultlist:
-                            #eger resultlist (nihai dizi)'in son elemanı point id'den küçükse,
-                            #reslist içinde gruplanan noktaların tamamı başka noktalarda var demektir.
-                            #bu yüzden reslist grup sırası id'leme için kullanılamaz.
-                            if resultlist[len(resultlist) -1][-1] < pointid:
-                                #yeni bir line id sayacı tanımlanıyor.
-                                pc +=1
-                                #eğer pc 1 ise resultlist'te son verilen id numarasından bir fazlası yeni yeni nokta için id olarak verilir.
-                                #eger 1'den fazla ise o point grubu için resultlist'te en son verilen id yeni point'e verilir.
-                                if pc == 1:
-                                    res_row.append(resultlist[len(resultlist) -1][-1] + 1)
-                                    resultlist.append(res_row)
-                                else:
-                                    res_row.append(resultlist[len(resultlist) -1][-1])
-                                    resultlist.append(res_row)
+        if combinationindex:
+            with open("./%s_result.txt" %(combinationindex), 'wb') as fl:
+                pk.dump(res, fl)
+            print "All detected lines added to ./%s_result.txt in %s. process." %(combinationindex, combinationindex)
+            return True
+        else:
+            if res:
+                return self.uniqueanditemlist(res)
+            else:
+                print "No lines detected!"
+                return False
+
+    def uniqueanditemlist(self, resultarray):
+        pointid = 0
+        resultlist = []
+
+        #tekrarlı noktaların kontrol işlemi başlıyor
+        for reslist in resultarray:
+            pointid +=1
+            pc = 0
+            for res_row in reslist:
+                #belirlenen doğrular için id'leme işlemi başlıyor
+                #seçilen nokta daha önce id'lendi ise bulunduğu dizi içindeki (reslist(i)) tespit sırasını alıyor.
+                if (res_row in [xy[0:6] for xy in resultlist]) == False:
+                    #resultlist'e son atamalar yapılmış mı kontrol ediliyor.
+                    if resultlist:
+                        #eger resultlist (nihai dizi)'in son elemanı point id'den küçükse,
+                        #reslist içinde gruplanan noktaların tamamı başka noktalarda var demektir.
+                        #bu yüzden reslist grup sırası id'leme için kullanılamaz.
+                        if resultlist[len(resultlist) -1][-1] < pointid:
+                            #yeni bir line id sayacı tanımlanıyor.
+                            pc +=1
+                            #eğer pc 1 ise resultlist'te son verilen id numarasından bir fazlası yeni yeni nokta için id olarak verilir.
+                            #eger 1'den fazla ise o point grubu için resultlist'te en son verilen id yeni point'e verilir.
+                            if pc == 1:
+                                res_row.append(resultlist[len(resultlist) -1][-1] + 1)
+                                resultlist.append(res_row)
                             else:
-                                res_row.append(pointid)
+                                res_row.append(resultlist[len(resultlist) -1][-1])
                                 resultlist.append(res_row)
                         else:
                             res_row.append(pointid)
                             resultlist.append(res_row)
-            #resultlist numpy dizine dönüştürülüyor. duplication'lar eleniyor.                          
-            result_array = pd.DataFrame.from_records(np.asarray(resultlist), columns=["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])
-            result_array = result_array.drop_duplicates(["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])  
-            print result_array
-            return result_array.values
-        else:
-            print "No lines detected!"
-            return False
+                    else:
+                        res_row.append(pointid)
+                        resultlist.append(res_row)
+        #resultlist numpy dizine dönüştürülüyor. duplication'lar eleniyor.                          
+        result_array = pd.DataFrame.from_records(np.asarray(resultlist), columns=["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])
+        result_array = result_array.drop_duplicates(["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])  
+        print result_array
+        return result_array.values
 
     def chunker(self, seq, size):
         return list(seq[pos:pos + size] for pos in xrange(0, len(seq), size))
@@ -390,23 +403,30 @@ class Detect:
 
         return self.chunker(combinatedfiles, sizeofworklist)
 
-
     def multilinedetector(self, catdir, fitsdir):
         cmds = list()
         
-        for i in range(cpu_count()):
+        sizeofworklist = len(self.combinecatfiles(catdir))
+        for i in range(sizeofworklist):
             cmds.append(["python", "asterotrek.py", "-dl", catdir, fitsdir, str(i)])
         
-        tp = ThreadPool(cpu_count())
+        tp = ThreadPool(sizeofworklist)
         
         for cmd in cmds:
-            print cmd
             tp.apply_async(self.rundl, (cmd,))
         
         tp.close()
         tp.join()
-        
-        return True
+
+        rawresultlistfiles = sorted(glob.glob("*_result.txt"))
+        rawresultlist = []
+
+        for rawresultfile in rawresultlistfiles:
+            #To read it back:
+            with open(rawresultfile, 'rb') as fl:
+                rawresultlist += pk.load(fl)
+
+        return self.uniqueanditemlist(rawresultlist)
     
     def rundl(self, cmd):
         p = subprocess.Popen(cmd)
