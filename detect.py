@@ -331,7 +331,7 @@ class Detect:
                     pointlist.append([points[0], points[1], points[2]])
             else:
                 pointlist.append([points[0], points[1], points[2]])
-        return np.asarray(pointlist)
+        return pointlist
 
     def uniqueanditemlist(self, resultarray):
         pointid = 0

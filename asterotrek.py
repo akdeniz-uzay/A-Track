@@ -187,19 +187,22 @@ if __name__ == "__main__":
         print "Please wait until processing is complete."
         f2n = plt.Plot()
         detectlines = dt.Detect()
-        datalxy = detectlines.detectlines(sys.argv[3], sys.argv[2])
-        
-        if os.path.isdir(sys.argv[3]):
-            for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):
-                print sys.argv[4]
-                print str(i) + " " + fitsimage
-                datacat = datalxy[datalxy[:, 0].astype(int) == i]
-                f2n.fits2png(fitsimage, sys.argv[4], datacat)
-                print "%s converted into %s" %(fitsimage, sys.argv[4])
-        elif os.path.isfile(sys.argv[3]):
-            f2n.fits2png(sys.argv[3], sys.argv[4], datacat)
-            print "%s converted into %." %(sys.argv[3], sys.argv[4])
-        print "Plotted all detected objects into PNG files."
+        datalxy = detectlines.multilinedetector(sys.argv[2], sys.argv[3])
+
+        if len(datalxy) != 0:
+            if os.path.isdir(sys.argv[3]):
+                for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):
+                    print sys.argv[4]
+                    print str(i) + " " + fitsimage
+                    datacat = datalxy[datalxy[:, 0].astype(int) == i]
+                    f2n.fits2png(fitsimage, sys.argv[4], datacat)
+                    print "%s converted into %s" %(fitsimage, sys.argv[4])
+            elif os.path.isfile(sys.argv[3]):
+                f2n.fits2png(sys.argv[3], sys.argv[4], datacat)
+                print "%s converted into %." %(sys.argv[3], sys.argv[4])
+            print "Plotted all detected objects into PNG files."
+        else:
+            print "No line detected!!!!"
         print "Elapsed time: %s" %(time.time() - start_time)
         #except:
         #    print "Usage error!"
