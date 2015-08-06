@@ -275,50 +275,12 @@ class Detect:
                                         if self.finalCheck(p1, p2, p3):
                                             cc +=1
                                             print "%s line(s) detected (raw)." %(cc)
-                                            if not res:
-                                                res.append([[fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], \
-                                                            lst[fileid_i][u][3], lst[fileid_i][u][4]],\
-                                                            [fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], \
-                                                            lst[fileid_j][z][3], lst[fileid_j][z][4]],\
-                                                            [fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], \
-                                                            lst[fileid_k][x][3], lst[fileid_k][x][4]]])
-                                            else:
-                                                for reslist in res:
-                                                    p1status = (p1 in [xy[2:4] for xy in reslist])
-                                                    p2status = (p2 in [xy[2:4] for xy in reslist])
-                                                    p3status = (p3 in [xy[2:4] for xy in reslist])
-
-                                                    if (p1status, p2status, p3status) == (True, False,False):
-                                                        reslist.append([fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], \
-                                                            lst[fileid_j][z][3], lst[fileid_j][z][4]])                                                                                                               
-                                                        reslist.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], \
-                                                            lst[fileid_k][x][3], lst[fileid_k][x][4]])
-                                                    elif (p1status, p2status, p3status) == (False, True,False):
-                                                        reslist.append([fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], \
-                                                            lst[fileid_i][u][3], lst[fileid_i][u][4]])
-                                                        reslist.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], \
-                                                            lst[fileid_k][x][3], lst[fileid_k][x][4]])                                                         
-                                                    elif (p1status, p2status, p3status) == (False, False,True):
-                                                        reslist.append([fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], \
-                                                            lst[fileid_i][u][3], lst[fileid_i][u][4]])
-                                                        reslist.append([fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], \
-                                                            lst[fileid_j][z][3], lst[fileid_j][z][4]])                                                        
-                                                    elif (p1status, p2status, p3status) == (True, True,False):
-                                                        reslist.append([fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], \
-                                                            lst[fileid_k][x][3], lst[fileid_k][x][4]])                                                                            
-                                                    elif (p1status, p2status, p3status) == (False, True,True):                                                            
-                                                        reslist.append([fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], \
-                                                            lst[fileid_i][u][3], lst[fileid_i][u][4]])                                                            
-                                                    elif (p1status, p2status, p3status) == (True, False,True):                                                            
-                                                        reslist.append([fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], \
-                                                            lst[fileid_j][z][3], lst[fileid_j][z][4]])
-                                                if (p1status, p2status, p3status) == (False, False,False):
-                                                    res.append([[fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], \
-                                                                lst[fileid_i][u][3], lst[fileid_i][u][4]],\
-                                                                [fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], \
-                                                                lst[fileid_j][z][3], lst[fileid_j][z][4]],\
-                                                                [fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], \
-                                                                lst[fileid_k][x][3], lst[fileid_k][x][4]]])                                                                                                                                       
+                                            res.append([[fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], \
+                                                        lst[fileid_i][u][3], lst[fileid_i][u][4]],\
+                                                        [fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], \
+                                                        lst[fileid_j][z][3], lst[fileid_j][z][4]],\
+                                                        [fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], \
+                                                        lst[fileid_k][x][3], lst[fileid_k][x][4]]])                                                                                                           
                                         else:
                                             print "final check failed"
 
@@ -334,6 +296,43 @@ class Detect:
                 print "No lines detected!"
                 return False
 
+    def collectpointsonline(self, pointarray):
+
+        pointlist = []
+
+        for points in pointarray:
+
+            p1 = points[0][2:4]
+            p2 = points[1][2:4]
+            p3 = points[2][2:4]
+
+            if pointlist:
+                for linelist in pointlist:
+                    p1status = (p1 in [xy[2:4] for xy in linelist])
+                    p2status = (p2 in [xy[2:4] for xy in linelist])
+                    p3status = (p3 in [xy[2:4] for xy in linelist])
+
+                    if (p1status, p2status, p3status) == (True, False,False):
+                        linelist.append(points[1])                                                                                                               
+                        linelist.append(points[2])
+                    elif (p1status, p2status, p3status) == (False, True,False):
+                        linelist.append(points[0])                                                                                                               
+                        linelist.append(points[2])                                                      
+                    elif (p1status, p2status, p3status) == (False, False,True):
+                        linelist.append(points[0])                                                                                                               
+                        linelist.append(points[1])                                                       
+                    elif (p1status, p2status, p3status) == (True, True,False):                                                                                                             
+                        linelist.append(points[2])                                                                           
+                    elif (p1status, p2status, p3status) == (False, True,True):                                                            
+                        linelist.append(points[0])                                                                                                                                                                       
+                    elif (p1status, p2status, p3status) == (True, False,True):                                                            
+                        linelist.append(points[1])                                                                                                               
+                if (p1status, p2status, p3status) == (False, False, False):
+                    pointlist.append([points[0], points[1], points[2]])
+            else:
+                pointlist.append([points[0], points[1], points[2]])
+        return np.asarray(pointlist)
+
     def uniqueanditemlist(self, resultarray):
         pointid = 0
         resultlist = []
@@ -345,7 +344,7 @@ class Detect:
             for res_row in reslist:
                 #belirlenen doğrular için id'leme işlemi başlıyor
                 #seçilen nokta daha önce id'lendi ise bulunduğu dizi içindeki (reslist(i)) tespit sırasını alıyor.
-                if (res_row in [xy[0:6] for xy in resultlist]) == False:
+                if (res_row[0:6] in [xy[0:6] for xy in resultlist]) == False:
                     #resultlist'e son atamalar yapılmış mı kontrol ediliyor.
                     if resultlist:
                         #eger resultlist (nihai dizi)'in son elemanı point id'den küçükse,
@@ -368,6 +367,7 @@ class Detect:
                     else:
                         res_row.append(pointid)
                         resultlist.append(res_row)
+        
         #resultlist numpy dizine dönüştürülüyor. duplication'lar eleniyor.                          
         result_array = pd.DataFrame.from_records(np.asarray(resultlist), columns=["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])
         result_array = result_array.drop_duplicates(["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])  
@@ -426,7 +426,8 @@ class Detect:
             with open(rawresultfile, 'rb') as fl:
                 rawresultlist += pk.load(fl)
 
-        return self.uniqueanditemlist(rawresultlist)
+        lineidlist = self.collectpointsonline(rawresultlist)
+        return self.uniqueanditemlist(lineidlist)
     
     def rundl(self, cmd):
         p = subprocess.Popen(cmd)
