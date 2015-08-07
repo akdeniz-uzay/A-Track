@@ -6,17 +6,31 @@ Created on Sat Feb 22 19:43:14 2015
 """
 import math
 import glob
-import os
-import pyfits
-import time
-import pandas as pd
+import os, time
 import itertools as it
-import matplotlib.pyplot as plt
 import pickle as pk
+from _ast import Return
+
+try:
+    import pyfits
+except ImportError:
+    print "Did you install pyfits?"
+    raise SystemExit
+
+try:
+    import pandas as pd
+except ImportError:
+    print "Did you install pandas?"
+    raise SystemExit
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    print "Did you install matplotlib?"
+    raise SystemExit
 
 try:
     import subprocess
-
     from multiprocessing.pool import ThreadPool
     from multiprocessing import cpu_count, Queue
 except ImportError:
@@ -60,14 +74,28 @@ class Detect:
         dist = math.sqrt((ycoor1 - ycoor0)**2 + (xcoor1 - xcoor0)**2)
         return dist
 
-    def finalCheck(self, coor0, coor1, coor2):
-        longestt = self.longest(coor0, coor1, coor2)
-        if longestt == (coor0, coor2, coor1):
+    def finalcheck(self, coor0, coor1, coor2):
+        """
+        finalcheck(self, coor0, coor1, coor2) -> boolean
+        Returns of tree points moving back or forward moving status
+        True: One of points moving back
+        False: One of points moving forward
+
+        @param coor0: first point's x and y coordinates
+        @type coor0: list        
+        @param coor1: first point's x and y coordinates
+        @type coor1: list
+        @param coor2: second point's x and y coordinates
+        @type coor2: list
+        @return: boolean
+        """
+        longest = self.longest(coor0, coor1, coor2)
+        if longest == (coor0, coor2, coor1):
           return True
         else:
           return False
 
-    def isClose(self, coor1, coor2, r):
+    def isClose(self, coor1, coor2, rad):
         """
         isClose(coor1, coor2, r) -> boolean
         Returns true and false if the second point is in the selected r radius.
@@ -80,8 +108,8 @@ class Detect:
         @type r: float, integer
         @return: boolean
         """
-        d = self.distance(coor1[0], coor1[1], coor2[0], coor2[1])
-        if float(d) <= float(r):
+        dist = self.distance(coor1[0], coor1[1], coor2[0], coor2[1])
+        if float(dist) <= float(rad):
             return True
         else:
             return False
@@ -104,11 +132,11 @@ class Detect:
         d12 = self.distance(coor1[0], coor1[1], coor2[0], coor2[1])
         d13 = self.distance(coor1[0], coor1[1], coor3[0], coor3[1])
         d23 = self.distance(coor3[0], coor3[1], coor2[0], coor2[1])
-        lis = [d12, d23, d13]
-        ref = lis[0]
+        distlist = [d12, d23, d13]
+        ref = distlist[0]
         index = 0
                 
-        for n, i in enumerate(lis):
+        for n, i in enumerate(distlist):
             if ref < i:
                 ref = i
                 index = n
@@ -143,86 +171,99 @@ class Detect:
             h = 0
         return h 
 
-    def detectstrayobjects(self, reference_cat, star_cat, target_folder, min_fwhm=1, max_fwhm=10, max_flux=500000, elongation=1.8, snrsigma=5, basepar=0.35):
+    def detectcandidateobjects(self, referencecat, mastercat, outdir, min_fwhm=1, max_fwhm=10, max_flux=500000, elongation=1.8, snrsigma=5, basepar=0.35):
         """
-        Reads given ordered (corrected) coordinate file and detect stray objects in "starcat.txt".
+        Reads given sextractor's catalogue file and detect candidate objects in "mastercat.txt".
         
-        @param reference_cat: Ordered (corrected) star catalogue file for one image.
-        @type reference_cat: Text file object.
-        @param star_cat: Ordered (corrected) star catalogue file for all image.
-        @type star_cat: Text file object...
-                    
+        @param referencecat: Catalogue file of extracted objects from FITS image.
+        @type referencecat: Text file object.
+        @param mastercat: Master catalogue file of all extracted objects from all images.
+        @type mastercat: Text file object.
+        @param outdir: Out directory of candidate objects file which will be saved in.
+        @type outdir: Directory
+        @param min_fwhm: Minimum FWHM value of searching objects.
+        @type min_fwhm: float
+        @param max_fwhm: Maximum FWHM value of searching objects.
+        @type max_fwhm: float
+        @param elongation: Ellipticity of searching value.
+        @type elongation: float
+        @param snrsigma: SNR value of searching value.
+        @type snrsigma: float
+        @param basepar: Distance between two points.
+        @type basepar: float
+        @return: array           
         """
-        catfile = os.path.basename(reference_cat)
+        catfile = os.path.basename(referencecat)
         h_catfile, e_catfile = catfile.split(".")
         
         if e_catfile == "pysexcat":
-            ref_np = np.genfromtxt(reference_cat, delimiter=None, comments='#')
-            star_np = np.genfromtxt(star_cat, delimiter=None, comments='#')
+            ref_np = np.genfromtxt(referencecat, delimiter=None, comments='#')
+            master_np = np.genfromtxt(mastercat, delimiter=None, comments='#')
             
-            reference = pd.DataFrame.from_records(ref_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
-            star_catalogue = pd.DataFrame.from_records(star_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
+            referencecatalogue = pd.DataFrame.from_records(ref_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
+            mastercatalogue = pd.DataFrame.from_records(master_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
             
-            refcat_all = reference[((reference.id_flags <= 16)) & (reference.flux <= max_flux) & (reference.fwhm <= max_fwhm) & \
-            ((reference.flux / reference.fluxerr) > snrsigma) & (reference.fwhm >= min_fwhm) & (reference.elongation <= elongation)]
-            starcat_all = star_catalogue[((star_catalogue.id_flags <= 16)) & (star_catalogue.flux <= max_flux) & (star_catalogue.fwhm <= max_fwhm) & \
-            ((star_catalogue.flux / star_catalogue.fluxerr) > snrsigma) & (star_catalogue.fwhm >= min_fwhm) & (star_catalogue.elongation <= elongation)]
+            refcatfiltered = referencecatalogue[((referencecatalogue.id_flags <= 16)) & (referencecatalogue.flux <= max_flux) & (referencecatalogue.fwhm <= max_fwhm) & \
+            ((referencecatalogue.flux / referencecatalogue.fluxerr) > snrsigma) & (referencecatalogue.fwhm >= min_fwhm) & (referencecatalogue.elongation <= elongation)]
+            mascat_all = mastercatalogue[((mastercatalogue.id_flags <= 16)) & (mastercatalogue.flux <= max_flux) & (mastercatalogue.fwhm <= max_fwhm) & \
+            ((mastercatalogue.flux / mastercatalogue.fluxerr) > snrsigma) & (mastercatalogue.fwhm >= min_fwhm) & (mastercatalogue.elongation <= elongation)]
             
-            refcat = refcat_all[["id_flags", "x", "y", "flux", "background"]]
+            refcat = refcatfiltered[["id_flags", "x", "y", "flux", "background"]]
             refcat = refcat.reset_index(drop=True)
-            starcat = starcat_all[["id_flags", "x", "y", "flux", "background"]]
-            starcat = starcat.reset_index(drop=True)
+            mascat = mascat_all[["id_flags", "x", "y", "flux", "background"]]
+            mascat = mascat.reset_index(drop=True)
             
             # flags or id, first column is not important, i added first column for just check.
-        else:
-            refcat = pd.read_csv(reference_cat, sep=" ", names=["id_flags", "x", "y", "flux", "background"], header=0)
-            starcat = pd.read_csv(star_cat, sep=" ", names=["id_flags", "x", "y", "flux", "background"], header=0)
         
-        strayobjectlist = pd.DataFrame(columns=["id_flags", "x", "y", "flux", "background"])
+        candidateobjects = pd.DataFrame(columns=["id_flags", "x", "y", "flux", "background"])
         for i in range(len(refcat.x)):
-            if len(starcat[((starcat.x - refcat.x[i])**2 + (starcat.y - refcat.y[i])**2)**0.5 <= basepar]) < 2:
-                strayobjectlist = strayobjectlist.append(refcat.iloc[i], ignore_index=True)
+            if len(mascat[((mascat.x - refcat.x[i])**2 + (mascat.y - refcat.y[i])**2)**0.5 <= basepar]) < 2:
+                candidateobjects = candidateobjects.append(refcat.iloc[i], ignore_index=True)
 
-        if os.path.exists(target_folder):
+        if os.path.exists(outdir):
             pass
         else:
-            os.mkdir(target_folder)        
+            os.mkdir(outdir)        
         
-        strayobjectlist.to_csv("%s/stray_%s.txt" %(target_folder, h_catfile), index = False)
-        return strayobjectlist
+        candidateobjects.to_csv("%s/candidates_%s.txt" %(outdir, h_catfile), index = False)
+        return candidateobjects
 
-    def detectlines(self, catdir, fitsdir, combinationindex = None, basepar=0.35, heightpar=0.1, pixel_scale=0.31, vmax=0.03, radiusSigma = 1):
+    def detectlines(self, catdir, fitsdir, combinationindex = None, basepar=0.35, heightpar=0.1, pixel_scale=0.31, vmax=0.03, radiussigma = 1):
         """
         
-        Reads given ordered (corrected) coordinate file and detect lines with randomized algorithm.
-        
-        @param ordered_cats: Ordered (corrected) star catalogues folder.
-        @type ordered_cats: Directory object.
-        @param output_figure: Plot figure path to save.
-        @type output_figure: PNG object.
-        @param basepar: The length of the base.
-        @type basepar: Float                    
+        Reads given candidate files and detect lines with randomized algorithm.
+
+        @param catdir: Directory of candidate objects.
+        @type catdir: Directory.
+        @param fitsdir: Directory of aligned FITS images.
+        @type fitsdir: Directory.
+        @param combinationindex: Index of candidates array divided by parallelized processing.
+        @type combinationindex: integer
+        @param basepar: Distance between two points.
+        @type basepar: float                  
         @param heightpar: The length of the triangle's height.
-        @type heightpar: Float
-        @param areapar: The area of triangle.
-        @type areapar: Float
+        @type heightpar: float
+        @param pixel_scale: Pixel scale of CCD.
+        @type pixel_scale: float
+        @param vmax: Theoretical maximum angular velocity of NEOs (px/").
+        @type vmax: float
+        @param radiussigma: Maximum error value (pixel) of moving objects calculated position.
+        @type radiussigma: float
+        @return: array
         """
 
         candidatefiles = sorted(glob.glob("%s/*affineremap.txt" %(catdir)))
         fitsfiles = sorted(glob.glob("%s/*.fit*" %(fitsdir)))
         
-        lst = []
+        containerlist = []
         fileidlist = []
-        res = []
-        resultlist = []
-        pointid = 0
-        cc = 0
+        candidates = []
         
         #all files copying to list
         for fileid, candidatefile in enumerate(candidatefiles):
             candidatelist = pd.read_csv(candidatefile, sep=",", names = ["id_flags", "x", "y", "flux", "background"], header=0)
             if not candidatelist.empty:
-                lst.append(candidatelist.values)
+                containerlist.append(candidatelist.values)
                 fileidlist.append(fileid)
 
         if combinationindex:
@@ -231,9 +272,9 @@ class Detect:
             combinationlist = it.combinations(fileidlist, 3)
 
         for cyc, selectedfileids in enumerate(combinationlist):
-        #for i in xrange(len(lst)-2):
+        #for i in xrange(len(containerlist)-2):
             fileid_i, fileid_j, fileid_k = selectedfileids
-            print "Searching lines in %s., %s., %s. (%s) files" %(fileid_i, fileid_j, fileid_k, cyc)
+            #print "Searching lines in %s., %s., %s. (%s) files" %(fileid_i, fileid_j, fileid_k, cyc)
             hdulist1 = pyfits.open(fitsfiles[fileid_i])
             hdulist2 = pyfits.open(fitsfiles[fileid_j])
             hdulist3 = pyfits.open(fitsfiles[fileid_k])
@@ -252,51 +293,56 @@ class Detect:
             otime3 =  time.strptime(obsdate3, "%Y-%m-%dT%H:%M:%S.%f")
             radius =  (time.mktime(otime2) - time.mktime(otime1) + (exptime2 - exptime1) / 2) * vmax / (pixel_scale * xbin)
             radius2 =  (time.mktime(otime3) - time.mktime(otime2) + (exptime3 - exptime2) / 2) * vmax / (pixel_scale * xbin)
-            for u in xrange(len(lst[fileid_i])):
-                for z in xrange(len(lst[fileid_j])):
+            for u in xrange(len(containerlist[fileid_i])):
+                for z in xrange(len(containerlist[fileid_j])):
                     #ilk çift nokta seçiliyor
-                    absRadius1 = self.distance(lst[fileid_i][u][1], lst[fileid_i][u][2], lst[fileid_j][z][1], lst[fileid_j][z][2])
+                    absradius1 = self.distance(containerlist[fileid_i][u][1], containerlist[fileid_i][u][2], containerlist[fileid_j][z][1], containerlist[fileid_j][z][2])
                     deltaobs1 = (time.mktime(otime2) - time.mktime(otime1)) + (exptime2 - exptime1) / 2
-                    if self.isClose(lst[fileid_i][u, [1,2]], lst[fileid_j][z, [1,2]], radius):
-                        for x in xrange(len(lst[fileid_k])):
-                            absRadius2 = self.distance(lst[fileid_j][z][1], lst[fileid_j][z][2], lst[fileid_k][x][1], lst[fileid_k][x][2])
+                    if self.isClose(containerlist[fileid_i][u, [1,2]], containerlist[fileid_j][z, [1,2]], radius):
+                        for x in xrange(len(containerlist[fileid_k])):
+                            absradius2 = self.distance(containerlist[fileid_j][z][1], containerlist[fileid_j][z][2], containerlist[fileid_k][x][1], containerlist[fileid_k][x][2])
                             deltaobs2 =  (time.mktime(otime3) - time.mktime(otime2)) + (exptime3 - exptime2) / 2
-                            if self.isClose(lst[fileid_j][z, [1,2]], lst[fileid_k][x, [1,2]], radius2):
-                                if ((deltaobs2 * absRadius1 / deltaobs1) - radiusSigma) <= absRadius2 and ((deltaobs2 * absRadius1 / deltaobs1) + radiusSigma) >= absRadius2:                                             
-                                    base = self.longest(lst[fileid_i][u, [1,2]], lst[fileid_j][z, [1,2]], lst[fileid_k][x, [1,2]])
+                            if self.isClose(containerlist[fileid_j][z, [1,2]], containerlist[fileid_k][x, [1,2]], radius2):
+                                if ((deltaobs2 * absradius1 / deltaobs1) - radiussigma) <= absradius2 and ((deltaobs2 * absradius1 / deltaobs1) + radiussigma) >= absradius2:                                             
+                                    base = self.longest(containerlist[fileid_i][u, [1,2]], containerlist[fileid_j][z, [1,2]], containerlist[fileid_k][x, [1,2]])
                                     hei = self.height(base[:-1], base[-1])
                                     lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
                                     if lengh > basepar * 1.5 and hei < heightpar:
                                         
-                                        p1 = [lst[fileid_i][u][1], lst[fileid_i][u][2]]
-                                        p2 = [lst[fileid_j][z][1], lst[fileid_j][z][2]]
-                                        p3 = [lst[fileid_k][x][1], lst[fileid_k][x][2]]
+                                        p1 = [containerlist[fileid_i][u][1], containerlist[fileid_i][u][2]]
+                                        p2 = [containerlist[fileid_j][z][1], containerlist[fileid_j][z][2]]
+                                        p3 = [containerlist[fileid_k][x][1], containerlist[fileid_k][x][2]]
                                      
-                                        if self.finalCheck(p1, p2, p3):
-                                            cc +=1
-                                            print "%s line(s) detected (raw)." %(cc)
-                                            res.append([[fileid_i,lst[fileid_i][u][0], lst[fileid_i][u][1], lst[fileid_i][u][2], \
-                                                        lst[fileid_i][u][3], lst[fileid_i][u][4]],\
-                                                        [fileid_j, lst[fileid_j][z][0], lst[fileid_j][z][1], lst[fileid_j][z][2], \
-                                                        lst[fileid_j][z][3], lst[fileid_j][z][4]],\
-                                                        [fileid_k, lst[fileid_k][x][0], lst[fileid_k][x][1], lst[fileid_k][x][2], \
-                                                        lst[fileid_k][x][3], lst[fileid_k][x][4]]])                                                                                                           
+                                        if self.finalcheck(p1, p2, p3):
+                                            candidates.append([[fileid_i,containerlist[fileid_i][u][0], containerlist[fileid_i][u][1], containerlist[fileid_i][u][2], \
+                                                        containerlist[fileid_i][u][3], containerlist[fileid_i][u][4]],\
+                                                        [fileid_j, containerlist[fileid_j][z][0], containerlist[fileid_j][z][1], containerlist[fileid_j][z][2], \
+                                                        containerlist[fileid_j][z][3], containerlist[fileid_j][z][4]],\
+                                                        [fileid_k, containerlist[fileid_k][x][0], containerlist[fileid_k][x][1], containerlist[fileid_k][x][2], \
+                                                        containerlist[fileid_k][x][3], containerlist[fileid_k][x][4]]])                                                                                                           
                                         else:
                                             print "final check failed"
 
         if combinationindex:
             with open("./%s_result.txt" %(combinationindex), 'wb') as fl:
-                pk.dump(res, fl)
+                pk.dump(candidates, fl)
             print "All detected lines added to ./%s_result.txt in %s. process." %(combinationindex, combinationindex)
             return True
         else:
-            if res:
+            if candidates:
                 return self.uniqueanditemlist(res)
             else:
                 print "No lines detected!"
                 return False
 
     def collectpointsonline(self, pointarray):
+        """
+        Reads three points on same line respectively and collects them in same list if conditions are valid.
+
+        @param pointarray: List of three points which are on same line.
+        @type pointarray: list
+        @return: list
+        """
 
         pointlist = []
 
@@ -334,50 +380,74 @@ class Detect:
         return pointlist
 
     def uniqueanditemlist(self, resultarray):
+        """
+        Reads points in same list respectively runs after collectpointsonline funtion and tags same id in same list if conditions are valid.
+
+        @param pointarray: List of points which are on same line.
+        @type pointarray: list
+        @return: array
+        """
+
         pointid = 0
-        resultlist = []
+        candidates = []
 
         #tekrarlı noktaların kontrol işlemi başlıyor
-        for reslist in resultarray:
+        for line in resultarray:
             pointid +=1
             pc = 0
-            for res_row in reslist:
+            for point in line:
                 #belirlenen doğrular için id'leme işlemi başlıyor
-                #seçilen nokta daha önce id'lendi ise bulunduğu dizi içindeki (reslist(i)) tespit sırasını alıyor.
-                if (res_row[0:6] in [xy[0:6] for xy in resultlist]) == False:
-                    #resultlist'e son atamalar yapılmış mı kontrol ediliyor.
-                    if resultlist:
-                        #eger resultlist (nihai dizi)'in son elemanı point id'den küçükse,
-                        #reslist içinde gruplanan noktaların tamamı başka noktalarda var demektir.
-                        #bu yüzden reslist grup sırası id'leme için kullanılamaz.
-                        if resultlist[len(resultlist) -1][-1] < pointid:
+                #seçilen nokta daha önce id'lendi ise bulunduğu dizi içindeki (line(i)) tespit sırasını alıyor.
+                if (point[0:6] in [xy[0:6] for xy in candidates]) == False:
+                    #candidates'e son atamalar yapılmış mı kontrol ediliyor.
+                    if candidates:
+                        #eger candidates (nihai dizi)'in son elemanı point id'den küçükse,
+                        #line içinde gruplanan noktaların tamamı başka noktalarda var demektir.
+                        #bu yüzden line grup sırası id'leme için kullanılamaz.
+                        if candidates[len(candidates) -1][-1] < pointid:
                             #yeni bir line id sayacı tanımlanıyor.
                             pc +=1
-                            #eğer pc 1 ise resultlist'te son verilen id numarasından bir fazlası yeni yeni nokta için id olarak verilir.
-                            #eger 1'den fazla ise o point grubu için resultlist'te en son verilen id yeni point'e verilir.
+                            #eğer pc 1 ise candidates'te son verilen id numarasından bir fazlası yeni yeni nokta için id olarak verilir.
+                            #eger 1'den fazla ise o point grubu için candidates'te en son verilen id yeni point'e verilir.
                             if pc == 1:
-                                res_row.append(resultlist[len(resultlist) -1][-1] + 1)
-                                resultlist.append(res_row)
+                                point.append(candidates[len(candidates) -1][-1] + 1)
+                                candidates.append(point)
                             else:
-                                res_row.append(resultlist[len(resultlist) -1][-1])
-                                resultlist.append(res_row)
+                                point.append(candidates[len(candidates) -1][-1])
+                                candidates.append(point)
                         else:
-                            res_row.append(pointid)
-                            resultlist.append(res_row)
+                            point.append(pointid)
+                            candidates.append(point)
                     else:
-                        res_row.append(pointid)
-                        resultlist.append(res_row)
+                        point.append(pointid)
+                        candidates.append(point)
         
-        #resultlist numpy dizine dönüştürülüyor. duplication'lar eleniyor.                          
-        result_array = pd.DataFrame.from_records(np.asarray(resultlist), columns=["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])
-        result_array = result_array.drop_duplicates(["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])  
-        print result_array
-        return result_array.values
+        #candidates numpy dizine dönüştürülüyor. duplication'lar eleniyor.                          
+        movingobjects = pd.DataFrame.from_records(np.asarray(candidates), columns=["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])
+        movingobjects = movingobjects.drop_duplicates(["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])  
+        print movingobjects
+        return movingobjects.values
 
     def chunker(self, seq, size):
+        """
+        It divides the worklist of combinated files to CPU count (multiple work).
+
+        @param seq: List of combinated files.
+        @type seq: list
+        @param size: Multiple work of detectlines sequence.
+        @type size: list
+        @return: list
+        """
         return list(seq[pos:pos + size] for pos in xrange(0, len(seq), size))
     
     def combinecatfiles(self, catdir):
+        """
+        It divides the worklist of combinated files to CPU count (multiple work).
+
+        @param catdir: Directory of candidate objects file which will be combine.
+        @type catdir: Directory
+        @return: list
+        """
 
         candidatefiles = sorted(glob.glob("%s/*affineremap.txt" %(catdir)))
         fileidlist = []
@@ -404,6 +474,16 @@ class Detect:
         return self.chunker(combinatedfiles, sizeofworklist)
 
     def multilinedetector(self, catdir, fitsdir):
+        """
+        Runs multi-processing tasks of the worklist.
+
+        @param catdir: Directory of candidate objects file which will be combine.
+        @type catdir: Directory
+        @param fitsdir: Directory of aligned FITS image.
+        @type fitsdir: Directory
+        @return: array
+        """
+        
         cmds = list()
         
         sizeofworklist = len(self.combinecatfiles(catdir))
@@ -418,20 +498,28 @@ class Detect:
         tp.close()
         tp.join()
 
-        rawresultlistfiles = sorted(glob.glob("*_result.txt"))
-        rawresultlist = []
+        rawcandidatesfiles = sorted(glob.glob("*_result.txt"))
+        rawcandidates = []
 
-        for rawresultfile in rawresultlistfiles:
+        for rawcandidatesfile in rawcandidatesfiles:
             #To read it back:
-            with open(rawresultfile, 'rb') as fl:
-                rawresultlist += pk.load(fl)
+            with open(rawcandidatesfile, 'rb') as fl:
+                rawcandidates += pk.load(fl)
 
-        lineidlist = self.collectpointsonline(rawresultlist)
-        return self.uniqueanditemlist(lineidlist)
+        lines = self.collectpointsonline(rawcandidates)
+        return self.uniqueanditemlist(lines)
     
     def rundl(self, cmd):
+        """
+        Runs multi-processing tasks as subprocesses.
+
+        @param cmd: Commands for main file.
+        @type cmd: list
+        @return: boolean
+        """
         p = subprocess.Popen(cmd)
         p.wait()
+        return True
 
 
 

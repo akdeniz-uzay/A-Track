@@ -14,6 +14,12 @@ import alipy
 import glob
 from alipy import pysex
 import os
+
+try:
+    import numpy as np
+except ImportError:
+    print "Did you install numpy?"
+    raise SystemExit
  
 
 def makecat(fitsfiles, catdir, detect_thresh=3, analysis_thresh=3, detect_minarea=1, pixel_scale=0.31, seeing_fwhm=1.5, 
@@ -40,6 +46,27 @@ def makecat(fitsfiles, catdir, detect_thresh=3, analysis_thresh=3, detect_minare
     @type pixel_scale: float, integer
     @param seeing_fwhm: FWHM of stellar images in arcsec (only for star/galaxy separation).
     @type seeing_fwhm: float, integer
+    @param phot_autoparams: MAG_AUTO parameters: <Kron_fact>,<min_radius>.
+    @type phot_autoparams: float, integer
+    @param back_size: Background mesh: <size> or <width>,<height>.
+    @type back_size: float, integer
+    @param back_filtersize: Background filter: <size> or <width>,<height>.
+    @type back_filtersize: float, integer
+    @param deblend_nthresh: Number of deblending sub-thresholds.
+    @type deblend_nthresh: float, integer
+    @param satur_level: level (in ADUs) at which arises saturation.
+    @type satur_level: float, integer
+    @param deblend_mincont: Minimum contrast parameter for deblending.
+    @type deblend_mincont: float, integer
+    @param gain: detector gain in e-/ADU.
+    @type gain: float, integer
+    @param rerun: Rerun sextractor if catalogue directory exist.
+    @type rerun: boolean
+    @param keepcat: Keep extracted catalogue files.
+    @type keepcat: boolean
+    @param verbose: Notify me via terminal.
+    @type verbose: boolean.
+    @return: boolean
     """
     for filepath in sorted(glob.glob(fitsfiles)):
         pysex.run(filepath, conf_args={'DETECT_THRESH':detect_thresh, 'ANALYSIS_THRESH':analysis_thresh, 'DETECT_MINAREA':detect_minarea, 'SATUR_LEVEL':satur_level, 
@@ -48,36 +75,51 @@ def makecat(fitsfiles, catdir, detect_thresh=3, analysis_thresh=3, detect_minare
         params=['FLAGS', 'X_IMAGE', 'Y_IMAGE', 'FLUX_AUTO', 'BACKGROUND', 'FWHM_IMAGE', 'ELONGATION', 'FLUXERR_AUTO'],
         rerun=rerun, keepcat=keepcat, catdir=catdir)
     return True
+
+def makemastercat(catdir):
+    """
+    Reads all catalogue file under catalogue directory and extracts all elements to "one catalogue file" named as "mastercat.txt".
     
-def image2xy(fitsfiles, catdir):
-    astrometry = "/usr/local/astrometry/bin/"
-    for filepath in sorted(glob.glob(fitsfiles)):
-        print filepath
-        base_filepath = os.path.basename(filepath)
-        h_filepath, e_filepath = base_filepath.split(".")
-        if not os.path.isdir(catdir):
-                os.makedirs(catdir)                 
-        os.popen("%simage2xy %s -o %s/%s.xy.fits" %(astrometry, filepath, catdir, h_filepath))
-        os.popen("%stablist %s/%s.xy.fits | tail -n +2 | awk '{print $1,$2,$3,$4,$5}' > %s/%s.cat" %(astrometry, catdir, h_filepath, catdir, h_filepath))
+    @param catdir: The target directory which contains all catalogue files.
+    @type catdir: Directory object.
+                
+    """
+    
+    if os.path.exists(catdir):
+        if os.path.isfile("%s/mastercat.cat" %(catdir)):
+            print "%s/mastercat.cat" %(catdir)
+            os.remove("%s/mastercat.cat" %(catdir))
+        catfiles = glob.glob("%s/*cat" %(catdir))
+        with open("%s/mastercat.cat" %(catdir), "a") as outfile:
+            for f in catfiles:
+                h_catfile, e_catfile = f.split(".")
+                if e_catfile == "pysexcat":
+                    objectcat = np.genfromtxt(f, delimiter=None, comments='#')                                      
+                np.savetxt(outfile, objectcat, delimiter=' ')
     return True
 
-def align(fitsfiles, ref_image, outdir):
+def align(fitsfiles, refimage, outdir):
     """
     FITS file align for alipy.
 
+    @param fitsfiles: FITS images which will be aligned.
+    @type fitsfiles: string.
+    @param refimage: Reference FITS image.
+    @type refimage: file.  
     @param outdir: Out directory for aligned FITS images.
-    @type outdir: string                    
+    @type outdir: Directory.
+    @return: boolean              
     """   
     # Minimal example of how to align images :
     images_to_align = sorted(glob.glob(fitsfiles))
 
-    identifications = alipy.ident.run(ref_image, images_to_align, visu=False, sexkeepcat=True)
+    identifications = alipy.ident.run(refimage, images_to_align, visu=False, sexkeepcat=True)
     # That's it !
     # Put visu=True to get visualizations in form of png files (nice but much slower)
     # On multi-extension data, you will want to specify the hdu (see API doc).
     
     # The output is a list of Identification objects, which contain the transforms :       
-    outputshape = alipy.align.shape(ref_image)
+    outputshape = alipy.align.shape(refimage)
     # This is simply a tuple (width, height)... you could specify any other shape.
     
     for id in identifications:
