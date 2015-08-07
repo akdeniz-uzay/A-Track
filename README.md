@@ -25,9 +25,9 @@ $ python asterotrek.py -sextractor "fitsdir/*.fits" path/cats/
 ```bash
 $ python asterotrek.py -makemaster path/catdir
 ```
-* **-makemaster**: make master catalogue
+* **-makemaster**: make master catalogue file
 
-**Step 4:** Search (check with mastercat.txt and save eligible objects to candidate objects file) candidate objects for each catalogue file and make candidate moving object catalogues under specified directory.
+**Step 4:** Search candidate objects in each catalogue file by appropriated parameters and save them into their candidate moving object catalogues under specified directory.
 
 ```bash
 $ python asterotrek.py -xcan path/catdir path/candidatedir
@@ -39,7 +39,7 @@ $ python asterotrek.py -xcan path/catdir path/candidatedir
 ```bash
 $ python asterotrek.py -mdl path/candidatedir path/
 ```
-* **-mdl**: detect lines with multi-processing
+* **-mdl**: Detect lines with multi-processing
 * **path/candidatedir**: Candidate MO catalogue directory.
 * **path/fitsdir/**: Aligned FITS images directory.
 
@@ -48,7 +48,7 @@ $ python asterotrek.py -mdl path/candidatedir path/
 ```bash
 $ python asterotrek.py -dlwpng path/candidatedir path/fitsdir path/png/
 ```
-* **path/candidatedir**: Directory of candidate object catalogue files.
+* **path/candidatedir**: Directory of candidate objects catalogue files.
 * **path/fitsdir**: FITS image directory.
 * **path/png/**: PNG files will be saved in the directory.
 
