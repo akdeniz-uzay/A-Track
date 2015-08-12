@@ -46,7 +46,7 @@ $ python asterotrek.py -mdl path/candidatedir path/
 **Step 6:** Converts FITS images into PNG files with detected objects (with-multi-processing). 
 
 ```bash
-$ python asterotrek.py -dlwpng path/candidatedir path/fitsdir path/png/
+$ python asterotrek.py -mdlwpng path/candidatedir path/fitsdir path/png/
 ```
 * **path/candidatedir**: Directory of candidate objects catalogue files.
 * **path/fitsdir**: FITS image directory.
