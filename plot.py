@@ -33,15 +33,22 @@ class Plot:
     MOD's plotting class.
                 
     """
-    def fits2png(self, fitsfile, outdir, movingobjects = None):
+    def fits2png(self, fitsfile, outdir, movingobjectsinfile = None, movingobjects = None, basepar = 1):
         """
-        f2n is a tiny python module to transfrom FITS images into PNG files, built around pyfits and PIL. I tend to include these PNG files into html pages for fast visualization, that's why the module is called "fits to net".
+        f2n is a tiny python module to transfrom FITS images into PNG files, built around pyfits and PIL. 
+        I tend to include these PNG files into html pages for fast visualization, that's why the module is called "fits to net".
         More information: http://obswww.unige.ch/~tewes/f2n_dot_py
 
         @param fitsfile: FITS file.
         @type fitsfile: File object.
         @param outdir: PNG file out directory.
         @type outdir: Directory object.
+        @param movingobjectsinfile: numpy array of moving objects in one file.
+        @type movingobjectsinfile: array.
+        @param movingobjects: numpy array of all detected moving objects.
+        @type movingobjects: array.
+        @param basepar: lenght of line.
+        @type basepar: float.
         @return boolean
         """
         try:
@@ -54,9 +61,19 @@ class Plot:
         myimage.makepilimage("log", negative = False)
 
         try:
-            if movingobjects.size:
-                for i in xrange(len(movingobjects)):
-                    myimage.drawrectangle(movingobjects[i][2] - 10, movingobjects[i][2] + 10, movingobjects[i][3] - 10, movingobjects[i][3] + 10, colour=(0,255,0), label="%s" %(int(movingobjects[i][6])))
+            if movingobjectsinfile.size:
+                for i in xrange(len(movingobjectsinfile)):
+                    linepoints = movingobjects[movingobjects[:, 6].astype(int) == int(movingobjectsinfile[i][6])]
+                    linelenght = math.sqrt((linepoints[len(linepoints)-1][3] - linepoints[0][3])**2 + \
+                                           (linepoints[len(linepoints)-1][2] - linepoints[0][2])**2)
+                    if linelenght < basepar * 2:
+                        rectcolour = (255, 0, 0)
+                        print linelenght
+                    else:
+                        rectcolour = (0,255,0)
+                    
+                    myimage.drawrectangle(movingobjectsinfile[i][2] - 10, movingobjectsinfile[i][2] + 10, movingobjectsinfile[i][3] - 10,\
+                                          movingobjectsinfile[i][3] + 10, colour = rectcolour, label="%s" %(int(movingobjectsinfile[i][6])))
         except AttributeError:
             pass
         myimage.writetitle(os.path.basename(fitsfile))
