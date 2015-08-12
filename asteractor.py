@@ -9,11 +9,15 @@ Created on Sat Feb 14 23:16:29 2015
 #
 # Copyleft, Yücel Kılıç (yucelkilic@myrafproject.org).
 # This is open-source software licensed under a GPLv3 license.
-
-import alipy
 import glob
-from alipy import pysex
 import os
+
+try:
+    import alipy
+    from alipy import pysex
+except ImportError:
+    print "Do you have alipy?"
+    raise SystemExit
 
 try:
     import numpy as np
