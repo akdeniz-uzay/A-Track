@@ -200,22 +200,22 @@ class Detect:
             ref_np = np.genfromtxt(referencecat, delimiter=None, comments='#')
             master_np = np.genfromtxt(mastercat, delimiter=None, comments='#')
             
-            referencecatalogue = pd.DataFrame.from_records(ref_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
-            mastercatalogue = pd.DataFrame.from_records(master_np, columns=["id_flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
+            referencecatalogue = pd.DataFrame.from_records(ref_np, columns=["flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
+            mastercatalogue = pd.DataFrame.from_records(master_np, columns=["flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
             
-            refcatfiltered = referencecatalogue[((referencecatalogue.id_flags <= 16)) & (referencecatalogue.flux <= max_flux) & (referencecatalogue.fwhm <= max_fwhm) & \
+            refcatfiltered = referencecatalogue[((referencecatalogue.flags <= 16)) & (referencecatalogue.flux <= max_flux) & (referencecatalogue.fwhm <= max_fwhm) & \
             ((referencecatalogue.flux / referencecatalogue.fluxerr) > snrsigma) & (referencecatalogue.fwhm >= min_fwhm) & (referencecatalogue.elongation <= elongation)]
-            mascat_all = mastercatalogue[((mastercatalogue.id_flags <= 16)) & (mastercatalogue.flux <= max_flux) & (mastercatalogue.fwhm <= max_fwhm) & \
+            mascat_all = mastercatalogue[((mastercatalogue.flags <= 16)) & (mastercatalogue.flux <= max_flux) & (mastercatalogue.fwhm <= max_fwhm) & \
             ((mastercatalogue.flux / mastercatalogue.fluxerr) > snrsigma) & (mastercatalogue.fwhm >= min_fwhm) & (mastercatalogue.elongation <= elongation)]
             
-            refcat = refcatfiltered[["id_flags", "x", "y", "flux", "background"]]
+            refcat = refcatfiltered[["flags", "x", "y", "flux", "background"]]
             refcat = refcat.reset_index(drop=True)
-            mascat = mascat_all[["id_flags", "x", "y", "flux", "background"]]
+            mascat = mascat_all[["flags", "x", "y", "flux", "background"]]
             mascat = mascat.reset_index(drop=True)
             
             # flags or id, first column is not important, i added first column for just check.
         
-        candidateobjects = pd.DataFrame(columns=["id_flags", "x", "y", "flux", "background"])
+        candidateobjects = pd.DataFrame(columns=["flags", "x", "y", "flux", "background"])
         for i in range(len(refcat.x)):
             if len(mascat[((mascat.x - refcat.x[i])**2 + (mascat.y - refcat.y[i])**2)**0.5 <= basepar]) < 2:
                 candidateobjects = candidateobjects.append(refcat.iloc[i], ignore_index=True)
@@ -261,7 +261,7 @@ class Detect:
         
         #all files copying to list
         for fileid, candidatefile in enumerate(candidatefiles):
-            candidatelist = pd.read_csv(candidatefile, sep=",", names = ["id_flags", "x", "y", "flux", "background"], header=0)
+            candidatelist = pd.read_csv(candidatefile, sep=",", names = ["flags", "x", "y", "flux", "background"], header=0)
             if not candidatelist.empty:
                 containerlist.append(candidatelist.values)
                 fileidlist.append(fileid)
@@ -296,14 +296,17 @@ class Detect:
             for u in xrange(len(containerlist[fileid_i])):
                 for z in xrange(len(containerlist[fileid_j])):
                     #ilk çift nokta seçiliyor
-                    absradius1 = self.distance(containerlist[fileid_i][u][1], containerlist[fileid_i][u][2], containerlist[fileid_j][z][1], containerlist[fileid_j][z][2])
+                    absradius1 = self.distance(containerlist[fileid_i][u][1], containerlist[fileid_i][u][2], \
+                                               containerlist[fileid_j][z][1], containerlist[fileid_j][z][2])
                     deltaobs1 = (time.mktime(otime2) - time.mktime(otime1)) + (exptime2 - exptime1) / 2
                     if self.isClose(containerlist[fileid_i][u, [1,2]], containerlist[fileid_j][z, [1,2]], radius):
                         for x in xrange(len(containerlist[fileid_k])):
-                            absradius2 = self.distance(containerlist[fileid_j][z][1], containerlist[fileid_j][z][2], containerlist[fileid_k][x][1], containerlist[fileid_k][x][2])
+                            absradius2 = self.distance(containerlist[fileid_j][z][1], containerlist[fileid_j][z][2], \
+                                                       containerlist[fileid_k][x][1], containerlist[fileid_k][x][2])
                             deltaobs2 =  (time.mktime(otime3) - time.mktime(otime2)) + (exptime3 - exptime2) / 2
                             if self.isClose(containerlist[fileid_j][z, [1,2]], containerlist[fileid_k][x, [1,2]], radius2):
-                                if ((deltaobs2 * absradius1 / deltaobs1) - radiussigma) <= absradius2 and ((deltaobs2 * absradius1 / deltaobs1) + radiussigma) >= absradius2:                                             
+                                if ((deltaobs2 * absradius1 / deltaobs1) - radiussigma) <= absradius2 and \
+                                ((deltaobs2 * absradius1 / deltaobs1) + radiussigma) >= absradius2:                                             
                                     base = self.longest(containerlist[fileid_i][u, [1,2]], containerlist[fileid_j][z, [1,2]], containerlist[fileid_k][x, [1,2]])
                                     hei = self.height(base[:-1], base[-1])
                                     lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
@@ -423,9 +426,8 @@ class Detect:
                         candidates.append(point)
         
         #candidates numpy dizine dönüştürülüyor. duplication'lar eleniyor.                          
-        movingobjects = pd.DataFrame.from_records(np.asarray(candidates), columns=["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])
-        movingobjects = movingobjects.drop_duplicates(["file_id", "id_flags", "x", "y", "flux", "background", "lineid"])  
-        print movingobjects
+        movingobjects = pd.DataFrame.from_records(np.asarray(candidates), columns=["file_id", "flags", "x", "y", "flux", "background", "lineid"])
+        movingobjects = movingobjects.drop_duplicates(["file_id", "flags", "x", "y", "flux", "background", "lineid"])
         return movingobjects.values
 
     def chunker(self, seq, size):
@@ -453,7 +455,7 @@ class Detect:
         fileidlist = []
         
         for fileid, candidatefile in enumerate(candidatefiles):
-            candidatelist = pd.read_csv(candidatefile, sep=",", names = ["id_flags", "x", "y", "flux", "background"], header=0)
+            candidatelist = pd.read_csv(candidatefile, sep=",", names = ["flags", "x", "y", "flux", "background"], header=0)
             if not candidatelist.empty:
                 fileidlist.append(fileid)
         
@@ -520,6 +522,64 @@ class Detect:
         p = subprocess.Popen(cmd)
         p.wait()
         return True
+    
+    def resultreporter(self, fitsdir, movingobjects, basepar = 1.0):
+        """
+        Categorize and report MOs as slow and fast objects.
+
+        @param fitsdir: Directory of aligned FITS image.
+        @type fitsdir: Directory
+        @param movingobjects: Numpy array of detected lines.
+        @type movingobjects: array
+        @param basepar: lenght of line.
+        @type basepar: float.
+        @return: boolean
+        """
+        tmp = []
+        fastmos = []
+        slowmos = []
+        fitsfiles = sorted(glob.glob("%s/*.fit*" %(fitsdir)))
+        numberoflines = movingobjects[:,6].max()
+        
+        for lineid in xrange(1, int(numberoflines)+1):
+            linepoints = movingobjects[movingobjects[:, 6].astype(int) == int(lineid)]
+            fileid_min, fileid_max = int(linepoints[:,0].min()), int(linepoints[:,0].max())
+            hdulist1 = pyfits.open(fitsfiles[fileid_min])
+            hdulist2 = pyfits.open(fitsfiles[fileid_max])
+            obsdate1 = hdulist1[0].header['date-obs']
+            exptime1 = hdulist1[0].header['exptime']
+            obsdate2 = hdulist2[0].header['date-obs']
+            exptime2 = hdulist2[0].header['exptime']
+            otime1 =  time.strptime(obsdate1, "%Y-%m-%dT%H:%M:%S.%f")
+            otime2 =  time.strptime(obsdate2, "%Y-%m-%dT%H:%M:%S.%f")
+            
+            linelenght = math.sqrt((linepoints[len(linepoints)-1][3] - linepoints[0][3])**2 + \
+                                   (linepoints[len(linepoints)-1][2] - linepoints[0][2])**2)
+            
+            skymotion = linelenght / ((time.mktime(otime2) + exptime2) - (time.mktime(otime1) + exptime1))
+
+            mowithmu = np.concatenate((linepoints, np.asarray([[skymotion] * len(linepoints)]).T), axis=1)
+            
+            if  linelenght > basepar * 2:
+                fastmos.append(mowithmu)
+            else:
+                slowmos.append(mowithmu)
+                
+        if len(fastmos) == 1:
+            retfast = fastmos[0]
+        elif len(fastmos) > 1:
+            retfast = np.concatenate(tuple(fastmos), axis = 0)
+        elif len(fastmos) == 0:
+            retfast = np.array(tmp)
+
+        if len(slowmos) == 1:
+            retslow = slowmos[0]
+        elif len(fastmos) > 1:
+            retslow = np.concatenate(tuple(slowmos), axis = 0)
+        elif len(slowmos) == 0:
+            retslow = np.array(tmp)
+
+        return retfast, retslow
 
 
 
