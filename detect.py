@@ -556,7 +556,7 @@ class Detect:
             linelenght = math.sqrt((linepoints[len(linepoints)-1][3] - linepoints[0][3])**2 + \
                                    (linepoints[len(linepoints)-1][2] - linepoints[0][2])**2)
             
-            skymotion = linelenght / ((time.mktime(otime2) + exptime2) - (time.mktime(otime1) + exptime1))
+            skymotion = (linelenght / ((time.mktime(otime2) + exptime2) - (time.mktime(otime1) + exptime1))) * 60
 
             mowithmu = np.concatenate((linepoints, np.asarray([[skymotion] * len(linepoints)]).T), axis=1)
             
