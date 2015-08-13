@@ -144,12 +144,12 @@ if __name__ == "__main__":
                 fastmos, slowmos = detectlines.resultreporter(sys.argv[3], movingobjects)
                 pd.set_option('expand_frame_repr', False)
                 if fastmos.size:
-                    fastmos = pd.DataFrame.from_records(fastmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/sec)"])
+                    fastmos = pd.DataFrame.from_records(fastmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/min)"])
                     print "\033[1;32mList of Fast Moving Objects\033[0m"
                     print "\033[1;32m===========================\033[0m"
                     print fastmos
                 if slowmos.size:
-                    slowmos = pd.DataFrame.from_records(slowmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/sec)"])
+                    slowmos = pd.DataFrame.from_records(slowmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/min)"])
                     print "\033[1;31mList of Slow Moving Objects (Please check these objects! Are these really MOs?)\033[0m"
                     print "\033[1;31m===========================\033[0m"
                     print slowmos
@@ -165,44 +165,44 @@ if __name__ == "__main__":
         Converts FITS images into PNG files with detected objects (with-multi-processing).
         Usage: python asterotrek.py -mdlwpng path/candidatedir path/ path/png/    		
         """
-        #try:
-        print "Please wait until processing is complete (multiprocessing)."
-        f2n = plt.Plot()
-        detectlines = dt.Detect()
-        movingobjects = detectlines.multilinedetector(sys.argv[2], sys.argv[3])
-
-        if len(movingobjects) != 0:
-            if os.path.isdir(sys.argv[3]):
-                for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):
-                    print sys.argv[4]
-                    print str(i) + " " + fitsimage
-                    movingobjectsinfile = movingobjects[movingobjects[:, 0].astype(int) == i]
-                    f2n.fits2png(fitsimage, sys.argv[4], movingobjectsinfile, movingobjects)
-                    print "%s converted into %s" %(fitsimage, sys.argv[4])
-            elif os.path.isfile(sys.argv[3]):
-                f2n.fits2png(sys.argv[3], sys.argv[4], datacat)
-                print "%s converted into %." %(sys.argv[3], sys.argv[4])
-            print "Plotted all detected objects into PNG files."
-            fastmos, slowmos = detectlines.resultreporter(sys.argv[3], movingobjects)
-            #List of Fast (greater than basepar value between first and last image) Moving Object
-            pd.set_option('expand_frame_repr', False)
-            if fastmos.size:
-                fastmos = pd.DataFrame.from_records(fastmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/sec)"])
-                print "\033[1;32mList of Fast Moving Objects\033[0m"
-                print "\033[1;32m===========================\033[0m"
-                print fastmos
-            if slowmos.size:
-                slowmos = pd.DataFrame.from_records(slowmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/sec)"])
-                print "\033[1;31mList of Slow Moving Objects (Please check these objects! Are these really MOs?)\033[0m"
-                print "\033[1;31m===========================\033[0m"
-                print slowmos
-        else:
-            print "No line detected!!!!"
-        print "Elapsed time: %s" %(time.time() - start_time)
-        #except:
-        #    print "Usage error!"
-        #    print "Usage: python asterotrek.py -mdlwpng <path/candidatedir> <fitsdir> <outdir/png/>" 
-        #    raise SystemExit
+        try:
+            print "Please wait until processing is complete (multiprocessing)."
+            f2n = plt.Plot()
+            detectlines = dt.Detect()
+            movingobjects = detectlines.multilinedetector(sys.argv[2], sys.argv[3])
+    
+            if len(movingobjects) != 0:
+                if os.path.isdir(sys.argv[3]):
+                    for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):
+                        print sys.argv[4]
+                        print str(i) + " " + fitsimage
+                        movingobjectsinfile = movingobjects[movingobjects[:, 0].astype(int) == i]
+                        f2n.fits2png(fitsimage, sys.argv[4], movingobjectsinfile, movingobjects)
+                        print "%s converted into %s" %(fitsimage, sys.argv[4])
+                elif os.path.isfile(sys.argv[3]):
+                    f2n.fits2png(sys.argv[3], sys.argv[4], datacat)
+                    print "%s converted into %." %(sys.argv[3], sys.argv[4])
+                print "Plotted all detected objects into PNG files."
+                fastmos, slowmos = detectlines.resultreporter(sys.argv[3], movingobjects)
+                #List of Fast (greater than basepar value between first and last image) Moving Object
+                pd.set_option('expand_frame_repr', False)
+                if fastmos.size:
+                    fastmos = pd.DataFrame.from_records(fastmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/min)"])
+                    print "\033[1;32mList of Fast Moving Objects\033[0m"
+                    print "\033[1;32m===========================\033[0m"
+                    print fastmos
+                if slowmos.size:
+                    slowmos = pd.DataFrame.from_records(slowmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/min)"])
+                    print "\033[1;31mList of Slow Moving Objects (Please check these objects! Are these really MOs?)\033[0m"
+                    print "\033[1;31m===========================\033[0m"
+                    print slowmos
+            else:
+                print "No line detected!!!!"
+            print "Elapsed time: %s" %(time.time() - start_time)
+        except:
+            print "Usage error!"
+            print "Usage: python asterotrek.py -mdlwpng <path/candidatedir> <fitsdir> <outdir/png/>" 
+            raise SystemExit
             
     elif sys.argv[1] == "-fits2png" and len(sys.argv) == 4:
         """
