@@ -30,9 +30,9 @@ $ python asterotrek.py -makemaster path/catdir
 **Step 4:** Search candidate objects in each catalogue file by appropriated parameters and save them into their candidate moving object catalogues under specified directory.
 
 ```bash
-$ python asterotrek.py -xcan path/catdir path/candidatedir
+$ python asterotrek.py -mxcan <catalogue_file> <master_catalogue_file> <path/candidatedir>
 ```
-* **-xcan**: Extract candidate objects from catalogue files.
+* **-mxcan**: Extract candidate objects from catalogue files (with-multi-processing).
 
 **Step 5:** Detect lines with multi-processing from the candidate cats.
 
