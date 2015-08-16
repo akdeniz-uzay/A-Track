@@ -96,22 +96,36 @@ if __name__ == "__main__":
         
     elif sys.argv[1] == "-xcan":
         """
-        Detects all candidate objects in given catalogue folder.
-        Usage: python asterotrek.py -xcan path/cats path/candidatedir
+        Detects candidate objects in given catalogue file.
+        Usage: python asterotrek.py -xcan catalogue_file master_catalogue_file path/candidatedir
             		
         """
         try:
+            detectlines = dt.Detect()
+            detectlines.detectcandidateobjects(sys.argv[2], sys.argv[3], sys.argv[4])
+            print "%s: Extracting all detected candidate objects to: %s." %(sys.argv[2], sys.argv[4])
+        except:
+            print "Usage error!"
+            print "Usage:python asterotrek.py -xcan <catalogue_file> <master_catalogue_file> <path/candidatedir>"
+            raise SystemExit
+        
+    elif sys.argv[1] == "-mxcan":
+        """
+        Detects all candidate objects in given catalogue folder with multi-processsing.
+        Usage: python asterotrek.py -mxcan path/cats path/candidatedir
+     
+        """
+        try:
             print "Please wait until processing is complete."
-            detect = dt.Detect()
-            for catfile in sorted(glob.glob("%s/*affineremap.*cat" %(sys.argv[2]))):
-                detect.detectcandidateobjects(catfile, "%s/mastercat.cat" %(sys.argv[2]), sys.argv[3])
-                print "Saved all detected candidate objects to: %s." %(sys.argv[2])
+            detectlines = dt.Detect()
+            detectlines.multidcos(sys.argv[2], sys.argv[3])
+            print "Saved all detected candidate objects to: %s." %(sys.argv[3])
             print "Candidate objects in catalogues has extracted."
             print "Elapsed time: %s" %(time.time() - start_time)
         except:
             print "Usage error!"
             print "Usage: python asterotrek.py -xcan <path/catdir> <path/candidatedir>"
-            raise SystemExit    
+            raise SystemExit     
 
     # Detect lines. 
     elif sys.argv[1] == "-dl":
