@@ -384,10 +384,10 @@ class Detect:
 
     def uniqueanditemlist(self, resultarray):
         """
-        Reads points in same list respectively runs after collectpointsonline funtion and tags same id in same list if conditions are valid.
+        Reads points in same list respectively runs after collect points online function and tags same id in same list if conditions are valid.
 
-        @param pointarray: List of points which are on same line.
-        @type pointarray: list
+        @param resultarray: List of points which are on same line.
+        @type resultarray: list
         @return: array
         """
 
@@ -477,7 +477,7 @@ class Detect:
 
     def multilinedetector(self, catdir, fitsdir):
         """
-        Runs multi-processing tasks of the worklist.
+        Runs multi-processing tasks of the linedetection worklist.
 
         @param catdir: Directory of candidate objects file which will be combine.
         @type catdir: Directory
@@ -495,7 +495,7 @@ class Detect:
         tp = ThreadPool(sizeofworklist)
         
         for cmd in cmds:
-            tp.apply_async(self.rundl, (cmd,))
+            tp.apply_async(self.runmp, (cmd,))
         
         tp.close()
         tp.join()
@@ -510,8 +510,36 @@ class Detect:
 
         lines = self.collectpointsonline(rawcandidates)
         return self.uniqueanditemlist(lines)
+
+    def multidcos(self, catdir, outdir):
+        """
+        #multi detect candidate objects function
+        Runs multi-processing tasks of the detect candidate objects worklist.
+
+        @param catdir: Directory of catalogue objects file.
+        @type catdir: Directory
+        @param oudir: Directory of candidate objects file which will be create (candidatedir).
+        @type outdir: Directory
+        @return: array
+        """
+        
+        cmds = list()
+        
+        numberofcpus = cpu_count()
+        for i, catfile in enumerate(sorted(glob.glob("%s/*affineremap.*cat" %(catdir)))):
+            cmds.append(["python", "asterotrek.py", "-xcan", catfile, "%s/mastercat.cat" %(catdir), outdir])
+
+        tp = ThreadPool(numberofcpus)
+        
+        for cmd in cmds:
+            tp.apply_async(self.runmp, (cmd,))
+        
+        tp.close()
+        tp.join()
+        
+        return True
     
-    def rundl(self, cmd):
+    def runmp(self, cmd):
         """
         Runs multi-processing tasks as subprocesses.
 
