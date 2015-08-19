@@ -116,24 +116,18 @@ class Plot:
             d.set('scale zscale')
             #Getting Params
 
-            catfile = os.path.basename(catfile)
             h_catfile, e_catfile = catfile.split(".")
             
             if e_catfile == "pysexcat":
                 print '\033[1;34mDetecting stars on %s!\033[0m' %(catfile)
-                coordinate = os.popen("cat %s|grep -v '#'|awk '{print $2,$3}'" %(catfile))
+                coordinate = np.genfromtxt(catfile, delimiter=None, comments='#')[:,[1,2]]
             elif e_catfile == "txt":
                 print '\033[1;34mDetecting stars on %s!\033[0m' %(catfile)
-                coordinate = os.popen("cat %s|tail -n +2|awk -F' *, *' '{print $2,$3}'" %(catfile))
-            elif e_catfile == "cat":
-                print '\033[1;34mDetecting stars on %s!\033[0m' %(catfile)
-                coordinate = os.popen("cat %s|tail -n +2|awk '{print $2,$3}'" %(catfile)) 
-            counter = 0
-            for line in coordinate.readlines():
-                counter += 1
-                line = line.replace("\n", "")
-                x_coor,  y_coor = line.split(" ")
-                d.set('regions', 'image; circle(%s,%s,5) # color=red text={%s}' %(x_coor,  y_coor, counter))
+                coordinate = np.genfromtxt(catfile, delimiter=",", comments='#',skip_header=1)[:,[1,2]]
+                 
+            for id, coor in enumerate(coordinate):
+                x_coor,  y_coor = coor[0], coor[1]
+                d.set('regions', 'image; circle(%s,%s,5) # color=red text={%s}' %(x_coor,  y_coor, id))
             print '\033[1;34mDetecting stars job is completed!\033[0m'
         except:
             print '\033[1;31mSomething went wrong with DS9!\033[0m'
