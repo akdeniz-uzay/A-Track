@@ -145,7 +145,7 @@ class Detect:
             h = 0
         return h 
 
-    def detectcandidateobjects(self, referencecat, mastercat, outdir, min_fwhm=1, max_fwhm=10, max_flux=500000, elongation=1.8, snrsigma=5, basepar=0.35):
+    def detectcandidateobjects(self, referencecat, mastercat, outdir, min_fwhm=1, max_flux=500000, elongation=1.8, snrsigma=5, basepar=0.35):
         """
         Reads given sextractor's catalogue file and detect candidate objects in "mastercat.txt".
         
@@ -157,8 +157,6 @@ class Detect:
         @type outdir: Directory
         @param min_fwhm: Minimum FWHM value of searching objects.
         @type min_fwhm: float
-        @param max_fwhm: Maximum FWHM value of searching objects.
-        @type max_fwhm: float
         @param elongation: Ellipticity of searching value.
         @type elongation: float
         @param snrsigma: SNR value of searching value.
@@ -177,6 +175,7 @@ class Detect:
             referencecatalogue = pd.DataFrame.from_records(ref_np, columns=["flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
             mastercatalogue = pd.DataFrame.from_records(master_np, columns=["flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
             
+            max_fwhm = np.mean(master_np[:,5]) * 2.5
             refcatfiltered = referencecatalogue[((referencecatalogue.flags <= 16)) & (referencecatalogue.flux <= max_flux) & (referencecatalogue.fwhm <= max_fwhm) & \
             ((referencecatalogue.flux / referencecatalogue.fluxerr) > snrsigma) & (referencecatalogue.fwhm >= min_fwhm) & \
             (referencecatalogue.flux > referencecatalogue.background) & (referencecatalogue.elongation <= elongation)]
