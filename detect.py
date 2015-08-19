@@ -9,7 +9,6 @@ import glob
 import os, time
 import itertools as it
 import pickle as pk
-from _ast import Return
 
 try:
     import pyfits
@@ -74,27 +73,6 @@ class Detect:
         dist = math.sqrt((ycoor1 - ycoor0)**2 + (xcoor1 - xcoor0)**2)
         return dist
 
-    def finalcheck(self, coor0, coor1, coor2):
-        """
-        finalcheck(self, coor0, coor1, coor2) -> boolean
-        Returns of tree points moving back or forward moving status
-        True: One of points moving back
-        False: One of points moving forward
-
-        @param coor0: first point's x and y coordinates
-        @type coor0: list        
-        @param coor1: first point's x and y coordinates
-        @type coor1: list
-        @param coor2: second point's x and y coordinates
-        @type coor2: list
-        @return: boolean
-        """
-        longest = self.longest(coor0, coor1, coor2)
-        if longest == (coor0, coor2, coor1):
-          return True
-        else:
-          return False
-
     def isClose(self, coor1, coor2, rad):
         """
         isClose(coor1, coor2, r) -> boolean
@@ -130,16 +108,12 @@ class Detect:
         """
 
         d12 = self.distance(coor1[0], coor1[1], coor2[0], coor2[1])
+        d23 = self.distance(coor2[0], coor2[1], coor3[0], coor3[1])
         d13 = self.distance(coor1[0], coor1[1], coor3[0], coor3[1])
-        d23 = self.distance(coor3[0], coor3[1], coor2[0], coor2[1])
+        
         distlist = [d12, d23, d13]
-        ref = distlist[0]
-        index = 0
-                
-        for n, i in enumerate(distlist):
-            if ref < i:
-                ref = i
-                index = n
+        
+        index = distlist.index(max(distlist))
         
         if index == 0:
             return coor1, coor2, coor3
@@ -191,7 +165,7 @@ class Detect:
         @type snrsigma: float
         @param basepar: Distance between two points.
         @type basepar: float
-        @return: array           
+        @return: array
         """
         catfile = os.path.basename(referencecat)
         h_catfile, e_catfile = catfile.split(".")
@@ -204,9 +178,11 @@ class Detect:
             mastercatalogue = pd.DataFrame.from_records(master_np, columns=["flags", "x", "y", "flux", "background", "fwhm", "elongation", "fluxerr"])
             
             refcatfiltered = referencecatalogue[((referencecatalogue.flags <= 16)) & (referencecatalogue.flux <= max_flux) & (referencecatalogue.fwhm <= max_fwhm) & \
-            ((referencecatalogue.flux / referencecatalogue.fluxerr) > snrsigma) & (referencecatalogue.fwhm >= min_fwhm) & (referencecatalogue.elongation <= elongation)]
+            ((referencecatalogue.flux / referencecatalogue.fluxerr) > snrsigma) & (referencecatalogue.fwhm >= min_fwhm) & \
+            (referencecatalogue.flux > referencecatalogue.background) & (referencecatalogue.elongation <= elongation)]
             mascat_all = mastercatalogue[((mastercatalogue.flags <= 16)) & (mastercatalogue.flux <= max_flux) & (mastercatalogue.fwhm <= max_fwhm) & \
-            ((mastercatalogue.flux / mastercatalogue.fluxerr) > snrsigma) & (mastercatalogue.fwhm >= min_fwhm) & (mastercatalogue.elongation <= elongation)]
+            ((mastercatalogue.flux / mastercatalogue.fluxerr) > snrsigma) & (mastercatalogue.fwhm >= min_fwhm) & \
+            (mastercatalogue.flux > mastercatalogue.background) & (mastercatalogue.elongation <= elongation)]
             
             refcat = refcatfiltered[["flags", "x", "y", "flux", "background"]]
             refcat = refcat.reset_index(drop=True)
@@ -228,7 +204,7 @@ class Detect:
         candidateobjects.to_csv("%s/candidates_%s.txt" %(outdir, h_catfile), index = False)
         return candidateobjects
 
-    def detectlines(self, catdir, fitsdir, combinationindex = None, basepar=0.35, heightpar=0.1, pixel_scale=0.31, vmax=0.03, radiussigma = 1):
+    def detectlines(self, catdir, fitsdir, processid = None, basepar=0.35, heightpar=0.1, pixel_scale=0.31, vmax=0.03, tolerance = 1.0):
         """
         
         Reads given candidate files and detect lines with randomized algorithm.
@@ -237,8 +213,8 @@ class Detect:
         @type catdir: Directory.
         @param fitsdir: Directory of aligned FITS images.
         @type fitsdir: Directory.
-        @param combinationindex: Index of candidates array divided by parallelized processing.
-        @type combinationindex: integer
+        @param processid: Index of candidates array divided by parallelized processing.
+        @type processid: integer
         @param basepar: Distance between two points.
         @type basepar: float                  
         @param heightpar: The length of the triangle's height.
@@ -247,8 +223,8 @@ class Detect:
         @type pixel_scale: float
         @param vmax: Theoretical maximum angular velocity of NEOs (px/").
         @type vmax: float
-        @param radiussigma: Maximum error value (pixel) of moving objects calculated position.
-        @type radiussigma: float
+        @param tolerance: Maximum error value (pixel) of moving objects calculated position.
+        @type tolerance: float
         @return: array
         """
 
@@ -266,15 +242,13 @@ class Detect:
                 containerlist.append(candidatelist.values)
                 fileidlist.append(fileid)
 
-        if combinationindex:
-            combinationlist = self.combinecatfiles(catdir)[int(combinationindex)]
+        if processid:
+            combinationlist = self.combinecatfiles(catdir)[int(processid)]
         else:
             combinationlist = it.combinations(fileidlist, 3)
 
-        for cyc, selectedfileids in enumerate(combinationlist):
-        #for i in xrange(len(containerlist)-2):
+        for selectedfileids in combinationlist:
             fileid_i, fileid_j, fileid_k = selectedfileids
-            #print "Searching lines in %s., %s., %s. (%s) files" %(fileid_i, fileid_j, fileid_k, cyc)
             hdulist1 = pyfits.open(fitsfiles[fileid_i])
             hdulist2 = pyfits.open(fitsfiles[fileid_j])
             hdulist3 = pyfits.open(fitsfiles[fileid_k])
@@ -288,48 +262,47 @@ class Detect:
             exptime2 = hdulist2[0].header['exptime']
             obsdate3 = hdulist3[0].header['date-obs']
             exptime3 = hdulist3[0].header['exptime']
-            otime1 =  time.strptime(obsdate1, "%Y-%m-%dT%H:%M:%S.%f")
-            otime2 =  time.strptime(obsdate2, "%Y-%m-%dT%H:%M:%S.%f")
-            otime3 =  time.strptime(obsdate3, "%Y-%m-%dT%H:%M:%S.%f")
+            try:
+                otime1 =  time.strptime(obsdate1, "%Y-%m-%dT%H:%M:%S.%f")
+            except:
+                otime1 =  time.strptime(obsdate1, "%Y-%m-%dT%H:%M:%S")
+            try:
+                otime2 =  time.strptime(obsdate2, "%Y-%m-%dT%H:%M:%S.%f")
+            except:
+                otime2 =  time.strptime(obsdate2, "%Y-%m-%dT%H:%M:%S")
+            try:
+                otime3 =  time.strptime(obsdate3, "%Y-%m-%dT%H:%M:%S.%f")
+            except:
+                otime3 =  time.strptime(obsdate3, "%Y-%m-%dT%H:%M:%S")
             radius =  (time.mktime(otime2) - time.mktime(otime1) + (exptime2 - exptime1) / 2) * vmax / (pixel_scale * xbin)
-            radius2 =  (time.mktime(otime3) - time.mktime(otime2) + (exptime3 - exptime2) / 2) * vmax / (pixel_scale * xbin)
             for u in xrange(len(containerlist[fileid_i])):
                 for z in xrange(len(containerlist[fileid_j])):
                     #ilk çift nokta seçiliyor
-                    absradius1 = self.distance(containerlist[fileid_i][u][1], containerlist[fileid_i][u][2], \
+                    distance12 = self.distance(containerlist[fileid_i][u][1], containerlist[fileid_i][u][2], \
                                                containerlist[fileid_j][z][1], containerlist[fileid_j][z][2])
-                    deltaobs1 = (time.mktime(otime2) - time.mktime(otime1)) + (exptime2 - exptime1) / 2
+                    time12 = (time.mktime(otime2) - time.mktime(otime1)) + (exptime2 - exptime1) / 2
                     if self.isClose(containerlist[fileid_i][u, [1,2]], containerlist[fileid_j][z, [1,2]], radius):
                         for x in xrange(len(containerlist[fileid_k])):
-                            absradius2 = self.distance(containerlist[fileid_j][z][1], containerlist[fileid_j][z][2], \
+                            distance23 = self.distance(containerlist[fileid_j][z][1], containerlist[fileid_j][z][2], \
                                                        containerlist[fileid_k][x][1], containerlist[fileid_k][x][2])
-                            deltaobs2 =  (time.mktime(otime3) - time.mktime(otime2)) + (exptime3 - exptime2) / 2
-                            if self.isClose(containerlist[fileid_j][z, [1,2]], containerlist[fileid_k][x, [1,2]], radius2):
-                                if ((deltaobs2 * absradius1 / deltaobs1) - radiussigma) <= absradius2 and \
-                                ((deltaobs2 * absradius1 / deltaobs1) + radiussigma) >= absradius2:                                             
-                                    base = self.longest(containerlist[fileid_i][u, [1,2]], containerlist[fileid_j][z, [1,2]], containerlist[fileid_k][x, [1,2]])
-                                    hei = self.height(base[:-1], base[-1])
-                                    lengh = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
-                                    if lengh > basepar * 1.5 and hei < heightpar:
-                                        
-                                        p1 = [containerlist[fileid_i][u][1], containerlist[fileid_i][u][2]]
-                                        p2 = [containerlist[fileid_j][z][1], containerlist[fileid_j][z][2]]
-                                        p3 = [containerlist[fileid_k][x][1], containerlist[fileid_k][x][2]]
-                                     
-                                        if self.finalcheck(p1, p2, p3):
-                                            candidates.append([[fileid_i,containerlist[fileid_i][u][0], containerlist[fileid_i][u][1], containerlist[fileid_i][u][2], \
-                                                        containerlist[fileid_i][u][3], containerlist[fileid_i][u][4]],\
-                                                        [fileid_j, containerlist[fileid_j][z][0], containerlist[fileid_j][z][1], containerlist[fileid_j][z][2], \
-                                                        containerlist[fileid_j][z][3], containerlist[fileid_j][z][4]],\
-                                                        [fileid_k, containerlist[fileid_k][x][0], containerlist[fileid_k][x][1], containerlist[fileid_k][x][2], \
-                                                        containerlist[fileid_k][x][3], containerlist[fileid_k][x][4]]])                                                                                                           
-                                        else:
-                                            print "final check failed"
-
-        if combinationindex:
-            with open("./%s_result.txt" %(combinationindex), 'wb') as fl:
+                            time23 =  (time.mktime(otime3) - time.mktime(otime2)) + (exptime3 - exptime2) / 2
+                            # delta değişkenleri asteroitin konum doğrulaması için kullanılıyor.
+                            if ((time23 * distance12 / time12) - tolerance) <= distance23 and \
+                            ((time23 * distance12 / time12) + tolerance) >= distance23:
+                                base = self.longest(containerlist[fileid_i][u, [1,2]], containerlist[fileid_j][z, [1,2]], containerlist[fileid_k][x, [1,2]])
+                                height = self.height(base[:-1], base[-1])
+                                length = self.distance(base[0][0], base[0][1], base[1][0], base[1][1])
+                                if length > basepar * 2 and height < heightpar:
+                                    candidates.append([[fileid_i,containerlist[fileid_i][u][0], containerlist[fileid_i][u][1], containerlist[fileid_i][u][2], \
+                                                containerlist[fileid_i][u][3], containerlist[fileid_i][u][4]],\
+                                                [fileid_j, containerlist[fileid_j][z][0], containerlist[fileid_j][z][1], containerlist[fileid_j][z][2], \
+                                                containerlist[fileid_j][z][3], containerlist[fileid_j][z][4]],\
+                                                [fileid_k, containerlist[fileid_k][x][0], containerlist[fileid_k][x][1], containerlist[fileid_k][x][2], \
+                                                containerlist[fileid_k][x][3], containerlist[fileid_k][x][4]]])
+        if processid:
+            with open("./%s_result.txt" %(processid), 'wb') as fl:
                 pk.dump(candidates, fl)
-            print "All detected lines added to ./%s_result.txt in %s. process." %(combinationindex, combinationindex)
+            print "All detected lines added to ./%s_result.txt in %s. process." %(processid, processid)
             return True
         else:
             if candidates:
@@ -384,7 +357,7 @@ class Detect:
 
     def uniqueanditemlist(self, resultarray):
         """
-        Reads points in same list respectively runs after collect points online function and tags same id in same list if conditions are valid.
+        Reads points in same list respectively runs after collect points on line function and tags same id in same list if conditions are valid.
 
         @param resultarray: List of points which are on same line.
         @type resultarray: list
@@ -424,7 +397,6 @@ class Detect:
                     else:
                         point.append(pointid)
                         candidates.append(point)
-        
         #candidates numpy dizine dönüştürülüyor. duplication'lar eleniyor.                          
         movingobjects = pd.DataFrame.from_records(np.asarray(candidates), columns=["file_id", "flags", "x", "y", "flux", "background", "lineid"])
         movingobjects = movingobjects.drop_duplicates(["file_id", "flags", "x", "y", "flux", "background", "lineid"])
@@ -467,13 +439,13 @@ class Detect:
 
         if (len(combinatedfiles) % numberofcpus) != 0:
             if len(combinatedfiles) < numberofcpus:
-                sizeofworklist = len(combinatedfiles)
+                numberofprocess = len(combinatedfiles)
             else:
-                sizeofworklist = quotient +1
+                numberofprocess = quotient +1
         else:
-            sizeofworklist = quotient
+            numberofprocess = quotient
 
-        return self.chunker(combinatedfiles, sizeofworklist)
+        return self.chunker(combinatedfiles, numberofprocess)
 
     def multilinedetector(self, catdir, fitsdir):
         """
@@ -488,11 +460,11 @@ class Detect:
         
         cmds = list()
         
-        sizeofworklist = len(self.combinecatfiles(catdir))
-        for i in range(sizeofworklist):
+        numberofprocess = len(self.combinecatfiles(catdir))
+        for i in range(numberofprocess):
             cmds.append(["python", "asterotrek.py", "-dl", catdir, fitsdir, str(i)])
         
-        tp = ThreadPool(sizeofworklist)
+        tp = ThreadPool(numberofprocess)
         
         for cmd in cmds:
             tp.apply_async(self.runmp, (cmd,))
@@ -578,13 +550,22 @@ class Detect:
             exptime1 = hdulist1[0].header['exptime']
             obsdate2 = hdulist2[0].header['date-obs']
             exptime2 = hdulist2[0].header['exptime']
-            otime1 =  time.strptime(obsdate1, "%Y-%m-%dT%H:%M:%S.%f")
-            otime2 =  time.strptime(obsdate2, "%Y-%m-%dT%H:%M:%S.%f")
+            try:
+                otime1 =  time.strptime(obsdate1, "%Y-%m-%dT%H:%M:%S.%f")
+            except:
+                otime1 =  time.strptime(obsdate1, "%Y-%m-%dT%H:%M:%S")
+            try:
+                otime2 =  time.strptime(obsdate2, "%Y-%m-%dT%H:%M:%S.%f")
+            except:
+                otime2 =  time.strptime(obsdate2, "%Y-%m-%dT%H:%M:%S")
             
             linelenght = math.sqrt((linepoints[len(linepoints)-1][3] - linepoints[0][3])**2 + \
                                    (linepoints[len(linepoints)-1][2] - linepoints[0][2])**2)
             
-            skymotion = (linelenght / ((time.mktime(otime2) + exptime2) - (time.mktime(otime1) + exptime1))) * 60
+            try:
+                skymotion = (linelenght / ((time.mktime(otime2) + (exptime2 / 2)) - (time.mktime(otime1) + (exptime1 / 2)))) * 60
+            except:
+                skymotion = 0
 
             mowithmu = np.concatenate((linepoints, np.asarray([[skymotion] * len(linepoints)]).T), axis=1)
             
