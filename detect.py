@@ -320,6 +320,15 @@ class Detect:
         """
 
         pointlist = []
+        for points in pointarray:
+
+            p1 = points[0][2:4]
+            p2 = points[1][2:4]
+            p3 = points[2][2:4]
+            print p1
+            print p2
+            print p3
+            print "========="
 
         for points in pointarray:
 
@@ -332,26 +341,37 @@ class Detect:
                     p1status = (p1 in [xy[2:4] for xy in linelist])
                     p2status = (p2 in [xy[2:4] for xy in linelist])
                     p3status = (p3 in [xy[2:4] for xy in linelist])
+                    
+                    print p1, p2, p3, p1status, p2status, p3status
 
-                    if (p1status, p2status, p3status) == (True, False,False):
+                    if (p1status, p2status, p3status) == (True, False, False):
                         linelist.append(points[1])                                                                                                               
                         linelist.append(points[2])
-                    elif (p1status, p2status, p3status) == (False, True,False):
+                        break
+                    elif (p1status, p2status, p3status) == (False, True, False):
                         linelist.append(points[0])                                                                                                               
-                        linelist.append(points[2])                                                      
-                    elif (p1status, p2status, p3status) == (False, False,True):
+                        linelist.append(points[2])
+                        break                                                   
+                    elif (p1status, p2status, p3status) == (False, False, True):
                         linelist.append(points[0])                                                                                                               
-                        linelist.append(points[1])                                                       
-                    elif (p1status, p2status, p3status) == (True, True,False):                                                                                                             
-                        linelist.append(points[2])                                                                           
-                    elif (p1status, p2status, p3status) == (False, True,True):                                                            
-                        linelist.append(points[0])                                                                                                                                                                       
-                    elif (p1status, p2status, p3status) == (True, False,True):                                                            
-                        linelist.append(points[1])                                                                                                               
+                        linelist.append(points[1])
+                        break                                                     
+                    elif (p1status, p2status, p3status) == (True, True, False):                                                                                                             
+                        linelist.append(points[2])
+                        break                                                                   
+                    elif (p1status, p2status, p3status) == (False, True, True):                                                            
+                        linelist.append(points[0])
+                        break                                                                                                                                                                     
+                    elif (p1status, p2status, p3status) == (True, False, True):                                                            
+                        linelist.append(points[1])
+                        break
+                    elif (p1status, p2status, p3status) == (True, True, True):
+                        break                                                                                                            
                 if (p1status, p2status, p3status) == (False, False, False):
                     pointlist.append([points[0], points[1], points[2]])
             else:
                 pointlist.append([points[0], points[1], points[2]])
+        print np.array(pointlist), len(pointlist)
         return pointlist
 
     def uniqueanditemlist(self, resultarray):
