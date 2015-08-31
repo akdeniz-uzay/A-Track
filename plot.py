@@ -45,6 +45,8 @@ class Plot:
         @type outdir: Directory object.
         @param movingobjects: numpy array of moving objects in one file.
         @type movingobjects: array.
+        @param skymotion_limit: sky velocity limit of object.
+        @type skymotion_limit: float.
         @return boolean
         """
         try:

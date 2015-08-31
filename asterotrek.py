@@ -153,9 +153,9 @@ if __name__ == "__main__":
         try:
             print "Please wait until processing is complete (multiprocessing)."
             detectlines = dt.Detect()
-            movingobjects = detectlines.multilinedetector(sys.argv[2], sys.argv[3])
-            if len(movingobjects) != 0:
-                fastmos, slowmos = detectlines.resultreporter(sys.argv[3], movingobjects)
+            lines = detectlines.multilinedetector(sys.argv[2], sys.argv[3])
+            if len(lines) != 0:
+                fastmos, slowmos = detectlines.resultreporter(sys.argv[3], lines)
                 pd.set_option('expand_frame_repr', False)
                 if fastmos.size:
                     fastmos = pd.DataFrame.from_records(fastmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/min)"])

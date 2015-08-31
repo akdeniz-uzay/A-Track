@@ -488,7 +488,7 @@ class Detect:
         p.wait()
         return True
     
-    def resultreporter(self, fitsdir, lines, basepar = 1.0):
+    def resultreporter(self, fitsdir, lines, skymotion_limit = 0.07):
         """
         Categorize and report MOs as slow and fast objects.
 
@@ -496,8 +496,8 @@ class Detect:
         @type fitsdir: Directory
         @param lines: list of detected lines.
         @type lines: list
-        @param basepar: lenght of line.
-        @type basepar: float.
+        @param skymotion_limit: sky velocity limit of object.
+        @type skymotion_limit: float.
         @return: boolean
         """
         tmp = []
@@ -548,24 +548,31 @@ class Detect:
             mowithmu = np.concatenate((np.asarray(linepoints),
                                        np.asarray([[int(lineid) + 1] * len(linepoints)]).T,
                                        np.asarray([[skymotion] * len(linepoints)]).T), axis=1)
-            
-            
-            if  linelenght > basepar * 2:
+            # skymotion değeri hız limiti mu'den büyükse hızlı gruba 
+            # yavaşsa yavaş gruba ekleniyor
+            if  skymotion >= skymotion_limit:
                 fastmos.append(mowithmu)
             else:
                 slowmos.append(mowithmu)
-                
+        
+        # eger hızlılar 1 adetse ilk elemanı döndür        
         if len(fastmos) == 1:
             retfast = fastmos[0]
+        # eger hızlı doğrular birden fazla ise bunları birleştir sonuç için 
+        # görselleştirmede tek bir array halinde verilmeleri işi kolaylaştıracak
         elif len(fastmos) > 1:
             retfast = np.concatenate(tuple(fastmos), axis = 0)
+        # hızlı doğru tespit edilmemişse boş sonuç return et
         elif len(fastmos) == 0:
             retfast = np.array(tmp)
-
+        
+        # eger yavaşlar bir adetse liste içindeki ilk eleman sonuçtur
         if len(slowmos) == 1:
             retslow = slowmos[0]
-        elif len(fastmos) > 1:
+        # eger yavaşlar birden fazla ise sonuçları birleştir görselleştirmede bize lazım olacak (çıktı için)
+        elif len(slowmos) > 1:
             retslow = np.concatenate(tuple(slowmos), axis = 0)
+        # eger yavaşlar bulunmadı ise sonucu boş return et.
         elif len(slowmos) == 0:
             retslow = np.array(tmp)
 
