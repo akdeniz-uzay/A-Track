@@ -100,14 +100,14 @@ if __name__ == "__main__":
         Usage: python asterotrek.py -xcan catalogue_file master_catalogue_file path/candidatedir
             		
         """
-        try:
-            detectlines = dt.Detect()
-            detectlines.detectcandidateobjects(sys.argv[2], sys.argv[3], sys.argv[4])
-            print "%s: Extracting all detected candidate objects to: %s." %(sys.argv[2], sys.argv[4])
-        except:
-            print "Usage error!"
-            print "Usage:python asterotrek.py -xcan <catalogue_file> <master_catalogue_file> <path/candidatedir>"
-            raise SystemExit
+        #try:
+        detectlines = dt.Detect()
+        detectlines.detectcandidateobjects(sys.argv[2], sys.argv[3], sys.argv[4])
+        print "%s: Extracting all detected candidate objects to: %s." %(sys.argv[2], sys.argv[4])
+        #except:
+        #    print "Usage error!"
+        #    print "Usage:python asterotrek.py -xcan <catalogue_file> <master_catalogue_file> <path/candidatedir>"
+        #    raise SystemExit
         
     elif sys.argv[1] == "-mxcan":
         """
@@ -183,22 +183,19 @@ if __name__ == "__main__":
             print "Please wait until processing is complete (multiprocessing)."
             f2n = plt.Plot()
             detectlines = dt.Detect()
-            movingobjects = detectlines.multilinedetector(sys.argv[2], sys.argv[3])
+            lines = detectlines.multilinedetector(sys.argv[2], sys.argv[3])
+            fastmos, slowmos = detectlines.resultreporter(sys.argv[3], lines)
+    
+            movingobjects = np.concatenate((fastmos, slowmos), axis=0)
     
             if len(movingobjects) != 0:
                 if os.path.isdir(sys.argv[3]):
                     for i, fitsimage in enumerate(sorted(glob.glob("%s/*.fits" %(sys.argv[3])))):
-                        print sys.argv[4]
-                        print str(i) + " " + fitsimage
-                        movingobjectsinfile = movingobjects[movingobjects[:, 0].astype(int) == i]
-                        f2n.fits2png(fitsimage, sys.argv[4], movingobjectsinfile, movingobjects)
+                        f2n.fits2png(fitsimage, sys.argv[4], movingobjects[movingobjects[:, 0].astype(int) == i])
                         print "%s converted into %s" %(fitsimage, sys.argv[4])
-                elif os.path.isfile(sys.argv[3]):
-                    f2n.fits2png(sys.argv[3], sys.argv[4], datacat)
-                    print "%s converted into %." %(sys.argv[3], sys.argv[4])
                 print "Plotted all detected objects into PNG files."
-                fastmos, slowmos = detectlines.resultreporter(sys.argv[3], movingobjects)
-                #List of Fast (greater than basepar value between first and last image) Moving Object
+                
+                #List of Fast (greater than basepar value between first and last image) Moving Objects
                 pd.set_option('expand_frame_repr', False)
                 if fastmos.size:
                     fastmos = pd.DataFrame.from_records(fastmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/min)"])

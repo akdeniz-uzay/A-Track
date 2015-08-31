@@ -310,116 +310,62 @@ class Detect:
                 print "No lines detected!"
                 return False
 
-    def collectpointsonline(self, pointarray):
+    def collectpointsonline(self, linesegments):
         """
         Reads three points on same line respectively and collects them in same list if conditions are valid.
 
-        @param pointarray: List of three points which are on same line.
-        @type pointarray: list
+        @param linesegments: List of three points which are on same line.
+        @type linesegments: list
         @return: list
         """
+        # doğruların bulunacağı dizisi tanımlanıyor
+        lines = []
 
-        pointlist = []
-        for points in pointarray:
-
+        for points in linesegments:
+            # ilk segmentin üç noktası seçiliyor
             p1 = points[0][2:4]
             p2 = points[1][2:4]
             p3 = points[2][2:4]
-            print p1
-            print p2
-            print p3
-            print "========="
-
-        for points in pointarray:
-
-            p1 = points[0][2:4]
-            p2 = points[1][2:4]
-            p3 = points[2][2:4]
-
-            if pointlist:
-                for linelist in pointlist:
-                    p1status = (p1 in [xy[2:4] for xy in linelist])
-                    p2status = (p2 in [xy[2:4] for xy in linelist])
-                    p3status = (p3 in [xy[2:4] for xy in linelist])
-                    
-                    print p1, p2, p3, p1status, p2status, p3status
-
+            # eger henüz doğru saptanmamışsa ekle...
+            if lines:
+                # dogru dizisi içinde toplanan herbir ayrı doğrunun içinde seçilen 
+                # segmenting parçaları (noktaları) var mı diye denetleniyor
+                for pointsofline in lines:
+                    p1status = (p1 in [xy[2:4] for xy in pointsofline])
+                    p2status = (p2 in [xy[2:4] for xy in pointsofline])
+                    p3status = (p3 in [xy[2:4] for xy in pointsofline])
+                    # 3 noktanın 8 adet lines dizini içerisinde bulunma ihtimalleri denetleniyor
+                    # C(3,0) + C(3,1) + C(3,2) + C(3,3) = 8
                     if (p1status, p2status, p3status) == (True, False, False):
-                        linelist.append(points[1])                                                                                                               
-                        linelist.append(points[2])
+                        pointsofline.append(points[1])                                                                                                               
+                        pointsofline.append(points[2])
+                        # eger herhangi birisi mevcutsa döngüden çıkılıyor
                         break
                     elif (p1status, p2status, p3status) == (False, True, False):
-                        linelist.append(points[0])                                                                                                               
-                        linelist.append(points[2])
+                        pointsofline.append(points[0])                                                                                                               
+                        pointsofline.append(points[2])
                         break                                                   
                     elif (p1status, p2status, p3status) == (False, False, True):
-                        linelist.append(points[0])                                                                                                               
-                        linelist.append(points[1])
+                        pointsofline.append(points[0])                                                                                                               
+                        pointsofline.append(points[1])
                         break                                                     
                     elif (p1status, p2status, p3status) == (True, True, False):                                                                                                             
-                        linelist.append(points[2])
+                        pointsofline.append(points[2])
                         break                                                                   
-                    elif (p1status, p2status, p3status) == (False, True, True):                                                            
-                        linelist.append(points[0])
+                    elif (p1status, p2status, p3status) == (False, True, True):                                                       
+                        pointsofline.append(points[0])
                         break                                                                                                                                                                     
                     elif (p1status, p2status, p3status) == (True, False, True):                                                            
-                        linelist.append(points[1])
+                        pointsofline.append(points[1])
                         break
                     elif (p1status, p2status, p3status) == (True, True, True):
                         break                                                                                                            
                 if (p1status, p2status, p3status) == (False, False, False):
-                    pointlist.append([points[0], points[1], points[2]])
+                    lines.append([points[0], points[1], points[2]])
             else:
-                pointlist.append([points[0], points[1], points[2]])
-        print np.array(pointlist), len(pointlist)
-        return pointlist
-
-    def uniqueanditemlist(self, resultarray):
-        """
-        Reads points in same list respectively runs after collect points on line function and tags same id in same list if conditions are valid.
-
-        @param resultarray: List of points which are on same line.
-        @type resultarray: list
-        @return: array
-        """
-
-        pointid = 0
-        candidates = []
-
-        #tekrarlı noktaların kontrol işlemi başlıyor
-        for line in resultarray:
-            pointid +=1
-            pc = 0
-            for point in line:
-                #belirlenen doğrular için id'leme işlemi başlıyor
-                #seçilen nokta daha önce id'lendi ise bulunduğu dizi içindeki (line(i)) tespit sırasını alıyor.
-                if (point[0:6] in [xy[0:6] for xy in candidates]) == False:
-                    #candidates'e son atamalar yapılmış mı kontrol ediliyor.
-                    if candidates:
-                        #eger candidates (nihai dizi)'in son elemanı point id'den küçükse,
-                        #line içinde gruplanan noktaların tamamı başka noktalarda var demektir.
-                        #bu yüzden line grup sırası id'leme için kullanılamaz.
-                        if candidates[len(candidates) -1][-1] < pointid:
-                            #yeni bir line id sayacı tanımlanıyor.
-                            pc +=1
-                            #eğer pc 1 ise candidates'te son verilen id numarasından bir fazlası yeni yeni nokta için id olarak verilir.
-                            #eger 1'den fazla ise o point grubu için candidates'te en son verilen id yeni point'e verilir.
-                            if pc == 1:
-                                point.append(candidates[len(candidates) -1][-1] + 1)
-                                candidates.append(point)
-                            else:
-                                point.append(candidates[len(candidates) -1][-1])
-                                candidates.append(point)
-                        else:
-                            point.append(pointid)
-                            candidates.append(point)
-                    else:
-                        point.append(pointid)
-                        candidates.append(point)
-        #candidates numpy dizine dönüştürülüyor. duplication'lar eleniyor.                          
-        movingobjects = pd.DataFrame.from_records(np.asarray(candidates), columns=["file_id", "flags", "x", "y", "flux", "background", "lineid"])
-        movingobjects = movingobjects.drop_duplicates(["file_id", "flags", "x", "y", "flux", "background", "lineid"])
-        return movingobjects.values
+                lines.append([points[0], points[1], points[2]])
+        
+        return lines
 
     def chunker(self, seq, size):
         """
@@ -500,7 +446,7 @@ class Detect:
                 rawcandidates += pk.load(fl)
 
         lines = self.collectpointsonline(rawcandidates)
-        return self.uniqueanditemlist(lines)
+        return lines
 
     def multidcos(self, catdir, outdir):
         """
@@ -542,14 +488,14 @@ class Detect:
         p.wait()
         return True
     
-    def resultreporter(self, fitsdir, movingobjects, basepar = 1.0):
+    def resultreporter(self, fitsdir, lines, basepar = 1.0):
         """
         Categorize and report MOs as slow and fast objects.
 
         @param fitsdir: Directory of aligned FITS image.
         @type fitsdir: Directory
-        @param movingobjects: Numpy array of detected lines.
-        @type movingobjects: array
+        @param lines: list of detected lines.
+        @type lines: list
         @param basepar: lenght of line.
         @type basepar: float.
         @return: boolean
@@ -557,12 +503,19 @@ class Detect:
         tmp = []
         fastmos = []
         slowmos = []
+        #fits dosyaları hız hesaplamalı için listeleniyor
         fitsfiles = sorted(glob.glob("%s/*.fit*" %(fitsdir)))
-        numberoflines = movingobjects[:,6].max()
+        #tespit edilen doğru sayısı
+        numberoflines = len(lines)
         
-        for lineid in xrange(1, int(numberoflines)+1):
-            linepoints = movingobjects[movingobjects[:, 6].astype(int) == int(lineid)]
-            fileid_min, fileid_max = int(linepoints[:,0].min()), int(linepoints[:,0].max())
+        # herbir dosyada tespit edilen doğru noktaları için hız hesaplanıyor
+        for lineid in xrange(numberoflines):
+            # seçilen doğrunun noktaları olası bir yanlış dizilim olasılığına karşın sıralarıyor
+            # böylelikle hız hesabı için en uç noktaların kullanımı kesinleşecek
+            linepoints = sorted(lines[lineid])
+            # seçilen doğrunun ilk ve son noktası hangi dosya üzerinde onlar belirleniyor
+            fileid_min, fileid_max = int(linepoints[0][0]), int(linepoints[len(linepoints) - 1][0])
+            # bu dosyalar belirlendikten sonra başlıklarından zaman bilgileri okunuyor
             hdulist1 = pyfits.open(fitsfiles[fileid_min])
             hdulist2 = pyfits.open(fitsfiles[fileid_max])
             obsdate1 = hdulist1[0].header['date-obs']
@@ -578,15 +531,24 @@ class Detect:
             except:
                 otime2 =  time.strptime(obsdate2, "%Y-%m-%dT%H:%M:%S")
             
-            linelenght = math.sqrt((linepoints[len(linepoints)-1][3] - linepoints[0][3])**2 + \
-                                   (linepoints[len(linepoints)-1][2] - linepoints[0][2])**2)
+            # gozlem zamanları saniye birimine çevrildi
             
+            # seçilen uc noktaların bulunduğu dosyaların (noktaların) arasındaki mesafe ölçülüyor
+            linelenght = self.distance(linepoints[0][2], linepoints[0][3], 
+                                       linepoints[len(linepoints)-1][2], linepoints[len(linepoints)-1][3])
+            
+            # V = (uzaklık/ delta(t)) * 60 hareketli nesnenin hızı belirleniyor (px/min)
             try:
                 skymotion = (linelenght / ((time.mktime(otime2) + (exptime2 / 2)) - (time.mktime(otime1) + (exptime1 / 2)))) * 60
             except:
                 skymotion = 0
-
-            mowithmu = np.concatenate((linepoints, np.asarray([[skymotion] * len(linepoints)]).T), axis=1)
+                
+            # this variable adds skymotion (mu) and line id to lines...
+            # hesaplanan skymotion degeri doğruya ek bilgi sütunu olarak ekleniyor.
+            mowithmu = np.concatenate((np.asarray(linepoints),
+                                       np.asarray([[int(lineid) + 1] * len(linepoints)]).T,
+                                       np.asarray([[skymotion] * len(linepoints)]).T), axis=1)
+            
             
             if  linelenght > basepar * 2:
                 fastmos.append(mowithmu)
