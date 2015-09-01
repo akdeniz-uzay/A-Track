@@ -488,7 +488,7 @@ class Detect:
         p.wait()
         return True
     
-    def resultreporter(self, fitsdir, lines, skymotion_limit = 0.07):
+    def resultreporter(self, fitsdir, lines, skymotion_limit = 0.1):
         """
         Categorize and report MOs as slow and fast objects.
 

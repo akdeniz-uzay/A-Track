@@ -33,7 +33,7 @@ class Plot:
     MOD's plotting class.
                 
     """
-    def fits2png(self, fitsfile, outdir, movingobjects = None, skymotion_limit = 0.07):
+    def fits2png(self, fitsfile, outdir, movingobjects = None, skymotion_limit = 0.1):
         """
         f2n is a tiny python module to transfrom FITS images into PNG files, built around pyfits and PIL. 
         I tend to include these PNG files into html pages for fast visualization, that's why the module is called "fits to net".
