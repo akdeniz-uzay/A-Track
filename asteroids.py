@@ -1,0 +1,521 @@
+# -*- coding: utf-8 -*-
+# Authors: Yücel Kılıç
+# This is an open-source software licensed under GPLv3. 363
+
+
+try:
+    import pyfits
+except ImportError:
+    print('Python cannot import pyfits. Make sure pyfits is installed.')
+    raise SystemExit
+
+try:
+    import numpy as np
+except ImportError:
+    print('Python cannot import numpy. Make sure numpy is installed.')
+    raise SystemExit
+
+try:
+    import pandas as pd
+except ImportError:
+    print('Python cannot import pandas. Make sure pandas is installed.')
+    raise SystemExit
+
+import math
+import glob
+import os
+import time
+import itertools as it
+import pickle as pk
+from multiprocessing import Pool, cpu_count
+
+
+def distance(p1, p2):
+
+    '''
+    Returns the distance between two points.
+
+    @param p1: x and y coordinates of the first point.
+    @type p1: list, tuple
+    @param p2: x and y coordinates of the second point.
+    @type p2: list, tuple
+    @return: float
+    '''
+
+    return math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
+
+
+def isClose(p1, p2, dmax):
+
+    '''
+    Checks if the distance between two points is less than a given value.
+
+    @param p1: x and y coordinates of the first point.
+    @type p1: list, tuple
+    @param p2: x and y coordinates of the second point.
+    @type p2: list, tuple
+    @param dmax: Distance to compare.
+    @type dmax: float, integer
+    @return: boolean
+    '''
+
+    d12 = distance(p1, p2)
+
+    return d12 <= dmax
+
+
+def ordered(p1, p2, p3):
+
+    '''
+    Reorders the vertices p1,p2,p3 of a triangle such that first two points
+    define the longest edge.
+
+    @param p1: x and y coordinates of the first point.
+    @type p1: list, tuple
+    @param p2: x and y coordinates of the second point.
+    @type p2: list, tuple
+    @param p3: x and y coordinates of the third point.
+    @type p3: list
+    @return: tuple
+    '''
+
+    d12 = distance(p1, p2)
+    d13 = distance(p1, p3)
+    d23 = distance(p2, p3)
+
+    long = max(d12, d23, d13)
+
+    if long == d12:
+        return (p1, p2, p3)
+    elif long == d13:
+        return (p1, p3, p2)
+    elif long == d23:
+        return (p2, p3, p1)
+
+
+def height(p1, p2, p3):
+
+    '''
+    Returns the shortest distance between a line and a point.
+
+    @param p1: x and y coordinates of the first point on the line.
+    @type p1: list, tuple
+    @param p2: x and y coordinates of the second point on the line.
+    @type p2: list, tuple
+    @param p3: x and y coordinates of the third point.
+    @type p3: list
+    @return: float
+    '''
+
+    x1 = p1[0]
+    y1 = p1[1]
+    x2 = p2[0]
+    y2 = p2[1]
+    x3 = p3[0]
+    y3 = p3[1]
+
+    try:
+        h = math.fabs((x2 - x1)*y3 - (y2 - y1)*x3 + x1*y2 - x2*y1) \
+            / math.sqrt(math.pow(x2 - x1, 2) + math.pow(y2 - y1, 2))
+    except ZeroDivisionError:
+        h = 0
+
+    return h
+
+
+def partitions(workload):
+
+    '''
+    Distributes the workload (3-combinations of all images) among available
+    CPUs as evenly as possible.
+
+    @param workload: List of 3-combinations of all images.
+    @type workload: list
+    @return: list
+    '''
+
+    nCPU = cpu_count()
+    partition = []
+    n = nCPU
+
+    while len(partition) != nCPU and len(workload) != 0:
+
+        size = math.ceil(len(workload) / n)
+        partition.append(workload[:size])
+        del workload[:size]
+        n = n - 1
+
+    return(partition)
+
+
+def detect_candidates(CMO, FWHM_MIN=1, FLUX=500000, ELONGATION=1.8, SNR=5,
+                      TRAVEL_MIN=0.35):
+
+    '''
+    Eliminates the sources, that do not satisfy the given criteria, from given
+    SExtractor catalog files.
+
+    @param CMO: Tuple (list of SExtractor catalog files, master catalog file,
+    output directory for the new catalog file).
+    @type CMO: tuple
+    @param FWHM_MIN: Minimum FWHM for the candidate objects.
+    @type FWHM_MIN: float
+    @param FLUX: Maximum flux for the candidate objects.
+    @type FLUX: float
+    @param ELONGATION: Maximum ellipticity for the candidate objects.
+    @type ELONGATION: float
+    @param SNR: Minimum SNR for the candidate objects.
+    @type SNR: float
+    @param TRAVEL_MIN: Minimum travel distance between two images for a
+    moving object.
+    @type TRAVEL_MIN: float
+    @return: pandas.DataFrame
+    '''
+
+    catalogs, master, outdir = CMO[0], CMO[1], CMO[2]
+
+    for catalog in catalogs:
+
+        catalog_np = np.genfromtxt(catalog, delimiter=None, comments='#')
+        master_np = np.genfromtxt(master, delimiter=None, comments='#')
+
+        COLUMNS = ['flags', 'x', 'y', 'flux', 'background', 'fwhm',
+                   'elongation', 'fluxerr']
+
+        catalog_pd = pd.DataFrame.from_records(catalog_np, columns=COLUMNS)
+        master_pd = pd.DataFrame.from_records(master_np, columns=COLUMNS)
+
+        FWHM_MAX = np.mean(master_np[:, 5]) * 2.5
+
+        catalogF = catalog_pd[(catalog_pd.flags <= 16) &
+                              (catalog_pd.fwhm <= FWHM_MAX) &
+                              (catalog_pd.fwhm >= FWHM_MIN) &
+                              (catalog_pd.flux <= FLUX) &
+                              (catalog_pd.flux > catalog_pd.background) &
+                              (catalog_pd.flux / catalog_pd.fluxerr > SNR) &
+                              (catalog_pd.elongation <= ELONGATION)]
+
+        masterF = master_pd[(master_pd.flags <= 16) &
+                            (master_pd.fwhm <= FWHM_MAX) &
+                            (master_pd.fwhm >= FWHM_MIN)
+                            (master_pd.flux <= FLUX) &
+                            (master_pd.flux > master_pd.background) &
+                            (master_pd.flux / master_pd.fluxerr > SNR) &
+                            (master_pd.elongation <= ELONGATION)]
+
+        catalogF = catalogF[COLUMNS[:5]].reset_index(drop=True)
+        masterF = masterF[COLUMNS[:5]].reset_index(drop=True)
+
+        candidates = pd.DataFrame(columns=COLUMNS[:5])
+
+        for i in range(len(catalogF.x)):
+
+            if len(masterF[math.sqrt((masterF.x - catalogF.x[i])**2 +
+                                     (masterF.y - catalogF.y[i])**2)
+                           <= TRAVEL_MIN]) < 2:
+                candidates = candidates.append(catalogF.iloc[i],
+                                               ignore_index=True)
+
+        catalog_head = os.path.basename(catalog).split('.')[0]
+        candidates.to_csv('{0}/{1}.cnd'.format(outdir, catalog_head),
+                          index=False)
+
+
+def all_candidates(catdir, outdir):
+
+    '''
+    Eliminates the sources, that do not satisfy the given criteria, from all
+    SExtractor catalog files.
+
+    @param catdir: Directory for the catalog files.
+    @type catdir: string
+    @param outdir: Output directory for the new catalog files.
+    @type outdir: string
+    '''
+
+    nCPU = cpu_count()
+    workload = sorted(glob.glob(catdir + '/*affineremap.pysexcat'))
+    cmds = []
+
+    for catalogs in partitions(workload):
+        cmds.append(tuple([catalogs, catdir + '/master.pysexcat', outdir]))
+
+    with Pool(nCPU) as p:
+        p.map_async(detect_candidates, cmds)
+
+
+def detect_segments(CFP, TRAVEL_MIN=0.35, HEIGHT_MAX=0.1, SCALE=0.31,
+                    VMAX=0.03, TOLERANCE=1.0):
+
+    '''
+    Detects line segments inside a given list of 3-combinations.
+
+    @param catdir: Tuple (directory for the catalog files, directory for the
+    aligned FITS images, processor number).
+    @type CFP: tuple
+    @param TRAVEL_MIN: Minimum travel distance between two images for a
+    moving object.
+    @type TRAVEL_MIN: float
+    @param HEIGHT_MAX: Maximum height of the triangle for the 3 points to
+    be considered as collinear.
+    @type HEIGHT_MAX: float
+    @param SCALE: Pixel scale subtended by the telescope/CCD system
+    (arcsecond).
+    @type SCALE: float
+    @param VMAX: Theoretical maximum angular velocity of NEOs ("/sec).
+    @type VMAX: float
+    @param TOLERANCE: Tolerance for the position of third point (pixel).
+    @type TOLERANCE: float
+    '''
+
+    catdir, fitsdir, processor = CFP[0], CFP[1], CFP[2]
+    images = sorted(glob.glob(fitsdir + '/*.fits'))
+    files = sorted(glob.glob(catdir + '/*affineremap.cnd'))
+    fileids = list(range(len(files)))
+    workload = list(it.combinations(fileids, 3))
+
+    catalogs = []
+
+    for file in files:
+
+        catalog = pd.read_csv(file, sep=',',
+                              names=['flags', 'x', 'y', 'flux',
+                                     'background'],
+                              header=0)
+        catalogs.append(catalog.values)
+
+    segments = []
+    partition = partitions(workload)[int(processor)]
+
+    for i, j, k in partition:
+
+        hdu1 = pyfits.open(images[i])
+        hdu2 = pyfits.open(images[j])
+        hdu3 = pyfits.open(images[k])
+        xbin = hdu1[0].header['xbinning']
+        obs_date1 = hdu1[0].header['date-obs']
+        obs_date2 = hdu2[0].header['date-obs']
+        obs_date3 = hdu3[0].header['date-obs']
+        exp_time1 = hdu1[0].header['exptime']
+        exp_time2 = hdu2[0].header['exptime']
+        exp_time3 = hdu3[0].header['exptime']
+
+        try:
+            obs_time1 = time.strptime(obs_date1, '%Y-%m-%dT%H:%M:%S.%f')
+        except:
+            obs_time1 = time.strptime(obs_date1, '%Y-%m-%dT%H:%M:%S')
+        try:
+            obs_time2 = time.strptime(obs_date2, '%Y-%m-%dT%H:%M:%S.%f')
+        except:
+            obs_time2 = time.strptime(obs_date2, '%Y-%m-%dT%H:%M:%S')
+        try:
+            obs_time3 = time.strptime(obs_date3, '%Y-%m-%dT%H:%M:%S.%f')
+        except:
+            obs_time3 = time.strptime(obs_date3, '%Y-%m-%dT%H:%M:%S')
+
+        dmax = (time.mktime(obs_time2) - time.mktime(obs_time1)
+                + (exp_time2 - exp_time1) / 2) * VMAX / (SCALE * xbin)
+
+        for p1 in range(len(catalogs[i])):
+
+            for p2 in range(len(catalogs[j])):
+
+                d12 = distance(catalogs[i][p1][1, 2], catalogs[j][p2][1, 2])
+                t12 = (time.mktime(obs_time2) - time.mktime(obs_time1)
+                       + (exp_time2 - exp_time1) / 2)
+
+                if isClose(catalogs[i][p1, [1, 2]], catalogs[j][p2, [1, 2]],
+                           dmax):
+
+                    for p3 in range(len(catalogs[k])):
+
+                        d23 = distance(catalogs[j][p2][1, 2],
+                                       catalogs[k][p3][1, 2])
+                        t23 = (time.mktime(obs_time3) - time.mktime(obs_time2)
+                               + (exp_time3 - exp_time2) / 2)
+
+                        if t23 * d12 / t12 - TOLERANCE <= d23 <= \
+                           t23 * d12 / t12 + TOLERANCE:
+
+                            points = ordered(catalogs[i][p1, [1, 2]],
+                                             catalogs[j][p2, [1, 2]],
+                                             catalogs[k][p3, [1, 2]])
+                            HEIGHT = height(points[0], points[1], points[2])
+                            LENGTH = distance(points[0], points[1])
+
+                            if LENGTH > TRAVEL_MIN * 2 and HEIGHT < HEIGHT_MAX:
+                                segments.append([[i,
+                                                  catalogs[i][p1][0],
+                                                  catalogs[i][p1][1],
+                                                  catalogs[i][p1][2],
+                                                  catalogs[i][p1][3],
+                                                  catalogs[i][p1][4]],
+                                                 [j,
+                                                  catalogs[j][p2][0],
+                                                  catalogs[j][p2][1],
+                                                  catalogs[j][p2][2],
+                                                  catalogs[j][p2][3],
+                                                  catalogs[j][p2][4]],
+                                                 [k,
+                                                  catalogs[k][p3][0],
+                                                  catalogs[k][p3][1],
+                                                  catalogs[k][p3][2],
+                                                  catalogs[k][p3][3],
+                                                  catalogs[k][p3][4]]])
+
+    with open(catdir + '/Processor{0}.sgm'.format(processor), 'wb') as result:
+        pk.dump(segments, result)
+
+    print('All detected segments from Processor {0} were added to',
+          'Processor{0}.sgm.'.format(processor))
+
+
+def merge_segments(segments):
+
+    '''
+    Merges 3-point segments that belong to the same line.
+    @param segments: List of 3-point segments.
+    @type segments: list
+    @return: list
+    '''
+
+    lines = []
+
+    for segment in segments:
+
+        p1 = segment[0][2:4]
+        p2 = segment[1][2:4]
+        p3 = segment[2][2:4]
+
+        if lines:
+
+            for line in lines:
+
+                points = [point[2:4] for point in line]
+                check1 = p1 in points
+                check2 = p2 in points
+                check3 = p3 in points
+                checks = (check1, check2, check3)
+
+                if True in checks and False in checks:
+
+                    for i in range(3):
+                        if checks[i] is False:
+                            line.append(segment[i])
+
+                    break
+
+            if checks == (False, False, False):
+                lines.append([segment[0], segment[1], segment[2]])
+
+        else:
+            lines.append([segment[0], segment[1], segment[2]])
+
+    return lines
+
+
+def detect_lines(catdir, fitsdir):
+
+    '''
+    Detects all line segments in a project.
+
+    @param catdir: Directory for the catalog files.
+    @type catdir: string
+    @param fitsdir: Directory for the aligned FITS images.
+    @type fitsdir: string
+    @return: list
+    '''
+
+    nCPU = cpu_count()
+    cmds = []
+
+    for i in range(nCPU):
+        cmds.append(tuple([catdir, fitsdir, str(i)]))
+
+    with Pool(nCPU) as p:
+        p.map_async(detect_segments, cmds)
+
+    results = sorted(glob.glob(catdir + '/*.sgm'))
+    segments = []
+
+    for result in results:
+
+        with open(result, 'rb') as res:
+            segments += pk.load(res)
+
+    return merge_segments(segments)
+
+
+def results(fitsdir, lines, SPEED_MIN=0.1):
+
+    '''
+    Reports detected moving objects, slow and fast.
+
+    @param fitsdir: Directory for the aligned FITS images.
+    @type fitsdir: string
+    @param lines: List of detected lines.
+    @type lines: list
+    @param SPEED_MIN: Minimum speed of a moving object.
+    @type SPEED_MIN: float
+    @return: numpy.ndarray
+    '''
+
+    fast_objects = []
+    slow_objects = []
+
+    images = sorted(glob.glob(fitsdir + '/*.fits'))
+
+    for i in range(len(lines)):
+
+        line = sorted(lines[i])
+        nmin = int(line[0][0])
+        nmax = int(line[-1][0])
+        hdu1 = pyfits.open(images[nmin])
+        hdu2 = pyfits.open(images[nmax])
+        obs_date1 = hdu1[0].header['date-obs']
+        exp_time1 = hdu1[0].header['exptime']
+        obs_date2 = hdu2[0].header['date-obs']
+        exp_time2 = hdu2[0].header['exptime']
+
+        try:
+            obs_time1 = time.strptime(obs_date1, '%Y-%m-%dT%H:%M:%S.%f')
+        except:
+            obs_time1 = time.strptime(obs_date1, '%Y-%m-%dT%H:%M:%S')
+        try:
+            obs_time2 = time.strptime(obs_date2, '%Y-%m-%dT%H:%M:%S.%f')
+        except:
+            obs_time2 = time.strptime(obs_date2, '%Y-%m-%dT%H:%M:%S')
+
+        length = distance(line[0][2, 3], line[-1][2, 3])
+
+        try:
+            speed = 60 * length / (time.mktime(obs_time2) + exp_time2 / 2
+                                   - time.mktime(obs_time1) - exp_time1 / 2)
+        except:
+            speed = 0
+
+        info = np.concatenate((np.asarray(line),
+                               np.asarray([[int(i) + 1] * len(line)]).T,
+                               np.asarray([[speed] * len(line)]).T),
+                              axis=1)
+
+        if speed >= SPEED_MIN:
+            fast_objects.append(info)
+        else:
+            slow_objects.append(info)
+
+    if len(fast_objects) == 1:
+        fast_objects = fast_objects[0]
+    elif len(fast_objects) > 1:
+        fast_objects = np.concatenate(tuple(fast_objects), axis=0)
+    elif len(fast_objects) == 0:
+        fast_objects = np.array([])
+
+    if len(slow_objects) == 1:
+        slow_objects = slow_objects[0]
+    elif len(slow_objects) > 1:
+        slow_objects = np.concatenate(tuple(slow_objects), axis=0)
+    elif len(slow_objects) == 0:
+        slow_objects = np.array([])
+
+    return fast_objects, slow_objects
