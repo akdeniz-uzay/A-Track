@@ -49,7 +49,7 @@ def align(fitsdir, reference, outdir):
 
 def make_catalog(fitsdir, outdir, DETECT_THRESH=3, ANALYSIS_THRESH=3,
                  DETECT_MINAREA=1, PIXEL_SCALE=0.31, SEEING_FWHM=1.5,
-                 PHOT_AUTOPARAMS='2.5, 3.5', BACK_SIZE=64,
+                 PHOT_AUTOPARAMS='"2.5, 3.5"', BACK_SIZE=64,
                  BACK_FILTERSIZE=3, DEBLEND_NTHRESH=16, SATUR_LEVEL=60000,
                  DEBLEND_MINCONT=0.00001, GAIN=0.55, rerun=True, keepcat=True,
                  verbose=True):

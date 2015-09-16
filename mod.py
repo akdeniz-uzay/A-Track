@@ -65,7 +65,7 @@ if __name__ == '__main__':
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
 
     print('Creating catalog files...')
-    sources.make_catalog(fitsdir, outdir)
+    sources.make_catalog(outdir, outdir)
     elapsed = int(time.time() - start)
     print('Complete!')
     print('Catalog files are saved as *affineremap.pysexcat.')
