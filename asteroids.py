@@ -197,7 +197,7 @@ def detect_candidates(CMO, FWHM_MIN=1, FLUX=500000, ELONGATION=1.8, SNR=5,
 
         masterF = master_pd[(master_pd.flags <= 16) &
                             (master_pd.fwhm <= FWHM_MAX) &
-                            (master_pd.fwhm >= FWHM_MIN)
+                            (master_pd.fwhm >= FWHM_MIN) &
                             (master_pd.flux <= FLUX) &
                             (master_pd.flux > master_pd.background) &
                             (master_pd.flux / master_pd.fluxerr > SNR) &
@@ -210,9 +210,10 @@ def detect_candidates(CMO, FWHM_MIN=1, FLUX=500000, ELONGATION=1.8, SNR=5,
 
         for i in range(len(catalogF.x)):
 
-            if len(masterF[math.sqrt((masterF.x - catalogF.x[i])**2 +
-                                     (masterF.y - catalogF.y[i])**2)
-                           <= TRAVEL_MIN]) < 2:
+            if len(masterF[(masterF.x - catalogF.x[i])**2 +
+                           (masterF.y - catalogF.y[i])**2 <=
+                           TRAVEL_MIN ** 2]) < 2:
+
                 candidates = candidates.append(catalogF.iloc[i],
                                                ignore_index=True)
 
@@ -240,8 +241,8 @@ def all_candidates(catdir, outdir):
     for catalogs in partitions(workload):
         cmds.append(tuple([catalogs, catdir + '/master.pysexcat', outdir]))
 
-    with Pool(nCPU) as p:
-        p.map_async(detect_candidates, cmds)
+    with Pool(nCPU) as pool:
+        pool.map(detect_candidates, cmds)
 
 
 def detect_segments(CFP, TRAVEL_MIN=0.35, HEIGHT_MAX=0.1, SCALE=0.31,
@@ -320,7 +321,7 @@ def detect_segments(CFP, TRAVEL_MIN=0.35, HEIGHT_MAX=0.1, SCALE=0.31,
 
             for p2 in range(len(catalogs[j])):
 
-                d12 = distance(catalogs[i][p1][1, 2], catalogs[j][p2][1, 2])
+                d12 = distance(catalogs[i][p1][1:3], catalogs[j][p2][1:3])
                 t12 = (time.mktime(obs_time2) - time.mktime(obs_time1)
                        + (exp_time2 - exp_time1) / 2)
 
@@ -329,8 +330,8 @@ def detect_segments(CFP, TRAVEL_MIN=0.35, HEIGHT_MAX=0.1, SCALE=0.31,
 
                     for p3 in range(len(catalogs[k])):
 
-                        d23 = distance(catalogs[j][p2][1, 2],
-                                       catalogs[k][p3][1, 2])
+                        d23 = distance(catalogs[j][p2][1:3],
+                                       catalogs[k][p3][1:3])
                         t23 = (time.mktime(obs_time3) - time.mktime(obs_time2)
                                + (exp_time3 - exp_time2) / 2)
 
@@ -366,8 +367,8 @@ def detect_segments(CFP, TRAVEL_MIN=0.35, HEIGHT_MAX=0.1, SCALE=0.31,
     with open(catdir + '/Processor{0}.sgm'.format(processor), 'wb') as result:
         pk.dump(segments, result)
 
-    print('All detected segments from Processor {0} were added to',
-          'Processor{0}.sgm.'.format(processor))
+    print('All detected segments from Processor {0}'.format(processor),
+          'were added to Processor{0}.sgm.'.format(processor))
 
 
 def merge_segments(segments):
@@ -432,8 +433,8 @@ def detect_lines(catdir, fitsdir):
     for i in range(nCPU):
         cmds.append(tuple([catdir, fitsdir, str(i)]))
 
-    with Pool(nCPU) as p:
-        p.map_async(detect_segments, cmds)
+    with Pool(nCPU) as pool:
+        pool.map(detect_segments, cmds, 1)
 
     results = sorted(glob.glob(catdir + '/*.sgm'))
     segments = []
@@ -486,7 +487,7 @@ def results(fitsdir, lines, SPEED_MIN=0.1):
         except:
             obs_time2 = time.strptime(obs_date2, '%Y-%m-%dT%H:%M:%S')
 
-        length = distance(line[0][2, 3], line[-1][2, 3])
+        length = distance(line[0][2:4], line[-1][2:4])
 
         try:
             speed = 60 * length / (time.mktime(obs_time2) + exp_time2 / 2

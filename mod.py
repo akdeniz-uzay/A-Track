@@ -37,8 +37,8 @@ except ImportError:
     raise SystemExit
 
 import sys
-import os
 import time
+import os
 import glob
 
 
@@ -57,35 +57,35 @@ if __name__ == '__main__':
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
 
-    print('Aligning images...')
+    print('\nAligning images...', end=' ')
     sources.align(fitsdir, reference, outdir)
     elapsed = int(time.time() - start)
     print('Complete!')
     print('Aligned images are saved as *affineremap.fits.')
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
 
-    print('Creating catalog files...')
+    print('\nCreating catalog files...', end=' ')
     sources.make_catalog(outdir, outdir)
     elapsed = int(time.time() - start)
     print('Complete!')
     print('Catalog files are saved as *affineremap.pysexcat.')
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
 
-    print('Building master catalog file...')
+    print('\nBuilding master catalog file...', end=' ')
     sources.make_master(outdir)
     elapsed = int(time.time() - start)
     print('Complete!')
     print('Master catalog file is saved as master.pysexcat.')
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
 
-    print('Detecting candidates...')
+    print('\nDetecting candidates...', end=' ')
     asteroids.all_candidates(outdir, outdir)
     elapsed = int(time.time() - start)
     print('Complete!')
     print('Candidates for each image are saved as *affineremap.cnd.')
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
 
-    print('Detecting moving objects...')
+    print('\nDetecting moving objects...\n')
     lines = asteroids.detect_lines(outdir, fitsdir)
 
     if len(lines) == 0:
@@ -94,41 +94,48 @@ if __name__ == '__main__':
 
     fast_objects, slow_objects = asteroids.results(fitsdir, lines)
     pd.set_option('expand_frame_repr', False)
-    COLUMNS = ['File ID', 'Flags', 'x', 'y', 'Flux', 'Background', 'Object ID',
-               'Speed (px/min)']
+    COLUMNS = ['FileID', 'Flags', 'x', 'y', 'Flux', 'Background', 'ObjectID',
+               'Speed(px/min)']
+
+    elapsed = int(time.time() - start)
+    print('\nMoving object detection completed.')
+    print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
 
     if fast_objects.size:
 
         fast_objects = pd.DataFrame.from_records(fast_objects, columns=COLUMNS)
-        print('\033[1;32mFast Moving Objects\033[0m')
-        print('\033[1;32m===================\033[0m')
+        print('\nFAST MOVING OBJECTS:\n')
         print(fast_objects)
 
     if slow_objects.size:
 
         slow_objects = pd.DataFrame.from_records(slow_objects, columns=COLUMNS)
-        print('\033[1;31mSlow Moving Objects\033[0m')
-        print('\033[1;31m===================\033[0m')
+        print('\nSLOW MOVING OBJECTS:\n')
         print(slow_objects)
 
-    elapsed = int(time.time() - start)
-    print('Moving object detection completed.')
-    print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
+    print()
 
-    print('Creating png files...', end=' ')
-    objects = np.concatenate((fast_objects, slow_objects), axis=0)
-    images = sorted(glob.glob(fitsdir + '/*.fits'))
-
-    for i, image in enumerate(images):
-        visuals.fits2png(image, outdir,
-                         objects[objects[:, 0].astype(int) == i])
-        print('{0} converted.'.format(image))
-
-    elapsed = int(time.time() - start)
-    print('png conversion completed.')
-    print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
-
-
+#    print('Creating png files...')
+#
+#    if fast_objects.size and slow_objects.size:
+#        objects = np.concatenate((fast_objects, slow_objects), axis=0)
+#    elif not fast_objects.size and slow_objects.size:
+#        objects = slow_objects
+#    elif not slow_objects.size and fast_objects.size:
+#        objects = fast_objects
+#
+#    images = sorted(glob.glob(fitsdir + '/*.fits'))
+#
+#    for i, image in enumerate(images):
+#        visuals.fits2png(image, outdir,
+#                         objects[objects[:, 0].astype(int) == i])
+#        print('{0} converted.'.format(image))
+#
+#    elapsed = int(time.time() - start)
+#    print('png conversion completed.')
+#    print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
+#
+#
 #    elif sys.argv[1] == '-fits2png' and len(sys.argv) == 4:
 #        '''
 #        Converts FITS images into PNG files.

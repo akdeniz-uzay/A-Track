@@ -35,16 +35,16 @@ def align(fitsdir, reference, outdir):
     images = sorted(glob.glob(fitsdir + '/*.fits'))
 
     identifications = alipy.ident.run(reference, images, visu=False,
-                                      sexkeepcat=True)
+                                      sexkeepcat=False, verbose=False)
 
-    outshape = alipy.align.shape(reference)
+    outshape = alipy.align.shape(reference, verbose=False)
 
     for idn in identifications:
 
         if idn.ok:
             alipy.align.affineremap(idn.ukn.filepath, idn.trans,
                                     shape=outshape, outdir=outdir,
-                                    makepng=False)
+                                    makepng=False, verbose=False)
 
 
 def make_catalog(fitsdir, outdir, DETECT_THRESH=3, ANALYSIS_THRESH=3,
@@ -52,7 +52,7 @@ def make_catalog(fitsdir, outdir, DETECT_THRESH=3, ANALYSIS_THRESH=3,
                  PHOT_AUTOPARAMS='"2.5, 3.5"', BACK_SIZE=64,
                  BACK_FILTERSIZE=3, DEBLEND_NTHRESH=16, SATUR_LEVEL=60000,
                  DEBLEND_MINCONT=0.00001, GAIN=0.55, rerun=True, keepcat=True,
-                 verbose=True):
+                 verbose=False):
 
     '''
     Creates SExtractor catalogs from FITS files.
@@ -141,7 +141,7 @@ def make_master(catdir):
     @type catdir: string
     '''
 
-    catfiles = sorted(glob.glob(catdir + '/*.pysexcat'))
+    catfiles = sorted(glob.glob(catdir + '/*affineremap.pysexcat'))
 
     with open(catdir + '/master.pysexcat', 'wb') as outfile:
         for catfile in catfiles:
