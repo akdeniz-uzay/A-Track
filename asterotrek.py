@@ -54,15 +54,15 @@ if __name__ == "__main__":
         Usage: python asterotrek.py -align "path/*.fits" path/reference.fits path/aligned
                     
         """   
-        try:
-            print "Please wait until processing is complete."
-            asteractor.align(sys.argv[2], sys.argv[3], sys.argv[4])
-            print "Identification and align processes are completed."
-            print "Elapsed time: %s min. %s sec." %(int((time.time() - start_time) / 60), "%.2f" % ((time.time() - start_time) % 60))
-        except:
-            print "Usage error!"
-            print "Usage: python asterotrek.py -align <fitsfiles> <reference.fits> <outdir>"
-            raise SystemExit
+    #try:
+        print "Please wait until processing is complete."
+        asteractor.align(sys.argv[2], sys.argv[3], sys.argv[4])
+        print "Identification and align processes are completed."
+        print "Elapsed time: %s min. %s sec." %(int((time.time() - start_time) / 60), "%.2f" % ((time.time() - start_time) % 60))
+    #except:
+    #    print "Usage error!"
+    #    print "Usage: python asterotrek.py -align <fitsfiles> <reference.fits> <outdir>"
+    #    raise SystemExit
 
     elif sys.argv[1] == "-sextractor":
         """
@@ -86,14 +86,14 @@ if __name__ == "__main__":
         Makes master catalogue file.
         Usage: python asterotrek.py -makemaster path/catdir	
         """
-        try:
-            asteractor.makemastercat(sys.argv[2])
-            print "Making all in one star catalogue process is completed."
-            print "Elapsed time: %s min. %s sec." %(int((time.time() - start_time) / 60), "%.2f" % ((time.time() - start_time) % 60))
-        except:
-            print "Usage error!"
-            print "Usage: python asterotrek.py -makemaster <path/catdir>"
-            raise SystemExit
+    #try:
+        asteractor.makemastercat(sys.argv[2])
+        print "Making all in one star catalogue process is completed."
+        print "Elapsed time: %s min. %s sec." %(int((time.time() - start_time) / 60), "%.2f" % ((time.time() - start_time) % 60))
+    #except:
+    #    print "Usage error!"
+    #    print "Usage: python asterotrek.py -makemaster <path/catdir>"
+    #    raise SystemExit
         
     elif sys.argv[1] == "-xcan":
         """
@@ -134,46 +134,46 @@ if __name__ == "__main__":
         Detect lines from the candidate cats.
         Usage: python asterotrek.py -dl path/candidatedir path/   		
         """
-        try:
-            detectlines = dt.Detect()
-            if len(sys.argv) == 5:
-                detectlines.detectlines(sys.argv[2], sys.argv[3], sys.argv[4])
-            else:
-                detectlines.detectlines(sys.argv[2], sys.argv[3])
-            print "Elapsed time: %s min. %s sec." %(int((time.time() - start_time) / 60), "%.2f" % ((time.time() - start_time) % 60))
-        except:
-            print "Usage error!"
-            print "Usage: python asterotrek.py -dl <path/candidatedir> <path/>"
-            raise SystemExit
+    #try:
+        detectlines = dt.Detect()
+        if len(sys.argv) == 5:
+            detectlines.detectlines(sys.argv[2], sys.argv[3], sys.argv[4])
+        else:
+            detectlines.detectlines(sys.argv[2], sys.argv[3])
+        print "Elapsed time: %s min. %s sec." %(int((time.time() - start_time) / 60), "%.2f" % ((time.time() - start_time) % 60))
+    #except:
+    #    print "Usage error!"
+    #    print "Usage: python asterotrek.py -dl <path/candidatedir> <path/>"
+    #    raise SystemExit
 
     elif sys.argv[1] == "-mdl":
         """
         Multi-Detect lines from the candidate cats.
         Usage: python asterotrek.py -mdl path/candidatedir path/           
         """
-        try:
-            print "Please wait until processing is complete (multiprocessing)."
-            detectlines = dt.Detect()
-            lines = detectlines.multilinedetector(sys.argv[2], sys.argv[3])
-            if len(lines) != 0:
-                fastmos, slowmos = detectlines.resultreporter(sys.argv[3], lines)
-                pd.set_option('expand_frame_repr', False)
-                if fastmos.size:
-                    fastmos = pd.DataFrame.from_records(fastmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/min)"])
-                    print "\033[1;32mList of Fast Moving Objects\033[0m"
-                    print "\033[1;32m===========================\033[0m"
-                    print fastmos
-                if slowmos.size:
-                    slowmos = pd.DataFrame.from_records(slowmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/min)"])
-                    print "\033[1;31mList of Slow Moving Objects (Please check these objects! Are these really MOs?)\033[0m"
-                    print "\033[1;31m===========================\033[0m"
-                    print slowmos
-            print "Multi line detection process is completed."
-            print "Elapsed time: %s min. %s sec." %(int((time.time() - start_time) / 60), "%.2f" % ((time.time() - start_time) % 60))
-        except:
-            print "Usage error!"
-            print "Usage: python asterotrek.py -mdl <path/candidatedir> <path/>"
-            raise SystemExit
+    #try:
+        print "Please wait until processing is complete (multiprocessing)."
+        detectlines = dt.Detect()
+        lines = detectlines.multilinedetector(sys.argv[2], sys.argv[3])
+        if len(lines) != 0:
+            fastmos, slowmos = detectlines.resultreporter(sys.argv[3], lines)
+            pd.set_option('expand_frame_repr', False)
+            if fastmos.size:
+                fastmos = pd.DataFrame.from_records(fastmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/min)"])
+                print "\033[1;32mList of Fast Moving Objects\033[0m"
+                print "\033[1;32m===========================\033[0m"
+                print fastmos
+            if slowmos.size:
+                slowmos = pd.DataFrame.from_records(slowmos, columns=["file_id", "flags", "x", "y", "flux", "background", "lineid", "skymotion(px/min)"])
+                print "\033[1;31mList of Slow Moving Objects (Please check these objects! Are these really MOs?)\033[0m"
+                print "\033[1;31m===========================\033[0m"
+                print slowmos
+        print "Multi line detection process is completed."
+        print "Elapsed time: %s min. %s sec." %(int((time.time() - start_time) / 60), "%.2f" % ((time.time() - start_time) % 60))
+    #except:
+    #    print "Usage error!"
+    #    print "Usage: python asterotrek.py -mdl <path/candidatedir> <path/>"
+    #    raise SystemExit
 
     elif sys.argv[1] == "-mdlwpng" and len(sys.argv) == 5:
         """
@@ -193,6 +193,8 @@ if __name__ == "__main__":
             movingobjects = slowmos
         elif not slowmos.size and fastmos.size:
             movingobjects = fastmos
+        else:
+            movingobjects = np.asarray([])
 
         if len(movingobjects) != 0:
             if os.path.isdir(sys.argv[3]):

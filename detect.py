@@ -145,7 +145,7 @@ class Detect:
             h = 0
         return h 
 
-    def detectcandidateobjects(self, referencecat, mastercat, outdir, min_fwhm=1, max_flux=500000, elongation=1.8, snrsigma=5, basepar=0.35):
+    def detectcandidateobjects(self, referencecat, mastercat, outdir, min_fwhm=1.0, max_flux=500000, elongation=1.8, snrsigma=10, basepar=0.5, background_sigma=1.0):
         """
         Reads given sextractor's catalogue file and detect candidate objects in "mastercat.txt".
         
@@ -166,9 +166,9 @@ class Detect:
         @return: array
         """
         catfile = os.path.basename(referencecat)
-        h_catfile, e_catfile = catfile.split(".")
+        h_catfile, e_catfile = os.path.splitext(catfile)
         
-        if e_catfile == "pysexcat":
+        if e_catfile == ".pysexcat":
             ref_np = np.genfromtxt(referencecat, delimiter=None, comments='#')
             master_np = np.genfromtxt(mastercat, delimiter=None, comments='#')
             
@@ -178,10 +178,10 @@ class Detect:
             max_fwhm = np.mean(master_np[:,5]) * 2.5
             refcatfiltered = referencecatalogue[((referencecatalogue.flags <= 16)) & (referencecatalogue.flux <= max_flux) & (referencecatalogue.fwhm <= max_fwhm) & \
             ((referencecatalogue.flux / referencecatalogue.fluxerr) > snrsigma) & (referencecatalogue.fwhm >= min_fwhm) & \
-            (referencecatalogue.flux > referencecatalogue.background) & (referencecatalogue.elongation <= elongation)]
+            (referencecatalogue.flux > referencecatalogue.background * background_sigma) & (referencecatalogue.elongation <= elongation)]
             mascat_all = mastercatalogue[((mastercatalogue.flags <= 16)) & (mastercatalogue.flux <= max_flux) & (mastercatalogue.fwhm <= max_fwhm) & \
             ((mastercatalogue.flux / mastercatalogue.fluxerr) > snrsigma) & (mastercatalogue.fwhm >= min_fwhm) & \
-            (mastercatalogue.flux > mastercatalogue.background) & (mastercatalogue.elongation <= elongation)]
+            (mastercatalogue.flux > mastercatalogue.background * background_sigma) & (mastercatalogue.elongation <= elongation)]
             
             refcat = refcatfiltered[["flags", "x", "y", "flux", "background"]]
             refcat = refcat.reset_index(drop=True)
@@ -203,7 +203,7 @@ class Detect:
         candidateobjects.to_csv("%s/candidates_%s.txt" %(outdir, h_catfile), index = False)
         return candidateobjects
 
-    def detectlines(self, catdir, fitsdir, processid = None, basepar=0.35, heightpar=0.1, pixel_scale=0.31, vmax=0.03, tolerance = 1.0):
+    def detectlines(self, catdir, fitsdir, processid = None, basepar=0.5, heightpar=0.1, pixel_scale=0.31, vmax=0.03, tolerance = 2.0):
         """
         
         Reads given candidate files and detect lines with randomized algorithm.
@@ -251,16 +251,43 @@ class Detect:
             hdulist1 = pyfits.open(fitsfiles[fileid_i])
             hdulist2 = pyfits.open(fitsfiles[fileid_j])
             hdulist3 = pyfits.open(fitsfiles[fileid_k])
-            xbin = hdulist1[0].header['xbinning']
-            ybin = hdulist1[0].header['ybinning']
+            try:
+                xbin = hdulist1[0].header['xbinning']
+            except:
+                xbin = 1.0
+            try:
+                ybin = hdulist1[0].header['ybinning']
+            except:
+                ybin = 1.0
             naxis1 = hdulist1[0].header['NAXIS1']
             naxis2 = hdulist1[0].header['NAXIS2']
-            obsdate1 = hdulist1[0].header['date-obs']
-            exptime1 = hdulist1[0].header['exptime']
-            obsdate2 = hdulist2[0].header['date-obs']
-            exptime2 = hdulist2[0].header['exptime']
-            obsdate3 = hdulist3[0].header['date-obs']
-            exptime3 = hdulist3[0].header['exptime']
+            try:
+                obsdate1 = hdulist1[0].header['date-obs']
+            except:
+                print "Do you have date-obs keyword in your FITS file?"
+                SystemExit
+            try:
+                exptime1 = hdulist1[0].header['exptime']
+            except:
+               print "Do you have exptime keyword in your FITS file?"
+            try:
+                obsdate2 = hdulist2[0].header['date-obs']
+            except:
+                print "Do you have date-obs keyword in your FITS file?"
+                SystemExit
+            try:
+                exptime2 = hdulist2[0].header['exptime']
+            except:
+               print "Do you have exptime keyword in your FITS file?"
+            try:
+                obsdate3 = hdulist3[0].header['date-obs']
+            except:
+                print "Do you have date-obs keyword in your FITS file?"
+                SystemExit
+            try:
+                exptime3 = hdulist3[0].header['exptime']
+            except:
+               print "Do you have exptime keyword in your FITS file?"
             try:
                 otime1 =  time.strptime(obsdate1, "%Y-%m-%dT%H:%M:%S.%f")
             except:

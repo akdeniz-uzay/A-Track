@@ -76,7 +76,7 @@ class Plot:
         if not os.path.isdir(outdir):
                 os.makedirs(outdir)
         base_fitsfile = os.path.basename(fitsfile)
-        h_fitsfile, e_fitsfile = base_fitsfile.split(".")
+        h_fitsfile, e_fitsfile = os.path.splitext(base_fitsfile)
         try:
             hdulist = pyfits.open(fitsfile)
             obsdate = hdulist[0].header['date-obs']
@@ -103,30 +103,30 @@ class Plot:
             raise SystemExit
 
         print '\033[1;32mNow, openning DS9!\033[0m'
-        try:
-            d = ds.DS9()
-            d.set("file %s" %(fitsfile))
-            #Zoom to fit
-            d.set('zoom to fit')
-            #Scale to zscales
-            d.set('scale zscale')
-            #Getting Params
+    #try:
+        d = ds.DS9()
+        d.set("file %s" %(fitsfile))
+        #Zoom to fit
+        d.set('zoom to fit')
+        #Scale to zscales
+        d.set('scale zscale')
+        #Getting Params
 
-            h_catfile, e_catfile = catfile.split(".")
-            
-            if e_catfile == "pysexcat":
-                print '\033[1;34mDetecting stars on %s!\033[0m' %(catfile)
-                coordinate = np.genfromtxt(catfile, delimiter=None, comments='#')[:,[1,2]]
-            elif e_catfile == "txt":
-                print '\033[1;34mDetecting stars on %s!\033[0m' %(catfile)
-                coordinate = np.genfromtxt(catfile, delimiter=",", comments='#',skip_header=1)[:,[1,2]]
-                 
-            for id, coor in enumerate(coordinate):
-                x_coor,  y_coor = coor[0], coor[1]
-                d.set('regions', 'image; circle(%s,%s,5) # color=red text={%s}' %(x_coor,  y_coor, id))
-            print '\033[1;34mDetecting stars job is completed!\033[0m'
-        except:
-            print '\033[1;31mSomething went wrong with DS9!\033[0m'
-            return False
-            raise SystemExit
-        return True
+        h_catfile, e_catfile = os.path.splitext(catfile)
+        
+        if e_catfile == ".pysexcat":
+            print '\033[1;34mDetecting stars on %s!\033[0m' %(catfile)
+            coordinate = np.genfromtxt(catfile, delimiter=None, comments='#')[:,[1,2]]
+        elif e_catfile == ".txt":
+            print '\033[1;34mDetecting stars on %s!\033[0m' %(catfile)
+            coordinate = np.genfromtxt(catfile, delimiter=",", comments='#',skip_header=1)[:,[1,2]]
+             
+        for id, coor in enumerate(coordinate):
+            x_coor,  y_coor = coor[0], coor[1]
+            d.set('regions', 'image; circle(%s,%s,5) # color=red text={%s}' %(x_coor,  y_coor, id))
+        print '\033[1;34mDetecting stars job is completed!\033[0m'
+    #except:
+    #    print '\033[1;31mSomething went wrong with DS9!\033[0m'
+    #    return False
+    #    raise SystemExit
+    #    return True
