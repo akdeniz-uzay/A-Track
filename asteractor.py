@@ -96,8 +96,8 @@ def makemastercat(catdir):
         catfiles = glob.glob("%s/*cat" %(catdir))
         with open("%s/mastercat.cat" %(catdir), "a") as outfile:
             for f in catfiles:
-                h_catfile, e_catfile = f.split(".")
-                if e_catfile == "pysexcat":
+                e_catfile = os.path.splitext(f)[1]
+                if e_catfile == ".pysexcat":
                     objectcat = np.genfromtxt(f, delimiter=None, comments='#')                                      
                 np.savetxt(outfile, objectcat, delimiter=' ')
     return True
