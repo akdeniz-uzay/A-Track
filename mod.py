@@ -58,28 +58,28 @@ if __name__ == '__main__':
         os.makedirs(outdir)
 
     print('\nAligning images...', end=' ')
-    sources.align(fitsdir, reference, outdir)
+    #sources.align(fitsdir, reference, outdir)
     elapsed = int(time.time() - start)
     print('Complete!')
     print('Aligned images are saved as *affineremap.fits.')
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
 
     print('\nCreating catalog files...', end=' ')
-    sources.make_catalog(outdir, outdir)
+    #sources.make_catalog(outdir, outdir)
     elapsed = int(time.time() - start)
     print('Complete!')
     print('Catalog files are saved as *affineremap.pysexcat.')
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
 
     print('\nBuilding master catalog file...', end=' ')
-    sources.make_master(outdir)
+    #sources.make_master(outdir)
     elapsed = int(time.time() - start)
     print('Complete!')
     print('Master catalog file is saved as master.pysexcat.')
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
 
     print('\nDetecting candidates...', end=' ')
-    asteroids.all_candidates(outdir, outdir)
+    #asteroids.all_candidates(outdir, outdir)
     elapsed = int(time.time() - start)
     print('Complete!')
     print('Candidates for each image are saved as *affineremap.cnd.')
@@ -112,52 +112,44 @@ if __name__ == '__main__':
         slow_objects = pd.DataFrame.from_records(slow_objects, columns=COLUMNS)
         print('\nSLOW MOVING OBJECTS:\n')
         print(slow_objects)
+        
+    print()
+
+    print('Creating png files...')
+
+    if fast_objects.size and slow_objects.size:
+        objects = np.concatenate((fast_objects, slow_objects), axis=0)
+    elif not fast_objects.size and slow_objects.size:
+        objects = slow_objects
+    elif not slow_objects.size and fast_objects.size:
+        objects = fast_objects
+
+    images = sorted(glob.glob(fitsdir + '/*.fits'))
+
+    for i, image in enumerate(images):
+        visuals.fits2png(image, outdir,
+                         objects[objects[:, 0].astype(int) == i])
+        print('{0} converted.'.format(image))
+
+    elapsed = int(time.time() - start)
+    print('png conversion completed.')
+    print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
 
     print()
 
-#    print('Creating png files...')
-#
-#    if fast_objects.size and slow_objects.size:
-#        objects = np.concatenate((fast_objects, slow_objects), axis=0)
-#    elif not fast_objects.size and slow_objects.size:
-#        objects = slow_objects
-#    elif not slow_objects.size and fast_objects.size:
-#        objects = fast_objects
-#
-#    images = sorted(glob.glob(fitsdir + '/*.fits'))
-#
-#    for i, image in enumerate(images):
-#        visuals.fits2png(image, outdir,
-#                         objects[objects[:, 0].astype(int) == i])
-#        print('{0} converted.'.format(image))
-#
-#    elapsed = int(time.time() - start)
-#    print('png conversion completed.')
-#    print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
-#
-#
-#    elif sys.argv[1] == '-fits2png' and len(sys.argv) == 4:
-#        '''
-#        Converts FITS images into PNG files.
-#        Usage: python asterotrek.py -fits2png <image(s)> <outdir>
-#        '''
-#        try:
-#            print 'Please wait until processing is complete.'
-#            f2n = visuals.Plot()
-#
-#            if os.path.isdir(sys.argv[2]):
-#                for image in sorted(glob.glob('%s/*.fits' %(sys.argv[2]))):
-#                    f2n.fits2png(image, sys.argv[3])
-#                    print '%s converted into %s.' %(image, sys.argv[3])
-#            elif os.path.isfile(sys.argv[2]):
-#                f2n.fits2png(sys.argv[2], sys.argv[3])
-#                print '%s converted into %.' %(sys.argv[2], sys.argv[3])
-#            print 'Converted all FITS files to PNG files.'
-#            print 'Elapsed time: %s min. %s sec.' %(int((time.time() - start) / 60), '%.2f' % ((time.time() - start) % 60))
-#        except:
-#            print 'Usage error!'
-#            print 'Usage: python asterotrek.py -fits2png <image(s)> <outdir>' 
-#            raise SystemExit
+    print('Creating GIF (animation) file...')
+
+    os.popen('convert -delay 20 -loop 0 {0}/*.png {0}/animation.gif'.format(outdir))
+    print('{0}/animation.gif created.'.format(outdir))
+    print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
+    
+
+
+    
+    
+
+
+
 #
 #    elif sys.argv[1] == '-plot2ds9' and len(sys.argv) == 4:
 #        '''
