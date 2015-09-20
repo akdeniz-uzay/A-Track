@@ -17,7 +17,16 @@ except ImportError:
     raise SystemExit
 
 import glob
+import os
+from configparser import ConfigParser
 
+config = ConfigParser()
+
+if os.path.exists('./modpy.config'):
+    config.read('./modpy.config')
+else:
+    print('Where is your modpy.config file?')
+    raise SystemExit
 
 def align(fitsdir, reference, outdir):
 
@@ -47,12 +56,22 @@ def align(fitsdir, reference, outdir):
                                     makepng=False, verbose=False)
 
 
-def make_catalog(fitsdir, outdir, DETECT_THRESH=3, ANALYSIS_THRESH=3,
-                 DETECT_MINAREA=1, PIXEL_SCALE=0.31, SEEING_FWHM=1.5,
-                 PHOT_AUTOPARAMS='"2.5, 3.5"', BACK_SIZE=64,
-                 BACK_FILTERSIZE=3, DEBLEND_NTHRESH=16, SATUR_LEVEL=60000,
-                 DEBLEND_MINCONT=0.00001, GAIN=0.55, rerun=True, keepcat=True,
-                 verbose=False):
+def make_catalog(fitsdir, outdir, 
+                 DETECT_THRESH = float(config.get('sources', 'DETECT_THRESH')), 
+                 ANALYSIS_THRESH = float(config.get('sources', 'ANALYSIS_THRESH')),
+                 DETECT_MINAREA = float(config.get('sources', 'DETECT_MINAREA')), 
+                 PIXEL_SCALE = float(config.get('sources', 'PIXEL_SCALE')), 
+                 SEEING_FWHM = float(config.get('sources', 'SEEING_FWHM')),
+                 PHOT_AUTOPARAMS = config.get('sources', 'PHOT_AUTOPARAMS'),
+                 BACK_SIZE = int(config.get('sources', 'BACK_SIZE')),
+                 BACK_FILTERSIZE = int(config.get('sources', 'BACK_FILTERSIZE')), 
+                 DEBLEND_NTHRESH = int(config.get('sources', 'DEBLEND_NTHRESH')), 
+                 SATUR_LEVEL = float(config.get('sources', 'SATUR_LEVEL')),
+                 DEBLEND_MINCONT = float(config.get('sources', 'DEBLEND_MINCONT')), 
+                 GAIN = float(config.get('sources', 'GAIN')),
+                 rerun = config.get('sources', 'rerun'),
+                 keepcat = config.get('sources', 'keepcat'),
+                 verbose = config.get('sources', 'verbose')):
 
     '''
     Creates SExtractor catalogs from FITS files.

@@ -28,6 +28,15 @@ import time
 import itertools as it
 import pickle as pk
 from multiprocessing import Pool, cpu_count
+from configparser import ConfigParser
+
+config = ConfigParser()
+
+if os.path.exists('./modpy.config'):
+    config.read('./modpy.config')
+else:
+    print('Where is your modpy.config file?')
+    raise SystemExit
 
 
 def distance(p1, p2):
@@ -148,8 +157,12 @@ def partitions(workload):
     return(partition)
 
 
-def detect_candidates(CMO, FWHM_MIN=1, FLUX=500000, ELONGATION=1.8, SNR=5,
-                      TRAVEL_MIN=0.35):
+def detect_candidates(CMO, 
+                      FWHM_MIN = float(config.get('asteroids', 'FWHM_MIN')), 
+                      FLUX = float(config.get('asteroids', 'FLUX')), 
+                      ELONGATION = float(config.get('asteroids', 'ELONGATION')), 
+                      SNR = float(config.get('asteroids','SNR')),
+                      TRAVEL_MIN = float(config.get('asteroids', 'TRAVEL_MIN'))):
 
     '''
     Eliminates the sources, that do not satisfy the given criteria, from given
@@ -245,8 +258,12 @@ def all_candidates(catdir, outdir):
         pool.map(detect_candidates, cmds)
 
 
-def detect_segments(CFP, TRAVEL_MIN=0.35, HEIGHT_MAX=0.1, SCALE=0.31,
-                    VMAX=0.03, TOLERANCE=1.0):
+def detect_segments(CFP, 
+                    TRAVEL_MIN = float(config.get('asteroids', 'TRAVEL_MIN')), 
+                    HEIGHT_MAX = float(config.get('asteroids', 'HEIGHT_MAX')), 
+                    SCALE = float(config.get('asteroids', 'SCALE')),
+                    VMAX = float(config.get('asteroids', 'VMAX')), 
+                    TOLERANCE = float(config.get('asteroids', 'TOLERANCE'))):
 
     '''
     Detects line segments inside a given list of 3-combinations.
@@ -449,7 +466,7 @@ def detect_lines(catdir, fitsdir):
     return merge_segments(segments)
 
 
-def results(fitsdir, lines, SPEED_MIN=0.1):
+def results(fitsdir, lines, SPEED_MIN = float(config.get('asteroids', 'SPEED_MIN'))):
 
     '''
     Reports detected moving objects, slow and fast.

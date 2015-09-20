@@ -17,8 +17,17 @@ except ImportError:
     print('Python cannot import numpy. Make sure numpy is installed.')
     raise SystemExit
 
+from configparser import ConfigParser
 
-def fits2png(fitsfile, outdir, asteroids=None, SPEED_MIN=0.1):
+config = ConfigParser()
+
+if os.path.exists('./modpy.config'):
+    config.read('./modpy.config')
+else:
+    print('Where is your modpy.config file?')
+    raise SystemExit
+
+def fits2png(fitsfile, outdir, asteroids=None, SPEED_MIN = float(config.get('visuals', 'SPEED_MIN'))):
 
     '''
     Transforms FITS images into PNG files.
