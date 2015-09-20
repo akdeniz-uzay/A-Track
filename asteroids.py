@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Authors: Yücel Kılıç
+# Authors: Yücel Kılıç, Tolga Atay, Murat Kaplan, Nurdan Karapınar
 # This is an open-source software licensed under GPLv3. 363
 
 
@@ -217,7 +217,7 @@ def detect_candidates(CMO, FWHM_MIN=1, FLUX=500000, ELONGATION=1.8, SNR=5,
                 candidates = candidates.append(catalogF.iloc[i],
                                                ignore_index=True)
 
-        catalog_head = os.path.basename(catalog).split('.')[0]
+        catalog_head = os.path.splitext(os.path.basename(catalog))[0]
         candidates.to_csv('{0}/{1}.cnd'.format(outdir, catalog_head),
                           index=False)
 
@@ -404,6 +404,8 @@ def merge_segments(segments):
                         if checks[i] is False:
                             line.append(segment[i])
 
+                    break
+                elif checks == (True, True, True):
                     break
 
             if checks == (False, False, False):
