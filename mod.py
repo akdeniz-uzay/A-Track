@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Authors: Yücel Kılıç
+# Authors: Yücel Kılıç, Tolga Atay, Murat Kaplan, Nurdan Karapınar
 # This is an open-source software licensed under GPLv3.
 
 
@@ -144,13 +144,6 @@ if __name__ == '__main__':
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
     
 
-
-    
-    
-
-
-
-#
 #    elif sys.argv[1] == '-plot2ds9' and len(sys.argv) == 4:
 #        '''
 #        Plots catalogue files into ds9.
@@ -164,18 +157,4 @@ if __name__ == '__main__':
 #        except:
 #            print 'Usage error!'
 #            print 'Usage: python asterotrek.py -fits2png <image(s)> <outdir>' 
-#            raise SystemExit
-#    elif sys.argv[1] == '-makegif':
-#        '''
-#        Converts PNG images to animated GIF file.
-#        Usage: python asterotrek.py -makegif <PNG(s)> <outdir>    		
-#        '''
-#        try:
-#            print 'Please wait until processing is complete.'
-#            os.popen('convert -delay 20 -loop 0 %s/*.png %s/%s.gif' %(sys.argv[2], sys.argv[2], sys.argv[3]))
-#            '%.2f' % 3.14159
-#            print 'Elapsed time: %s min. %s sec.' %(int((time.time() - start) / 60), '%.2f' % ((time.time() - start) % 60))
-#        except:
-#            print 'Usage error!'
-#            print 'python asterotrek.py -makegif <PNG(s)> <outdir>' 
 #            raise SystemExit

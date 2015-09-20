@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Authors: Yücel Kılıç
+# Authors: Yücel Kılıç, Tolga Atay, Murat Kaplan, Nurdan Karapınar
 # This is an open-source software licensed under GPLv3.
 
 
@@ -59,7 +59,7 @@ def fits2png(fitsfile, outdir, asteroids=None, SPEED_MIN=0.1):
 
     image.writetitle(os.path.basename(fitsfile))
 
-    fits_head = os.path.basename(fitsfile).split('.')[0]
+    fits_head = os.path.splitext(os.path.basename(fitsfile))[0]
 
     hdu = pyfits.open(fitsfile)
     obs_date = hdu[0].header['date-obs']
@@ -94,13 +94,13 @@ def plot2ds9(fitsfile, catalog):
 
     print('\033[1;34mDetecting sources on {0}...\033[0m'.format(catalog))
 
-    extension = catalog.split('.')[1]
+    extension = os.path.splitext(os.path.basename(catalog))[1]
 
-    if extension == 'pysexcat':
+    if extension == '.pysexcat':
         coordinates = np.genfromtxt(catalog, delimiter=None,
                                     comments='#')[:, [1, 2]]
 
-    elif extension == 'cat':
+    elif extension == '.cnd':
         coordinates = np.genfromtxt(catalog, delimiter=',', comments='#',
                                     skip_header=1)[:, [1, 2]]
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Authors: Yücel Kılıç
+# Authors: Yücel Kılıç, Tolga Atay, Murat Kaplan, Nurdan Karapınar
 # This is an open-source software licensed under GPLv3.
 
 
