@@ -100,18 +100,24 @@ if __name__ == '__main__':
     elapsed = int(time.time() - start)
     print('\nMoving object detection completed.')
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
+    
+    if os.path.exists('{0}/modpy_result.txt'.format(outdir)):
+        os.remove('{0}/modpy_result.txt'.format(outdir))
 
     if fast_objects.size:
 
         fast_objects = pd.DataFrame.from_records(fast_objects, columns=COLUMNS)
         print('\nFAST MOVING OBJECTS:\n')
         print(fast_objects)
+        fast_objects.to_csv('{0}/modpy_result.txt'.format(outdir) , sep='\t')
 
     if slow_objects.size:
 
         slow_objects = pd.DataFrame.from_records(slow_objects, columns=COLUMNS)
         print('\nSLOW MOVING OBJECTS:\n')
         print(slow_objects)
+        with open('{0}/modpy_result.txt'.format(outdir), 'a') as f:
+            slow_objects.to_csv(f, sep='\t')
         
     print()
 
@@ -120,9 +126,9 @@ if __name__ == '__main__':
     if fast_objects.size and slow_objects.size:
         objects = np.concatenate((fast_objects, slow_objects), axis=0)
     elif not fast_objects.size and slow_objects.size:
-        objects = slow_objects
+        objects = slow_objects.values
     elif not slow_objects.size and fast_objects.size:
-        objects = fast_objects
+        objects = fast_objects.values
 
     images = sorted(glob.glob(fitsdir + '/*.fits'))
 
