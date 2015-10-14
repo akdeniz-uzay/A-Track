@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Authors: Yücel Kılıç, Tolga Atay, Murat Kaplan, Nurdan Karapınar
-# This is an open-source software licensed under GPLv3. 363
+# Authors: Yücel Kılıç, Murat Kaplan, Nurdan Karapınar, Tolga Atay.
+# This is an open-source software licensed under GPLv3.
 
 
 try:
@@ -34,8 +34,10 @@ config = ConfigParser()
 
 if os.path.exists('./modpy.config'):
     config.read('./modpy.config')
+
 else:
-    print('Where is your modpy.config file?')
+    print('Python cannot open the configuration file. Make sure modpy.config',
+          'is in the same folder as mod.py.')
     raise SystemExit
 
 
@@ -157,12 +159,12 @@ def partitions(workload):
     return(partition)
 
 
-def detect_candidates(CMO, 
-                      FWHM_MIN = float(config.get('asteroids', 'FWHM_MIN')), 
-                      FLUX = float(config.get('asteroids', 'FLUX')), 
-                      ELONGATION = float(config.get('asteroids', 'ELONGATION')), 
-                      SNR = float(config.get('asteroids','SNR')),
-                      TRAVEL_MIN = float(config.get('asteroids', 'TRAVEL_MIN'))):
+def detect_candidates(CMO,
+                      FWHM_MIN=float(config.get('asteroids', 'FWHM_MIN')),
+                      FLUX=float(config.get('asteroids', 'FLUX')),
+                      ELONGATION=float(config.get('asteroids', 'ELONGATION')),
+                      SNR=float(config.get('asteroids', 'SNR')),
+                      TRAVEL_MIN=float(config.get('asteroids', 'TRAVEL_MIN'))):
 
     '''
     Eliminates the sources, that do not satisfy the given criteria, from given
@@ -182,7 +184,6 @@ def detect_candidates(CMO,
     @param TRAVEL_MIN: Minimum travel distance between two images for a
     moving object.
     @type TRAVEL_MIN: float
-    @return: pandas.DataFrame
     '''
 
     catalogs, master, outdir = CMO[0], CMO[1], CMO[2]
@@ -258,12 +259,12 @@ def all_candidates(catdir, outdir):
         pool.map(detect_candidates, cmds)
 
 
-def detect_segments(CFP, 
-                    TRAVEL_MIN = float(config.get('asteroids', 'TRAVEL_MIN')), 
-                    HEIGHT_MAX = float(config.get('asteroids', 'HEIGHT_MAX')), 
-                    SCALE = float(config.get('asteroids', 'SCALE')),
-                    VMAX = float(config.get('asteroids', 'VMAX')), 
-                    TOLERANCE = float(config.get('asteroids', 'TOLERANCE'))):
+def detect_segments(CFP,
+                    TRAVEL_MIN=float(config.get('asteroids', 'TRAVEL_MIN')),
+                    HEIGHT_MAX=float(config.get('asteroids', 'HEIGHT_MAX')),
+                    SCALE=float(config.get('asteroids', 'SCALE')),
+                    VMAX=float(config.get('asteroids', 'VMAX')),
+                    TOLERANCE=float(config.get('asteroids', 'TOLERANCE'))):
 
     '''
     Detects line segments inside a given list of 3-combinations.
@@ -278,7 +279,7 @@ def detect_segments(CFP,
     be considered as collinear.
     @type HEIGHT_MAX: float
     @param SCALE: Pixel scale subtended by the telescope/CCD system
-    (arcsecond).
+    (arcsec).
     @type SCALE: float
     @param VMAX: Theoretical maximum angular velocity of NEOs ("/sec).
     @type VMAX: float
@@ -297,8 +298,7 @@ def detect_segments(CFP,
     for file in files:
 
         catalog = pd.read_csv(file, sep=',',
-                              names=['flags', 'x', 'y', 'flux',
-                                     'background'],
+                              names=['flags', 'x', 'y', 'flux', 'background'],
                               header=0)
         catalogs.append(catalog.values)
 
@@ -334,58 +334,52 @@ def detect_segments(CFP,
         dmax = (time.mktime(obs_time2) - time.mktime(obs_time1)
                 + (exp_time2 - exp_time1) / 2) * VMAX / (SCALE * xbin)
 
-        for p1 in range(len(catalogs[i])):
+        for p1, p2 in it.product(range(len(catalogs[i])),
+                                 range(len(catalogs[j]))):
 
-            for p2 in range(len(catalogs[j])):
-
-                d12 = distance(catalogs[i][p1][1:3], catalogs[j][p2][1:3])
-                t12 = (time.mktime(obs_time2) - time.mktime(obs_time1)
-                       + (exp_time2 - exp_time1) / 2)
-
-                if isClose(catalogs[i][p1, [1, 2]], catalogs[j][p2, [1, 2]],
+            if not isClose(catalogs[i][p1, [1, 2]], catalogs[j][p2, [1, 2]],
                            dmax):
+                continue
 
-                    for p3 in range(len(catalogs[k])):
+            d12 = distance(catalogs[i][p1][1:3], catalogs[j][p2][1:3])
+            t12 = (time.mktime(obs_time2) - time.mktime(obs_time1)
+                   + (exp_time2 - exp_time1) / 2)
 
-                        d23 = distance(catalogs[j][p2][1:3],
-                                       catalogs[k][p3][1:3])
-                        t23 = (time.mktime(obs_time3) - time.mktime(obs_time2)
-                               + (exp_time3 - exp_time2) / 2)
+            for p3 in range(len(catalogs[k])):
 
-                        if t23 * d12 / t12 - TOLERANCE <= d23 <= \
-                           t23 * d12 / t12 + TOLERANCE:
+                d23 = distance(catalogs[j][p2][1:3],
+                               catalogs[k][p3][1:3])
+                t23 = (time.mktime(obs_time3) - time.mktime(obs_time2)
+                       + (exp_time3 - exp_time2) / 2)
 
-                            points = ordered(catalogs[i][p1, [1, 2]],
-                                             catalogs[j][p2, [1, 2]],
-                                             catalogs[k][p3, [1, 2]])
-                            HEIGHT = height(points[0], points[1], points[2])
-                            LENGTH = distance(points[0], points[1])
+                if not (t23 * d12 / t12 - TOLERANCE <= d23 <=
+                        t23 * d12 / t12 + TOLERANCE):
+                    continue
 
-                            if LENGTH > TRAVEL_MIN * 2 and HEIGHT < HEIGHT_MAX:
-                                segments.append([[i,
-                                                  catalogs[i][p1][0],
-                                                  catalogs[i][p1][1],
-                                                  catalogs[i][p1][2],
-                                                  catalogs[i][p1][3],
-                                                  catalogs[i][p1][4]],
-                                                 [j,
-                                                  catalogs[j][p2][0],
-                                                  catalogs[j][p2][1],
-                                                  catalogs[j][p2][2],
-                                                  catalogs[j][p2][3],
-                                                  catalogs[j][p2][4]],
-                                                 [k,
-                                                  catalogs[k][p3][0],
-                                                  catalogs[k][p3][1],
-                                                  catalogs[k][p3][2],
-                                                  catalogs[k][p3][3],
-                                                  catalogs[k][p3][4]]])
+                points = ordered(catalogs[i][p1, [1, 2]],
+                                 catalogs[j][p2, [1, 2]],
+                                 catalogs[k][p3, [1, 2]])
+                HEIGHT = height(points[0], points[1], points[2])
+                LENGTH = distance(points[0], points[1])
+
+                if LENGTH > TRAVEL_MIN * 2 and HEIGHT < HEIGHT_MAX:
+                    segments.append([[i,
+                                      catalogs[i][p1][0], catalogs[i][p1][1],
+                                      catalogs[i][p1][2], catalogs[i][p1][3],
+                                      catalogs[i][p1][4]],
+                                     [j,
+                                      catalogs[j][p2][0], catalogs[j][p2][1],
+                                      catalogs[j][p2][2], catalogs[j][p2][3],
+                                      catalogs[j][p2][4]],
+                                     [k,
+                                      catalogs[k][p3][0], catalogs[k][p3][1],
+                                      catalogs[k][p3][2], catalogs[k][p3][3],
+                                      catalogs[k][p3][4]]])
 
     with open(catdir + '/Processor{0}.sgm'.format(processor), 'wb') as result:
         pk.dump(segments, result)
 
-    print('All detected segments from Processor {0}'.format(processor),
-          'were added to Processor{0}.sgm.'.format(processor))
+    print('Processor {0} complete.'.format(processor))
 
 
 def merge_segments(segments):
@@ -420,12 +414,12 @@ def merge_segments(segments):
                     for i in range(3):
                         if checks[i] is False:
                             line.append(segment[i])
-
-                    break
-                elif checks == (True, True, True):
                     break
 
-            if checks == (False, False, False):
+                elif False not in checks:
+                    break
+
+            if True not in checks:
                 lines.append([segment[0], segment[1], segment[2]])
 
         else:
@@ -466,7 +460,8 @@ def detect_lines(catdir, fitsdir):
     return merge_segments(segments)
 
 
-def results(fitsdir, lines, SPEED_MIN = float(config.get('asteroids', 'SPEED_MIN'))):
+def results(fitsdir, lines,
+            SPEED_MIN=float(config.get('asteroids', 'SPEED_MIN'))):
 
     '''
     Reports detected moving objects, slow and fast.
