@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-# Authors: Yücel Kılıç, Tolga Atay, Murat Kaplan, Nurdan Karapınar
+# Authors: Yücel Kılıç, Murat Kaplan, Nurdan Karapınar, Tolga Atay.
 # This is an open-source software licensed under GPLv3.
 
-
-import os
 
 try:
     import pyfits
@@ -17,17 +15,22 @@ except ImportError:
     print('Python cannot import numpy. Make sure numpy is installed.')
     raise SystemExit
 
+import os
 from configparser import ConfigParser
 
 config = ConfigParser()
 
 if os.path.exists('./modpy.config'):
     config.read('./modpy.config')
+
 else:
-    print('Where is your modpy.config file?')
+    print('Python cannot open the configuration file. Make sure modpy.config',
+          'is in the same folder as mod.py.')
     raise SystemExit
 
-def fits2png(fitsfile, outdir, asteroids=None, SPEED_MIN = float(config.get('visuals', 'SPEED_MIN'))):
+
+def fits2png(fitsfile, outdir, asteroid=None,
+             SPEED_MIN=float(config.get('visuals', 'SPEED_MIN'))):
 
     '''
     Transforms FITS images into PNG files.
@@ -36,8 +39,8 @@ def fits2png(fitsfile, outdir, asteroids=None, SPEED_MIN = float(config.get('vis
     @type fitsfile: string
     @param outdir: Output directory for the png files.
     @type outdir: string
-    @param asteroids: numpy array for the moving objects.
-    @type asteroids: numpy.ndarray
+    @param asteroid: numpy array for the moving objects.
+    @type asteroid: numpy.ndarray
     @param SPEED_MIN: Minimum speed of a moving object.
     @type SPEED_MIN: float
     '''
@@ -46,25 +49,28 @@ def fits2png(fitsfile, outdir, asteroids=None, SPEED_MIN = float(config.get('vis
         import f2n
     except ImportError:
         print('Python cannot import f2n. Make sure f2n is installed.')
-        return
+        raise SystemExit
 
     image = f2n.fromfits(fitsfile, verbose=False)
     image.setzscale('auto', 'auto')
     image.makepilimage('log', negative=False)
 
-    if asteroids.size:
+    if asteroid.size:
 
-        for i in range(len(asteroids)):
+        for i in range(len(asteroid)):
 
-            if asteroids[i][7] >= SPEED_MIN:
+            x = asteroid.iloc[i]['x']
+            y = asteroid.iloc[i]['y']
+            speed = asteroid.iloc[i]['Speed(px/min)']
+            label = '{0}'.format(int(asteroid.iloc[i]['ObjectID']))
+
+            if speed >= SPEED_MIN:
                 color = (0, 255, 0)
 
             else:
                 color = (255, 0, 0)
 
-            image.drawcircle(asteroids[i][2], asteroids[i][3], r=10,
-                             colour=color,
-                             label='{0}'.format(int(asteroids[i][6])))
+            image.drawcircle(x, y, r=10, colour=color, label=label)
 
     image.writetitle(os.path.basename(fitsfile))
 
