@@ -1,13 +1,7 @@
 # -*- coding: utf-8 -*-
-# Authors: Yücel Kılıç, Tolga Atay, Murat Kaplan, Nurdan Karapınar
+# Authors: Yücel Kılıç, Murat Kaplan, Nurdan Karapınar, Tolga Atay.
 # This is an open-source software licensed under GPLv3.
 
-
-try:
-    import numpy as np
-except ImportError:
-    print('Python cannot import numpy. Make sure numpy is installed.')
-    raise SystemExit
 
 try:
     import pandas as pd
@@ -100,67 +94,68 @@ if __name__ == '__main__':
     elapsed = int(time.time() - start)
     print('\nMoving object detection completed.')
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
-    
-    if os.path.exists('{0}/modpy_result.txt'.format(outdir)):
-        os.remove('{0}/modpy_result.txt'.format(outdir))
+
+    if os.path.exists('{0}/results.txt'.format(outdir)):
+        os.remove('{0}/results.txt'.format(outdir))
 
     if fast_objects.size:
 
         fast_objects = pd.DataFrame.from_records(fast_objects, columns=COLUMNS)
         print('\nFAST MOVING OBJECTS:\n')
         print(fast_objects)
-        fast_objects.to_csv('{0}/modpy_result.txt'.format(outdir) , sep='\t')
+        fast_objects.to_csv('{0}/results.txt'.format(outdir), sep='\t',
+                            float_format='%.2f', index=False)
 
     if slow_objects.size:
 
         slow_objects = pd.DataFrame.from_records(slow_objects, columns=COLUMNS)
         print('\nSLOW MOVING OBJECTS:\n')
         print(slow_objects)
-        with open('{0}/modpy_result.txt'.format(outdir), 'a') as f:
-            slow_objects.to_csv(f, sep='\t')
-        
-    print()
+        with open('{0}/results.txt'.format(outdir), 'a') as f:
+            f.write('\n')
+            slow_objects.to_csv(f, sep='\t', float_format='%.2f', index=False)
 
-    print('Creating png files...')
+    print('\nCreating PNG files...\n')
 
     if fast_objects.size and slow_objects.size:
-        objects = np.concatenate((fast_objects, slow_objects), axis=0)
+        objects = pd.concat((fast_objects, slow_objects), axis=0,
+                            ignore_index=True)
     elif not fast_objects.size and slow_objects.size:
-        objects = slow_objects.values
+        objects = slow_objects
     elif not slow_objects.size and fast_objects.size:
-        objects = fast_objects.values
+        objects = fast_objects
 
     images = sorted(glob.glob(fitsdir + '/*.fits'))
 
     for i, image in enumerate(images):
-        visuals.fits2png(image, outdir,
-                         objects[objects[:, 0].astype(int) == i])
-        print('{0} converted.'.format(image))
+        asteroid = objects[objects['FileID'] == i]
+        visuals.fits2png(image, outdir, asteroid)
+        print('{0} converted to png.'.format(image))
 
     elapsed = int(time.time() - start)
-    print('png conversion completed.')
-    print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
+    print('\nPNG conversion completed.')
+    print('Elapsed Time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
 
+    print('\nCreating GIF (animation) file...')
+    os.popen('convert -delay 20 -loop 0 ' +
+             '{0}/*.png {0}/animation.gif'.format(outdir))
+    print('{0}/animation.gif created.'.format(outdir))
+    print('Elapsed Time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
     print()
 
-    print('Creating GIF (animation) file...')
-
-    os.popen('convert -delay 20 -loop 0 {0}/*.png {0}/animation.gif'.format(outdir))
-    print('{0}/animation.gif created.'.format(outdir))
-    print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
-    
 
 #    elif sys.argv[1] == '-plot2ds9' and len(sys.argv) == 4:
 #        '''
 #        Plots catalogue files into ds9.
-#        Usage: python asterotrek.py -plot2ds9 <image> <catfile>    		
+#        Usage: python asterotrek.py -plot2ds9 <image> <catfile>
 #        '''
 #        try:
 #            print 'Please wait until processing is complete.'
 #            p2ds9 = visuals.Plot()
 #            p2ds9.plot2ds9(sys.argv[2], sys.argv[3])
-#            print 'Elapsed time: %s min. %s sec.' %(int((time.time() - start) / 60), '%.2f' % ((time.time() - start) % 60))
+#            print 'Elapsed time: %s min. %s sec.' %(int((time.time() - start)
+#                                / 60), '%.2f' % ((time.time() - start) % 60))
 #        except:
 #            print 'Usage error!'
-#            print 'Usage: python asterotrek.py -fits2png <image(s)> <outdir>' 
+#            print 'Usage: python asterotrek.py -fits2png <image(s)> <outdir>'
 #            raise SystemExit
