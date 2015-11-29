@@ -103,7 +103,7 @@ def plot2ds9(fitsfile, catalog):
     print('\033[1;32mStarting DS9...\033[0m')
 
     d = ds.DS9()
-    d.set('file' + fitsfile)
+    d.set('file {0}'.format(fitsfile))
     d.set('zoom to fit')
     d.set('scale zscale')
 
@@ -122,7 +122,7 @@ def plot2ds9(fitsfile, catalog):
     for i, coordinate in enumerate(coordinates):
 
         x, y = coordinate[0], coordinate[1]
-        cmd = 'image; circle({0},{1},5) # color=red text={{2}}'
-        d.set('regions', cmd.format(x, y, i))
+        cmd = 'image; circle({0},{1},5) # color=red text=\"' + str(i) + '\"'
+        d.set('regions', cmd.format(x, y))
 
-    print('\033[1;34mAll sources detected.\033[0m')
+    print('\033[1;34mAll sources plotted.\033[0m')
