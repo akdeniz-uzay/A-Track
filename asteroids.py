@@ -331,8 +331,8 @@ def detect_segments(CFP,
         except:
             obs_time3 = time.strptime(obs_date3, '%Y-%m-%dT%H:%M:%S')
 
-        dmax = (time.mktime(obs_time2) - time.mktime(obs_time1)
-                + (exp_time2 - exp_time1) / 2) * VMAX / (SCALE * xbin)
+        dmax = (time.mktime(obs_time2) - time.mktime(obs_time1) +
+                (exp_time2 - exp_time1) / 2) * VMAX / (SCALE * xbin)
 
         for p1, p2 in it.product(range(len(catalogs[i])),
                                  range(len(catalogs[j]))):
@@ -342,15 +342,15 @@ def detect_segments(CFP,
                 continue
 
             d12 = distance(catalogs[i][p1][1:3], catalogs[j][p2][1:3])
-            t12 = (time.mktime(obs_time2) - time.mktime(obs_time1)
-                   + (exp_time2 - exp_time1) / 2)
+            t12 = (time.mktime(obs_time2) - time.mktime(obs_time1) +
+                   (exp_time2 - exp_time1) / 2)
 
             for p3 in range(len(catalogs[k])):
 
                 d23 = distance(catalogs[j][p2][1:3],
                                catalogs[k][p3][1:3])
-                t23 = (time.mktime(obs_time3) - time.mktime(obs_time2)
-                       + (exp_time3 - exp_time2) / 2)
+                t23 = (time.mktime(obs_time3) - time.mktime(obs_time2) +
+                       (exp_time3 - exp_time2) / 2)
 
                 if not (t23 * d12 / t12 - TOLERANCE <= d23 <=
                         t23 * d12 / t12 + TOLERANCE):
@@ -504,8 +504,8 @@ def results(fitsdir, lines,
         length = distance(line[0][2:4], line[-1][2:4])
 
         try:
-            speed = 60 * length / (time.mktime(obs_time2) + exp_time2 / 2
-                                   - time.mktime(obs_time1) - exp_time1 / 2)
+            speed = 60 * length / (time.mktime(obs_time2) + exp_time2 / 2 -
+                                   time.mktime(obs_time1) - exp_time1 / 2)
         except:
             speed = 0
 

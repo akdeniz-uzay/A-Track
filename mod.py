@@ -103,17 +103,29 @@ if __name__ == '__main__':
         fast_objects = pd.DataFrame.from_records(fast_objects, columns=COLUMNS)
         print('\nFAST MOVING OBJECTS:\n')
         print(fast_objects)
-        fast_objects.to_csv('{0}/results.txt'.format(outdir), sep='\t',
-                            float_format='%.2f', index=False)
+        fast_objects[['FileID',
+                      'Flags',
+                      'ObjectID']] = fast_objects[['FileID',
+                                                   'Flags',
+                                                   'ObjectID']].astype(int)
+        with open('{0}/results.txt'.format(outdir), 'w') as f:
+            s = fast_objects.to_string(justify='left', index=False)
+            f.write(s)
 
     if slow_objects.size:
 
         slow_objects = pd.DataFrame.from_records(slow_objects, columns=COLUMNS)
         print('\nSLOW MOVING OBJECTS:\n')
         print(slow_objects)
+        slow_objects[['FileID',
+                      'Flags',
+                      'ObjectID']] = slow_objects[['FileID',
+                                                   'Flags',
+                                                   'ObjectID']].astype(int)
         with open('{0}/results.txt'.format(outdir), 'a') as f:
-            f.write('\n')
-            slow_objects.to_csv(f, sep='\t', float_format='%.2f', index=False)
+            f.write('\n\n')
+            s = slow_objects.to_string(justify='left', index=False)
+            f.write(s)
 
     print('\nCreating PNG files...\n')
 
@@ -142,20 +154,3 @@ if __name__ == '__main__':
     print('{0}/animation.gif created.'.format(outdir))
     print('Elapsed Time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
     print()
-
-
-#    elif sys.argv[1] == '-plot2ds9' and len(sys.argv) == 4:
-#        '''
-#        Plots catalogue files into ds9.
-#        Usage: python asterotrek.py -plot2ds9 <image> <catfile>
-#        '''
-#        try:
-#            print 'Please wait until processing is complete.'
-#            p2ds9 = visuals.Plot()
-#            p2ds9.plot2ds9(sys.argv[2], sys.argv[3])
-#            print 'Elapsed time: %s min. %s sec.' %(int((time.time() - start)
-#                                / 60), '%.2f' % ((time.time() - start) % 60))
-#        except:
-#            print 'Usage error!'
-#            print 'Usage: python asterotrek.py -fits2png <image(s)> <outdir>'
-#            raise SystemExit
