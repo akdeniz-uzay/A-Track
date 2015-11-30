@@ -137,7 +137,7 @@ if __name__ == '__main__':
     elif not slow_objects.size and fast_objects.size:
         objects = fast_objects
 
-    images = sorted(glob.glob(fitsdir + '/*.fits'))
+    images = sorted(glob.glob(fitsdir + 'modpy/*affineremap.fits'))
 
     for i, image in enumerate(images):
         asteroid = objects[objects['FileID'] == i]
