@@ -27,7 +27,7 @@ Options:
   --version             Show version.
   -r --ref=<ref_image>  Reference FITS image for alignment.
   --skip-align          Skip aligment if alignment had already done.
-  --skip-cats           Skip creating catalogue files if catalogue.
+  --skip-cats           Skip creating catalogue files if catalogue
                         files had been created by user.
   --skip-pngs           Skip create PNGs and animation.
   --skip-gif            Skip create animation file.
