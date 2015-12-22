@@ -22,12 +22,12 @@ from configparser import ConfigParser
 
 config = ConfigParser()
 
-if os.path.exists('./modpy.config'):
-    config.read('./modpy.config')
+if os.path.exists('./atrack.config'):
+    config.read('./atrack.config')
 
 else:
-    print('Python cannot open the configuration file. Make sure modpy.config',
-          'is in the same folder as mod.py.')
+    print('Python cannot open the configuration file. Make sure atrack.config',
+          'is in the same folder as atrack.py.')
     raise SystemExit
 
 
@@ -45,6 +45,11 @@ def align(fitsdir, reference, outdir):
     '''
 
     images = sorted(glob.glob(fitsdir + '/*.fits'))
+
+    if not reference:
+        reference = images[0]
+    else:
+        reference = reference[0]
 
     identifications = alipy.ident.run(reference, images, visu=False,
                                       sexkeepcat=False, verbose=False)
