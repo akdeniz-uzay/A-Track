@@ -54,7 +54,6 @@ except ImportError:
           'the same folder as atrack.py.')
     raise SystemExit
 
-import sys
 import time
 import os
 import glob
@@ -64,7 +63,6 @@ if __name__ == '__main__':
 
     start = time.time()
     arguments = docopt(__doc__, version='A-Track 0.1-dev')
-    print(arguments)
 
     try:
         fitsdir, reference = arguments['<fits_dir>'], arguments['--ref']

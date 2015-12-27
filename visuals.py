@@ -22,7 +22,6 @@ config = ConfigParser()
 
 if os.path.exists('./atrack.config'):
     config.read('./atrack.config')
-
 else:
     print('Python cannot open the configuration file. Make sure atrack.config',
           'is in the same folder as atrack.py.')
