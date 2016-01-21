@@ -379,6 +379,7 @@ def detect_segments(CFP,
     with open(catdir + '/Processor{0}.sgm'.format(processor), 'wb') as result:
         pk.dump(segments, result)
 
+
     print('Processor {0} complete.'.format(processor))
 
 
