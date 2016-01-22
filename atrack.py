@@ -119,17 +119,17 @@ if __name__ == '__main__':
     pd.set_option('expand_frame_repr', False)
     COLUMNS = ['FileID', 'Flags', 'x', 'y', 'Flux', 'Background', 'ObjectID',
                'Speed(px/min)']
+    NEWCOLS = ['ObjectID', 'FileID', 'Flags', 'x', 'y', 'Flux', 'Background',
+               'Speed(px/min)']
 
     elapsed = int(time.time() - start)
     print('\nMoving object detection completed.')
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
 
-    if os.path.exists('{0}/results.txt'.format(outdir)):
-        os.remove('{0}/results.txt'.format(outdir))
-
     if fast_objects.size:
 
         fast_objects = pd.DataFrame.from_records(fast_objects, columns=COLUMNS)
+        fast_objects = fast_objects.reindex_axis(NEWCOLS, axis=1)
         print('\nFAST MOVING OBJECTS:\n')
         print(fast_objects)
         fast_objects[['FileID',
@@ -144,6 +144,7 @@ if __name__ == '__main__':
     if slow_objects.size:
 
         slow_objects = pd.DataFrame.from_records(slow_objects, columns=COLUMNS)
+        slow_objects = slow_objects.reindex_axis(NEWCOLS, axis=1)
         print('\nSLOW MOVING OBJECTS:\n')
         print(slow_objects)
         slow_objects[['FileID',
