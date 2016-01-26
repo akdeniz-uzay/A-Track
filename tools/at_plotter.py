@@ -108,8 +108,8 @@ if __name__ == '__main__':
     plt.xlim([0, 2048])
     plt.ylim([0, 2048])
     plt.title('A-Track v1.0 - Detected Asteroids')
-    plt.xlabel("X_IMAGE")
-    plt.ylabel("Y_IMAGE")
+    plt.xlabel("X_IMAGE (px)")
+    plt.ylabel("Y_IMAGE (px)")
     ax = plt.gca()
     ax.set_aspect('equal', 'datalim')
 
