@@ -61,15 +61,13 @@ if __name__ == '__main__':
         cdata = cdata + line.tolist()
 
     adata = np.array(cdata)
-    filled_markers = ['o', 'v', 's', 'p', '*', 'h', 'H', 'D', 'd']
+    filled_markers = ['o', 'v', '*', 'p', 's', 'h', 'H', 'D', 'd']
 
     for fileid in np.unique(data[:, 1]):
         fdata = adata[adata[:, 1] == fileid]
         plt.scatter(fdata[:, 3], fdata[:, 4], s=50, c=np.random.rand(3, 1),
                     marker=filled_markers[int(fileid) % len(filled_markers)],
-                    label='Frame ' + str(int(fileid)))
-
-    plt.legend(loc=2)
+                    label='Image {0}'.format(str(int(fileid))))
 
     for k in range(1, len(np.unique(adata[:, 0])) + 1):
         line = adata[(adata[:, 0] == k)]
@@ -100,10 +98,12 @@ if __name__ == '__main__':
         else:
             tc = 'lime'
 
-        plt.annotate('ObjectID {0}'.format(str(k)),
+        plt.annotate('ObjectID {0}'.format(str(int(line[0, 0]))),
                      xy=(line[0, 3], line[0, 4]),
                      xytext=(10, 0),
                      textcoords='offset points', color=tc)
+
+    plt.legend(loc=2)
 
     plt.xlim([0, 2048])
     plt.ylim([0, 2048])
@@ -117,4 +117,5 @@ if __name__ == '__main__':
 
     '''
     plt.savefig()
+
     '''
