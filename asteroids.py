@@ -161,8 +161,11 @@ def partitions(workload):
 
 def detect_candidates(CMO,
                       FWHM_MIN=float(config.get('asteroids', 'FWHM_MIN')),
-                      FLUX=float(config.get('asteroids', 'FLUX')),
-                      ELONGATION=float(config.get('asteroids', 'ELONGATION')),
+                      FWHM_COEFFICIENT=float(config.get('asteroids',
+                                                        'FWHM_COEFFICIENT')),
+                      FLUX_MAX=float(config.get('asteroids', 'FLUX_MAX')),
+                      ELONGATION_MAX=float(config.get('asteroids',
+                                                      'ELONGATION_MAX')),
                       SNR=float(config.get('asteroids', 'SNR')),
                       TRAVEL_MIN=float(config.get('asteroids', 'TRAVEL_MIN'))):
 
@@ -175,10 +178,12 @@ def detect_candidates(CMO,
     @type CMO: tuple
     @param FWHM_MIN: Minimum FWHM for the candidate objects.
     @type FWHM_MIN: float
-    @param FLUX: Maximum flux for the candidate objects.
-    @type FLUX: float
-    @param ELONGATION: Maximum ellipticity for the candidate objects.
-    @type ELONGATION: float
+    @param FWHM_COEFFICIENT: FWHM coefficient.
+    @type FWHM_COEFFICIENT: float
+    @param FLUX_MAX: Maximum flux for the candidate objects.
+    @type FLUX_MAX: float
+    @param ELONGATION_MAX: Maximum ellipticity for the candidate objects.
+    @type ELONGATION_MAX: float
     @param SNR: Minimum SNR for the candidate objects.
     @type SNR: float
     @param TRAVEL_MIN: Minimum travel distance between two images for a
@@ -199,23 +204,23 @@ def detect_candidates(CMO,
         catalog_pd = pd.DataFrame.from_records(catalog_np, columns=COLUMNS)
         master_pd = pd.DataFrame.from_records(master_np, columns=COLUMNS)
 
-        FWHM_MAX = np.mean(master_np[:, 5]) * 2.5
+        FWHM_MAX = np.mean(master_np[:, 5]) * FWHM_COEFFICIENT
 
         catalogF = catalog_pd[(catalog_pd.flags <= 16) &
                               (catalog_pd.fwhm <= FWHM_MAX) &
                               (catalog_pd.fwhm >= FWHM_MIN) &
-                              (catalog_pd.flux <= FLUX) &
+                              (catalog_pd.flux <= FLUX_MAX) &
                               (catalog_pd.flux > catalog_pd.background) &
                               (catalog_pd.flux / catalog_pd.fluxerr > SNR) &
-                              (catalog_pd.elongation <= ELONGATION)]
+                              (catalog_pd.elongation <= ELONGATION_MAX)]
 
         masterF = master_pd[(master_pd.flags <= 16) &
                             (master_pd.fwhm <= FWHM_MAX) &
                             (master_pd.fwhm >= FWHM_MIN) &
-                            (master_pd.flux <= FLUX) &
+                            (master_pd.flux <= FLUX_MAX) &
                             (master_pd.flux > master_pd.background) &
                             (master_pd.flux / master_pd.fluxerr > SNR) &
-                            (master_pd.elongation <= ELONGATION)]
+                            (master_pd.elongation <= ELONGATION_MAX)]
 
         catalogF = catalogF[COLUMNS[:5]].reset_index(drop=True)
         masterF = masterF[COLUMNS[:5]].reset_index(drop=True)
