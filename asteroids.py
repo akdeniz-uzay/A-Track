@@ -166,7 +166,7 @@ def detect_candidates(CMO,
                       FLUX_MAX=float(config.get('asteroids', 'FLUX_MAX')),
                       ELONGATION_MAX=float(config.get('asteroids',
                                                       'ELONGATION_MAX')),
-                      SNR=float(config.get('asteroids', 'SNR')),
+                      SNR_MIN=float(config.get('asteroids', 'SNR_MIN')),
                       TRAVEL_MIN=float(config.get('asteroids', 'TRAVEL_MIN'))):
 
     '''
@@ -184,8 +184,8 @@ def detect_candidates(CMO,
     @type FLUX_MAX: float
     @param ELONGATION_MAX: Maximum ellipticity for the candidate objects.
     @type ELONGATION_MAX: float
-    @param SNR: Minimum SNR for the candidate objects.
-    @type SNR: float
+    @param SNR_MIN: Minimum SNR_MIN for the candidate objects.
+    @type SNR_MIN: float
     @param TRAVEL_MIN: Minimum travel distance between two images for a
     moving object.
     @type TRAVEL_MIN: float
@@ -211,7 +211,7 @@ def detect_candidates(CMO,
                               (catalog_pd.fwhm >= FWHM_MIN) &
                               (catalog_pd.flux <= FLUX_MAX) &
                               (catalog_pd.flux > catalog_pd.background) &
-                              (catalog_pd.flux / catalog_pd.fluxerr > SNR) &
+                              (catalog_pd.flux / catalog_pd.fluxerr > SNR_MIN) &
                               (catalog_pd.elongation <= ELONGATION_MAX)]
 
         masterF = master_pd[(master_pd.flags <= 16) &
@@ -219,7 +219,7 @@ def detect_candidates(CMO,
                             (master_pd.fwhm >= FWHM_MIN) &
                             (master_pd.flux <= FLUX_MAX) &
                             (master_pd.flux > master_pd.background) &
-                            (master_pd.flux / master_pd.fluxerr > SNR) &
+                            (master_pd.flux / master_pd.fluxerr > SNR_MIN) &
                             (master_pd.elongation <= ELONGATION_MAX)]
 
         catalogF = catalogF[COLUMNS[:5]].reset_index(drop=True)
@@ -268,7 +268,7 @@ def detect_segments(CFP,
                     TRAVEL_MIN=float(config.get('asteroids', 'TRAVEL_MIN')),
                     HEIGHT_MAX=float(config.get('asteroids', 'HEIGHT_MAX')),
                     SCALE=float(config.get('asteroids', 'SCALE')),
-                    VMAX=float(config.get('asteroids', 'VMAX')),
+                    V_MAX=float(config.get('asteroids', 'V_MAX')),
                     TOLERANCE=float(config.get('asteroids', 'TOLERANCE'))):
 
     '''
@@ -286,8 +286,8 @@ def detect_segments(CFP,
     @param SCALE: Pixel scale subtended by the telescope/CCD system
     (arcsec).
     @type SCALE: float
-    @param VMAX: Theoretical maximum angular velocity of NEOs ("/sec).
-    @type VMAX: float
+    @param V_MAX: Theoretical maximum angular velocity of NEOs ("/sec).
+    @type V_MAX: float
     @param TOLERANCE: Tolerance for the position of third point (pixel).
     @type TOLERANCE: float
     '''
@@ -337,7 +337,7 @@ def detect_segments(CFP,
             obs_time3 = time.strptime(obs_date3, '%Y-%m-%dT%H:%M:%S')
 
         dmax = (time.mktime(obs_time2) - time.mktime(obs_time1) +
-                (exp_time2 - exp_time1) / 2) * VMAX / (SCALE * xbin)
+                (exp_time2 - exp_time1) / 2) * V_MAX / (SCALE * xbin)
 
         for p1, p2 in it.product(range(len(catalogs[i])),
                                  range(len(catalogs[j]))):
@@ -461,6 +461,8 @@ def detect_lines(catdir, fitsdir):
 
         with open(result, 'rb') as res:
             segments += pk.load(res)
+
+        os.remove(result)
 
     return merge_segments(segments)
 
