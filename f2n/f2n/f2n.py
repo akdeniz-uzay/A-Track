@@ -404,7 +404,8 @@ class f2nimage:
 			
 			
 			#calcarray.shape = numpyarrayshape
-			bwarray = np.zeros(calcarray.shape, dtype=np.uint8)
+			# bwarray = np.zeros(calcarray.shape, dtype=np.uint8)
+                        bwarray = np.zeros(calcarray.shape, dtype=np.float64)
 			calcarray.round(out=bwarray)
 			if negative:
 				if self.verbose:
