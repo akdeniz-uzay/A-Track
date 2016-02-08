@@ -196,39 +196,36 @@ def detect_candidates(CMO,
 
     catalogs, master, outdir = CMO[0], CMO[1], CMO[2]
 
+    masterF = np.genfromtxt(master, delimiter=None, comments='#')
+    COLUMNS = ['flags', 'x', 'y', 'flux', 'background', 'fwhm', 'elongation',
+               'fluxerr']
+    FWHM_MAX = np.mean(masterF[:, 5]) * FWHM_COEFFICIENT
+    masterF = pd.DataFrame.from_records(masterF, columns=COLUMNS)
+    masterF = masterF[
+            (masterF.flags <= FLAG_MAX) &
+            (masterF.fwhm <= FWHM_MAX) &
+            (masterF.fwhm >= FWHM_MIN) &
+            (masterF.flux <= FLUX_MAX) &
+            (masterF.flux > masterF.background) &
+            (masterF.flux / masterF.fluxerr > SNR_MIN) &
+            (masterF.elongation <= ELONGATION_MAX)]
+    masterF = masterF[COLUMNS[:5]].reset_index(drop=True)
+
     for catalog in catalogs:
 
-        catalog_np = np.genfromtxt(catalog, delimiter=None, comments='#')
-        master_np = np.genfromtxt(master, delimiter=None, comments='#')
+        catalogF = np.genfromtxt(catalog, delimiter=None, comments='#')
+        catalogF = pd.DataFrame.from_records(catalogF, columns=COLUMNS)
 
-        COLUMNS = ['flags', 'x', 'y', 'flux', 'background', 'fwhm',
-                   'elongation', 'fluxerr']
-
-        catalog_pd = pd.DataFrame.from_records(catalog_np, columns=COLUMNS)
-        master_pd = pd.DataFrame.from_records(master_np, columns=COLUMNS)
-
-        FWHM_MAX = np.mean(master_np[:, 5]) * FWHM_COEFFICIENT
-
-        catalogF = catalog_pd[
-            (catalog_pd.flags <= FLAG_MAX) &
-            (catalog_pd.fwhm <= FWHM_MAX) &
-            (catalog_pd.fwhm >= FWHM_MIN) &
-            (catalog_pd.flux <= FLUX_MAX) &
-            (catalog_pd.flux > catalog_pd.background) &
-            (catalog_pd.flux / catalog_pd.fluxerr > SNR_MIN) &
-            (catalog_pd.elongation <= ELONGATION_MAX)]
-
-        masterF = master_pd[
-            (master_pd.flags <= FLAG_MAX) &
-            (master_pd.fwhm <= FWHM_MAX) &
-            (master_pd.fwhm >= FWHM_MIN) &
-            (master_pd.flux <= FLUX_MAX) &
-            (master_pd.flux > master_pd.background) &
-            (master_pd.flux / master_pd.fluxerr > SNR_MIN) &
-            (master_pd.elongation <= ELONGATION_MAX)]
+        catalogF = catalogF[
+            (catalogF.flags <= FLAG_MAX) &
+            (catalogF.fwhm <= FWHM_MAX) &
+            (catalogF.fwhm >= FWHM_MIN) &
+            (catalogF.flux <= FLUX_MAX) &
+            (catalogF.flux > catalogF.background) &
+            (catalogF.flux / catalogF.fluxerr > SNR_MIN) &
+            (catalogF.elongation <= ELONGATION_MAX)]
 
         catalogF = catalogF[COLUMNS[:5]].reset_index(drop=True)
-        masterF = masterF[COLUMNS[:5]].reset_index(drop=True)
 
         candidates = pd.DataFrame(columns=COLUMNS[:5])
 
