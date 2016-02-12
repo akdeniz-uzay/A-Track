@@ -93,13 +93,13 @@ if __name__ == '__main__':
         print('Elapsed time: {0} min {1} sec.'
               .format(elapsed // 60, elapsed % 60))
 
-        print('\nBuilding master catalog file...', end=' ')
-        sources.make_master(outdir)
-        elapsed = int(time.time() - start)
-        print('Complete!')
-        print('Master catalog file is saved as master.pysexcat.')
-        print('Elapsed time: {0} min {1} sec.'
-              .format(elapsed // 60, elapsed % 60))
+    print('\nBuilding master catalog file...', end=' ')
+    sources.make_master(outdir)
+    elapsed = int(time.time() - start)
+    print('Complete!')
+    print('Master catalog file is saved as master.pysexcat.')
+    print('Elapsed time: {0} min {1} sec.'
+          .format(elapsed // 60, elapsed % 60))
 
     print('\nDetecting candidates...', end=' ')
     asteroids.all_candidates(outdir, outdir)
@@ -115,7 +115,7 @@ if __name__ == '__main__':
         print('atrack could not find any moving objects in the images.')
         raise SystemExit
 
-    fast_objects, slow_objects = asteroids.results(fitsdir, lines)
+    moving_objects, uncertain_objects = asteroids.results(fitsdir, lines)
     pd.set_option('expand_frame_repr', False)
     COLUMNS = ['FileID', 'Flags', 'x', 'y', 'Flux', 'Background', 'ObjectID',
                'Speed(px/min)']
@@ -126,47 +126,50 @@ if __name__ == '__main__':
     print('\nMoving object detection completed.')
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
 
-    if fast_objects.size:
+    if moving_objects.size:
 
-        fast_objects = pd.DataFrame.from_records(fast_objects, columns=COLUMNS)
-        fast_objects = fast_objects.reindex_axis(NEWCOLS, axis=1)
-        print('\nFAST MOVING OBJECTS:\n')
-        print(fast_objects)
-        fast_objects[['FileID',
-                      'Flags',
-                      'ObjectID']] = fast_objects[['FileID',
-                                                   'Flags',
-                                                   'ObjectID']].astype(int)
+        moving_objects = pd.DataFrame.from_records(moving_objects,
+                                                   columns=COLUMNS)
+        moving_objects = moving_objects.reindex_axis(NEWCOLS, axis=1)
+        print('\nMOVING OBJECTS:\n')
+        print(moving_objects)
+        moving_objects[['FileID',
+                        'Flags',
+                        'ObjectID']] = moving_objects[['FileID',
+                                                       'Flags',
+                                                       'ObjectID']].astype(int)
         with open('{0}/results.txt'.format(outdir), 'w') as f:
-            s = fast_objects.to_string(justify='left', index=False)
+            s = moving_objects.to_string(justify='left', index=False)
             f.write(s)
 
-    if slow_objects.size:
+    if uncertain_objects.size:
 
-        slow_objects = pd.DataFrame.from_records(slow_objects, columns=COLUMNS)
-        slow_objects = slow_objects.reindex_axis(NEWCOLS, axis=1)
-        print('\nSLOW MOVING OBJECTS:\n')
-        print(slow_objects)
-        slow_objects[['FileID',
-                      'Flags',
-                      'ObjectID']] = slow_objects[['FileID',
-                                                   'Flags',
-                                                   'ObjectID']].astype(int)
+        uncertain_objects = pd.DataFrame.from_records(uncertain_objects,
+                                                      columns=COLUMNS)
+        uncertain_objects = uncertain_objects.reindex_axis(NEWCOLS, axis=1)
+        print('\nUNCERTAIN OBJECTS:\n')
+        print(uncertain_objects)
+        uncertain_objects[['FileID',
+                           'Flags',
+                           'ObjectID']] = uncertain_objects[[
+                               'FileID',
+                               'Flags',
+                               'ObjectID']].astype(int)
         with open('{0}/results.txt'.format(outdir), 'a') as f:
             f.write('\n\n')
-            s = slow_objects.to_string(justify='left', index=False)
+            s = uncertain_objects.to_string(justify='left', index=False)
             f.write(s)
 
     if not arguments['--skip-pngs']:
         print('\nCreating PNG files...\n')
 
-        if fast_objects.size and slow_objects.size:
-            objects = pd.concat((fast_objects, slow_objects), axis=0,
+        if moving_objects.size and uncertain_objects.size:
+            objects = pd.concat((moving_objects, uncertain_objects), axis=0,
                                 ignore_index=True)
-        elif not fast_objects.size and slow_objects.size:
-            objects = slow_objects
-        elif not slow_objects.size and fast_objects.size:
-            objects = fast_objects
+        elif not moving_objects.size and uncertain_objects.size:
+            objects = uncertain_objects
+        elif not uncertain_objects.size and moving_objects.size:
+            objects = moving_objects
 
         images = sorted(glob.glob(outdir + '/*affineremap.fits'))
 

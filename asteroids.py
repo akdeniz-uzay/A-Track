@@ -473,7 +473,7 @@ def results(fitsdir, lines,
             SPEED_MIN=float(config.get('asteroids', 'SPEED_MIN'))):
 
     '''
-    Reports detected moving objects, slow and fast.
+    Reports detected moving objects and uncertain objects.
 
     @param fitsdir: Directory for the aligned FITS images.
     @type fitsdir: string
@@ -484,8 +484,8 @@ def results(fitsdir, lines,
     @return: numpy.ndarray
     '''
 
-    fast_objects = []
-    slow_objects = []
+    moving_objects = []
+    uncertain_objects = []
 
     images = sorted(glob.glob(fitsdir + '/*.fits'))
 
@@ -524,22 +524,22 @@ def results(fitsdir, lines,
                               axis=1)
 
         if speed >= SPEED_MIN:
-            fast_objects.append(info)
+            moving_objects.append(info)
         else:
-            slow_objects.append(info)
+            uncertain_objects.append(info)
 
-    if len(fast_objects) == 1:
-        fast_objects = fast_objects[0]
-    elif len(fast_objects) > 1:
-        fast_objects = np.concatenate(tuple(fast_objects), axis=0)
-    elif len(fast_objects) == 0:
-        fast_objects = np.array([])
+    if len(moving_objects) == 1:
+        moving_objects = moving_objects[0]
+    elif len(moving_objects) > 1:
+        moving_objects = np.concatenate(tuple(moving_objects), axis=0)
+    elif len(moving_objects) == 0:
+        moving_objects = np.array([])
 
-    if len(slow_objects) == 1:
-        slow_objects = slow_objects[0]
-    elif len(slow_objects) > 1:
-        slow_objects = np.concatenate(tuple(slow_objects), axis=0)
-    elif len(slow_objects) == 0:
-        slow_objects = np.array([])
+    if len(uncertain_objects) == 1:
+        uncertain_objects = uncertain_objects[0]
+    elif len(uncertain_objects) > 1:
+        uncertain_objects = np.concatenate(tuple(uncertain_objects), axis=0)
+    elif len(uncertain_objects) == 0:
+        uncertain_objects = np.array([])
 
-    return fast_objects, slow_objects
+    return moving_objects, uncertain_objects
