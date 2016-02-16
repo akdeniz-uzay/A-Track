@@ -202,13 +202,13 @@ def detect_candidates(CMO,
     FWHM_MAX = np.mean(masterF[:, 5]) * FWHM_COEFFICIENT
     masterF = pd.DataFrame.from_records(masterF, columns=COLUMNS)
     masterF = masterF[
-            (masterF.flags <= FLAG_MAX) &
-            (masterF.fwhm <= FWHM_MAX) &
-            (masterF.fwhm >= FWHM_MIN) &
-            (masterF.flux <= FLUX_MAX) &
-            (masterF.flux > masterF.background) &
-            (masterF.flux / masterF.fluxerr > SNR_MIN) &
-            (masterF.elongation <= ELONGATION_MAX)]
+        (masterF.flags <= FLAG_MAX) &
+        (masterF.fwhm <= FWHM_MAX) &
+        (masterF.fwhm >= FWHM_MIN) &
+        (masterF.flux <= FLUX_MAX) &
+        (masterF.flux > masterF.background) &
+        (masterF.flux / masterF.fluxerr > SNR_MIN) &
+        (masterF.elongation <= ELONGATION_MAX)]
     masterF = masterF[COLUMNS[:5]].reset_index(drop=True)
 
     for catalog in catalogs:
