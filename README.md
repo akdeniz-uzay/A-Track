@@ -67,7 +67,7 @@ python3 setup.py install
 cd ..
 ```
 
-After install Alipy you should fix the problem descirebed as [issue](#1).
+After install Alipy you should fix the problem descirebed as [issue#1](https://github.com/akdeniz-uzay/A-Track/issues/1).
 
 ```bash
 
