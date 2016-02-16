@@ -398,15 +398,15 @@ class f2nimage:
 			if scale == 'log':
 				#calcarray = np.array(map(lambda x: loggray(x, self.z1, self.z2), calcarray))
 				calcarray = loggray(calcarray, self.z1, self.z2)
-			else :
+			else:
 				#calcarray = np.array(map(lambda x: lingray(x, self.z1, self.z2), calcarray))
 				calcarray = lingray(calcarray, self.z1, self.z2)
-			
-			
+				
 			#calcarray.shape = numpyarrayshape
-			# bwarray = np.zeros(calcarray.shape, dtype=np.uint8)
-                        bwarray = np.zeros(calcarray.shape, dtype=np.float64)
+			#bwarray = np.zeros(calcarray.shape, dtype=np.uint8)
+			bwarray = np.zeros(calcarray.shape, dtype=np.float64)
 			calcarray.round(out=bwarray)
+			
 			if negative:
 				if self.verbose:
 					print('Using negative scale')
