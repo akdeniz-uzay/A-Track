@@ -37,20 +37,20 @@ Options:
 
 A-Track tested on (X)Ubuntu 14.04 LTS, Fedora >22 and Mac OS X >Yosemite.
 
-To install A-Track on any OS, run the folowing commands;
+To install A-Track on any OS, run the following commands;
 
 
 **Ubuntu:** ```sudo apt-get install python3 python3-pip imagemagick git-all sextractor```
 
 **Fedora:** ```sudo dnf install python3-pip imagemagick git-all```
 
-* Select latest SExtractor version from [here](http://www.astromatic.net/download/sextractor/) (We suggest v2.19.5).
+* Select and install latest SExtractor from [here](http://www.astromatic.net/download/sextractor/) (We suggest v2.19.5).
 
 **Mac OS X:** You need [Homebrew](http://brew.sh) for install dependencies.
 
 * ```brew install imagemagick git python3 sextractor```
 
-Now, we can continue with pip3 :) (GNU/Linux! Don't forget the ```sudo```);
+Now, we can continue with pip3 :) (GNU/Linux users! Don't forget the ```sudo```);
 
 ```bash
 
@@ -67,7 +67,7 @@ python3 setup.py install
 cd ..
 ```
 
-After install Alipy you should fix the problem descirebed as #1.
+After install Alipy you should fix the problem descirebed as [issue](#1).
 
 ```bash
 
