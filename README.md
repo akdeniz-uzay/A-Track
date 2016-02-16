@@ -79,8 +79,7 @@ python3 setup.py install
 
 Now, you have the A-Track! Copy your FITS images folder under A-Track/ then run the [atrack.py](#usage)!
 
-**P.S.:** If you want to install A-Track on Windows. You need to install SExtractor first! However, it is not very easy :) Please see the [link](http://www.astromatic.net/forum/showthread.php?tid=948).
-* Also, you can use older version of SExtractor (v2.0.0), but this version detects considerably less objects than latest version.
+**P.S.:** If you want to install A-Track on Windows. You need to install SExtractor first! However, it is not very easy :) Please see the [link](http://www.astromatic.net/forum/showthread.php?tid=948). Also, you can use older version of [SExtractor (v2.0.0)](http://stupendous.rit.edu/tass/software/sextractor/Extra20.zip), but this version detects considerably less objects than latest version.
 
 
 
