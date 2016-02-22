@@ -50,7 +50,7 @@ T.-C. Chen, K.-L. Chung, A new randomized algorithm for detecting lines,
 \bibitem{alipy}
 M.~Tewes, \href{http://obswww.unige.ch/~tewes/alipy/}{a python package to
   quickly, automatically, and robustly identify geometrical transforms between
-  optical astronomical images} (2015).
+  optical astronomical images} (2016).
 \newline\urlprefix\url{http://obswww.unige.ch/~tewes/alipy/}
 
 \bibitem{lang2010}
@@ -69,7 +69,7 @@ E.~Bertin, S.~Arnouts,
 
 \bibitem{sextractor_manual}
 E.~Bertin, \href{http://terapix.iap.fr/IMG/pdf/sextractor.pdf}{{SE}xtractor
-  v2.3 User's Manual}, Institud d'Astrophysique \& Observatorie de Paris.
+  v2.5 User's Manual}, Institud d'Astrophysique \& Observatorie de Paris.
 \newline\urlprefix\url{http://terapix.iap.fr/IMG/pdf/sextractor.pdf}
 
 \bibitem{astplot}

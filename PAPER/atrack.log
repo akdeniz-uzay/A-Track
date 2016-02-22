@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2016.2.19)  19 FEB 2016 17:11
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2016.2.19)  22 FEB 2016 10:13
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -487,12 +487,12 @@ Package pdftex.def Info: figure_4_line_segment.pdf used on input line 238.
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 [9] [10 <./figure_3_velocity.pdf>]
-<figure_5_results_file.pdf, id=277, 390.25798pt x 200.9106pt>
+<figure_5_results_file.pdf, id=277, 1107.13625pt x 335.2525pt>
 File: figure_5_results_file.pdf Graphic file (type pdf)
 
 <use figure_5_results_file.pdf>
 Package pdftex.def Info: figure_5_results_file.pdf used on input line 249.
-(pdftex.def)             Requested size: 345.0pt x 177.61426pt.
+(pdftex.def)             Requested size: 345.0pt x 104.46944pt.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
@@ -615,10 +615,10 @@ s/type1/public/amsfonts/cm/cmti8.pfb></usr/share/texlive/texmf-dist/fonts/type1
 /public/amsfonts/cm/cmtt10.pfb></usr/share/texlive/texmf-dist/fonts/type1/publi
 c/amsfonts/cm/cmtt8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfo
 nts/symbols/msam10.pfb>
-Output written on atrack.pdf (21 pages, 973697 bytes).
+Output written on atrack.pdf (21 pages, 983198 bytes).
 PDF statistics:
- 529 PDF objects out of 1000 (max. 8388607)
- 412 compressed objects within 5 object streams
+ 528 PDF objects out of 1000 (max. 8388607)
+ 413 compressed objects within 5 object streams
  63 named destinations out of 1000 (max. 500000)
  103 words of extra memory for PDF output out of 10000 (max. 10000000)
 
