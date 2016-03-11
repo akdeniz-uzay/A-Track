@@ -7,14 +7,12 @@
 * [Pandas](http://pandas.pydata.org/) 0.16.x or later.
 * [AliPy](http://obswww.unige.ch/~tewes/alipy/) 2.0.x or later.
 * [PyFITS](http://www.stsci.edu/institute/software_hardware/pyfits) 3.3.x or later.
-* [f2n](https://github.com/akdeniz-uzay/mod/tree/master/f2n) for Python 3.0
+* [f2n](https://github.com/akdeniz-uzay/mod/tree/master/f2n) for Python 3
 * [docopt](https://github.com/docopt/docopt) for Python 3.
 
 ### <a name="usage"></a> Usage
 
- ```bash
-A-Track.
-
+```bash
 Usage:
   atrack.py <fits_dir> [-r <ref_image>, --ref=<ref_image>] [--skip-align]
                        [--skip-cats] [--skip-pngs]
@@ -23,43 +21,43 @@ Usage:
   atrack.py --version
 
 Options:
-  -h --help             Show this screen.
+  --help                Show this screen.
   --version             Show version.
-  -r --ref=<ref_image>  Reference FITS image for alignment.
-  --skip-align          Skip aligment if alignment had already done.
-  --skip-cats           Skip creating catalogue files if catalogue
-                        files had been created by user.
-  --skip-pngs           Skip create PNGs and animation.
-  --skip-gif            Skip create animation file.
- ```
+  --ref=<ref_image>     Reference FITS image for alignment.
+  --skip-align          Skip alignment if alignment is already done.
+  --skip-cats           Skip creating catalog files if they are already created.
+  --skip-pngs           Skip creating PNGs.
+  --skip-gif            Skip creating animation file.
+```
 
 ### Installation
 
-A-Track tested on (X)Ubuntu 14.04 LTS, Fedora >22 and Mac OS X >Yosemite.
+A-Track is tested on Ubuntu 14.04 LTS, Fedora 22 and Mac OS X Yosemite.
 
-To install A-Track on any OS, run the following commands;
+To install A-Track on any OS, run the following commands:
 
 
 **Ubuntu:** ```sudo apt-get install python3 python3-pip imagemagick git-all sextractor```
 
 **Fedora:** ```sudo dnf install python3-pip imagemagick git-all```
 
-* Select and install latest SExtractor from [here](http://www.astromatic.net/download/sextractor/) (We suggest v2.19.5).
+* Install the latest SExtractor from [here](http://www.astromatic.net/download/sextractor/) (we suggest v2.19.5 as the older versions detect fewer objects).
 
-**Mac OS X:** You need [Homebrew](http://brew.sh) for install dependencies.
+**Mac OS X:** You need [Homebrew](http://brew.sh) to install the dependencies.
 
 * ```brew install imagemagick git python3 sextractor```
 
-Now, we can continue with pip3 :) (GNU/Linux users! Don't forget the ```sudo```);
+Numpy, Pandas, Scipy, pyFITS, and docopt can be installed with pip3 (GNU/Linux users! Don't forget the ```sudo```):
 
 ```bash
 
 cd ~
-pip3 install numpy pandas pyfits docopt scipy matplotlib```
+pip3 install numpy pandas pyfits docopt scipy matplotlib
 
 git clone https://github.com/japs/alipy
 cd alipy
 python3 setup.py install
+
 cd ..
 git clone https://github.com/japs/astroasciidata
 cd astroasciidata
@@ -67,22 +65,29 @@ python3 setup.py install
 cd ..
 ```
 
-After install Alipy you should fix the problem descirebed as [issue#1](https://github.com/akdeniz-uzay/A-Track/issues/1).
+After installing Alipy, you should locate the built align.py file and change
 
-```bash
+Line 51:
+```
+   tofits(alifilepath, data, hdr = None, verbose = verbose)
+```
+To:
+```
+   if hdr:
+       tofits(alifilepath, data, hdr = hdr, verbose = verbose)
+   else:
+       tofits(alifilepath, data, hdr = None, verbose = verbose)
 
+```
+Finally, you can download the A-Track files and install the f2n package:
+
+```
 cd ..
 git clone https://github.com/akdeniz-uzay/A-Track
 cd f2n
 python3 setup.py install
 ```
 
-Now, you have the A-Track! Copy your FITS images folder under A-Track/ then run the [atrack.py](#usage)!
+Now, you have A-Track! You can open a command-line interface in the A-Track directory and execute the file [atrack.py](#usage)!
 
-**P.S.:** If you want to install A-Track on Windows. You need to install SExtractor first! However, it is not very easy :) Please see the [link](http://www.astromatic.net/forum/showthread.php?tid=948). Also, you can use older version of [SExtractor (v2.0.0)](http://stupendous.rit.edu/tass/software/sextractor/Extra20.zip), but this version detects considerably less objects than latest version.
-
-
-
-
-
-
+**P.S.:** If you want to use A-Track on Windows, you need to install SExtractor first! This is a bit tricky. Please see the [link](http://www.astromatic.net/forum/showthread.php?tid=948).
