@@ -14,11 +14,9 @@
 
 ```bash
 Usage:
-  atrack.py <fits_dir> [-r <ref_image>, --ref=<ref_image>] [--skip-align]
-                       [--skip-cats] [--skip-pngs]
-                       [--skip-gif]
-  atrack.py (-h | --help)
-  atrack.py --version
+  python3 atrack.py <fits_dir> [--ref=<ref_image>] [--skip-align]
+                               [--skip-cats] [--skip-pngs]
+                               [--skip-gif] [--help] [--version]
 
 Options:
   --help                Show this screen.
