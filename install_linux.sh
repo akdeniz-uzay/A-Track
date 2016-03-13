@@ -38,7 +38,7 @@ fi
 
 # Functions to use.
 #
-atrack_dep_deb()   {
+atrack_dep_deb(){
    echo ''
    echo '      Installing dependencies for A-Track.' 
    echo '      (Be patient...)'
@@ -46,14 +46,14 @@ atrack_dep_deb()   {
    apt-get install --no-install-recommends -y $DEPS_deb
 }
 
-atrack_dep_rpm()   {
+atrack_dep_rpm(){
    echo ''
    echo '      Installing dependencies (Be patient...)'
    echo ''
    yum -y install $DEPS_rpm
 }
 
-atrack_dep_pip()   {
+atrack_dep_pip(){
    echo ''
    echo '      Installing dependencies via pip3.'
    echo ''
@@ -92,7 +92,7 @@ atrack_dep_pip()   {
    rm -rf atrack_tmp/
 }
 
-atrack_post()    {
+atrack_post(){
    echo ''
    echo '      A-Track has been installed.'
    echo ''
@@ -102,19 +102,19 @@ atrack_post()    {
    echo ''
 }
 
-install_atrack_deb()   {
+install_atrack_deb(){
     atrack_dep_deb
     atrack_dep_pip
     atrack_post
 }
 
-install_atrack_rpm()   {
+install_atrack_rpm(){
     atrack_dep_rpm
     atrack_dep_pip
     atrack_post
 }
 
-fail_install()  {
+fail_install(){
    echo ''
    echo 'Do not you have required GNU/Linux Distro?'
    echo '(Fedora, Ubuntu, Debian, LinuxMint, CentOS, RedHat)'
