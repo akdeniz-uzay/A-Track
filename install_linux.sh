@@ -57,7 +57,7 @@ atrack_dep_pip(){
    echo '      Installing dependencies via pip3.'
    echo ''
    echo ''
-   echo '      Installing pandas, docopt, pyds9' 
+   echo '      Installing pandas, numpy, pyfits, docopt, pyds9' 
    echo '      (Be patient...)'
    echo ''
    pip3 install --upgrade docopt pandas numpy pyfits
@@ -124,8 +124,9 @@ fail_install(){
 # Check which distro are we running and run the apropiate script.
 
 distro=$(cat /etc/issue| head -n1| awk '{print $1}')
+# LinuxMint => Linux
 
-if [ $distro = "Debian" -o $distro = "Ubuntu" -o $distro = "LinuxMint" ]; then
+if [ $distro = "Debian" -o $distro = "Ubuntu" -o $distro = "Linux" ]; then
     echo ''
     echo 'The following extra packages will be installed for A-Track;'
     echo 'docopt, pandas, numpy, pyfits, alipy, astroasciidata, pyds9'

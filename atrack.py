@@ -5,16 +5,17 @@
 """A-Track.
 
 Usage:
-  atrack.py <fits_dir> [--ref=<ref_image>] [--skip-align]
-                               [--skip-cats] [--skip-pngs] [--skip-gif]
-                               [--help] [--version]
+    atrack.py <fits_dir> [--ref=<ref_image>] [--skip-align]
+                                 [--skip-cats] [--skip-pngs]
+                                 [--skip-gif] [--help] [--version]
 
 Options:
   --help                Show this screen.
   --version             Show version.
   --ref=<ref_image>     Reference FITS image for alignment.
   --skip-align          Skip alignment if alignment is already done.
-  --skip-cats           Skip creating catalog files if they are already created.
+  --skip-cats           Skip creating catalog files if they are
+                        already created.
   --skip-pngs           Skip creating PNGs.
   --skip-gif            Skip creating animation file.
 """
@@ -61,6 +62,7 @@ if __name__ == '__main__':
 
     start = time.time()
     arguments = docopt(__doc__, version='A-Track 1.0')
+    print(arguments)
 
     try:
         fitsdir, reference = arguments['<fits_dir>'], arguments['--ref']
