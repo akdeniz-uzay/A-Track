@@ -96,8 +96,21 @@ fail_brew(){
 
 if [ "$(uname -s)" == "Darwin" ]; then
     if [ -x "/usr/local/bin/brew" ] ; then
-	rm -rf atrack_tmp/;
-	install_atrack;	
+	echo ''
+	echo 'The following extra packages will be installed for A-Track;'
+	echo 'imagemagick, pandas, numpy, sextractor, pyfits'
+	echo 'pyfits, docopt, scipy, matplotlib, pyds9, alipy'
+	echo 'astroasciidata, f2n, pillow, wget.'
+	read -r -p "Do you want to proceed? [y/N] " response
+	case $response in
+	    [yY][eE][sS]|[yY])
+		rm -rf atrack_tmp/;
+		install_atrack;
+		;;
+	    *)
+		exit 1
+		;;
+	esac
     else
 	fail_brew
     fi
