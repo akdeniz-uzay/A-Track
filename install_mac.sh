@@ -20,11 +20,11 @@ atrack_install_dep(){
    echo ''
    echo '      imagemagick, pandas, numpy, sextractor, pyfits'
    echo '      pyfits, docopt, scipy, matplotlib, pyds9, alipy'
-   echo '      astroasciidata, f2n, pillow;'
+   echo '      astroasciidata, f2n, pillow, wget;'
    echo '      will be installed. (Be patient...)'
    echo ''
    brew update
-   for pkg in imagemagick git python3 sextractor; do
+   for pkg in imagemagick git python3 sextractor wget; do
        if brew list -1 | grep -q "^${pkg}\$"; then
 	   echo "Package '$pkg' is already installed!"
        else
