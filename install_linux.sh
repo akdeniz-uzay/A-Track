@@ -129,7 +129,7 @@ if [ $distro = "Debian" -o $distro = "Ubuntu" -o $distro = "LinuxMint" ]; then
     echo ''
     echo 'The following extra packages will be installed for A-Track;'
     echo 'docopt, pandas, numpy, pyfits, alipy, astroasciidata, pyds9'
-    echo '$DEPS_deb'
+    echo $DEPS_deb
     echo ''
     read -r -p "Do you want to proceed? [y/N] " response
     case $response in
@@ -145,7 +145,7 @@ elif [ $distro = "Fedora" -o $distro = "CentOS" ]; then
     echo ''
     echo 'The following extra packages will be installed for A-Track;'
     echo 'docopt, pandas, numpy, pyfits, alipy, astroasciidata, pyds9'
-    echo '$DEPS_rpm'
+    echo $DEPS_rpm
     echo ''
     read -r -p "Do you want to proceed? [y/N] " response
     case $response in
