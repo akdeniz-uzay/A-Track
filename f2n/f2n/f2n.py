@@ -57,7 +57,7 @@ class f2nimage:
 		
 		# Now the numpy array to hold the actual data.
 		
-		if numpyarray == None:
+		if numpyarray is None:
 
 			self.numpyarray = np.ones(shape, dtype=np.float32)*fill
 

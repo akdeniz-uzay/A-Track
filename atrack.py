@@ -5,20 +5,18 @@
 """A-Track.
 
 Usage:
-  atrack.py <fits_dir> [-r <ref_image>, --ref=<ref_image>] [--skip-align]
-                       [--skip-cats] [--skip-pngs] [--skip-gif]
-  atrack.py (-h | --help)
-  atrack.py --version
+  atrack.py <fits_dir> [--ref=<ref_image>] [--skip-align]
+                               [--skip-cats] [--skip-pngs] [--skip-gif]
+                               [--help] [--version]
 
 Options:
-  -h --help             Show this screen.
+  --help                Show this screen.
   --version             Show version.
-  -r --ref=<ref_image>  Reference FITS image for alignment.
-  --skip-align          Skip aligment if alignment had already done.
-  --skip-cats           Skip creating catalogue files if catalogue
-                        files had been created by user.
-  --skip-pngs           Skip create PNGs and animation.
-  --skip-gif            Skip create animation file.
+  --ref=<ref_image>     Reference FITS image for alignment.
+  --skip-align          Skip alignment if alignment is already done.
+  --skip-cats           Skip creating catalog files if they are already created.
+  --skip-pngs           Skip creating PNGs.
+  --skip-gif            Skip creating animation file.
 """
 
 try:
@@ -62,7 +60,7 @@ import glob
 if __name__ == '__main__':
 
     start = time.time()
-    arguments = docopt(__doc__, version='A-Track 0.1-dev')
+    arguments = docopt(__doc__, version='A-Track 1.0')
 
     try:
         fitsdir, reference = arguments['<fits_dir>'], arguments['--ref']
@@ -112,7 +110,7 @@ if __name__ == '__main__':
     lines = asteroids.detect_lines(outdir, fitsdir)
 
     if len(lines) == 0:
-        print('atrack could not find any moving objects in the images.')
+        print('A-Track could not find any moving objects in the images.')
         raise SystemExit
 
     moving_objects, uncertain_objects = asteroids.results(fitsdir, lines)
