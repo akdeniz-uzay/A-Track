@@ -6,14 +6,14 @@
 
 # Variables to use
 
-DEPS_deb="python3 python3-dev python3-pip python3-numpy
-python3-matplotlib python3-scipy python3-pyfits python3-pil 
-wget imagemagick libxt-dev git-all sextractor build-essential
+DEPS_deb="python3 python3-dev python3-pip python3-scipy 
+python3-pil wget imagemagick libxt-dev git-all sextractor 
+build-essential
 "
 
-DEPS_rpm="python3 python3-devel python3-pip python3-numpy
-python3-matplotlib python3-scipy python3-pyfits python3-pillow 
-wget ImageMagick libXt-devel git-all sextractor make automake 
+DEPS_rpm="python3 python3-devel python3-pip 
+python3-scipy python3-pillow wget ImageMagick 
+libXt-devel git-all sextractor make automake 
 gcc gcc-c++ kernel-devel
 "
 
@@ -34,7 +34,6 @@ then
     echo '         sudo ./install.sh'
     exit 1
 fi
-
 
 # Functions to use.
 #
@@ -61,14 +60,14 @@ atrack_dep_pip(){
    echo '      Installing pandas, docopt, pyds9' 
    echo '      (Be patient...)'
    echo ''
-   pip3 install docopt pandas
+   pip3 install docopt pandas numpy pyfits
    pip3 install git+https://github.com/ericmandel/pyds9.git#egg=pyds9
    mkdir atrack_tmp/
    cd atrack_tmp/
    echo ''
    echo '      Installing alipy.'
    echo ''
-   wget https://dl.dropboxusercontent.com/u/3985402/alipy.tar.gz
+   wget --no-check-certificate https://dl.dropboxusercontent.com/u/3985402/alipy.tar.gz
    tar -xvf alipy.tar.gz
    cd alipy
    python3 setup.py install
@@ -127,11 +126,37 @@ fail_install(){
 distro=$(cat /etc/issue| head -n1| awk '{print $1}')
 
 if [ $distro = "Debian" -o $distro = "Ubuntu" -o $distro = "LinuxMint" ]; then
-    rm -rf atrack_tmp/;
-    install_atrack_deb;
+    echo ''
+    echo 'The following extra packages will be installed for A-Track;'
+    echo 'docopt, pandas, numpy, pyfits, alipy, astroasciidata, pyds9'
+    echo '$DEPS_deb'
+    echo ''
+    read -r -p "Do you want to proceed? [y/N] " response
+    case $response in
+	[yY][eE][sS]|[yY])
+	    rm -rf atrack_tmp/;
+	    install_atrack_deb;
+	    ;;
+	*)
+	    exit 1
+	    ;;
+    esac
 elif [ $distro = "Fedora" -o $distro = "CentOS" ]; then
-    rm -rf atrack_tmp/;
-    install_atrack_rpm
+    echo ''
+    echo 'The following extra packages will be installed for A-Track;'
+    echo 'docopt, pandas, numpy, pyfits, alipy, astroasciidata, pyds9'
+    echo '$DEPS_rpm'
+    echo ''
+    read -r -p "Do you want to proceed? [y/N] " response
+    case $response in
+	[yY][eE][sS]|[yY])
+	    rm -rf atrack_tmp/;
+	    install_atrack_rpm;
+	    ;;
+	*)
+	    exit 1
+	    ;;
+    esac
 else  fail_install;
 fi
 
