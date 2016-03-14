@@ -60,7 +60,7 @@ atrack_dep_pip(){
    echo '      Installing pandas, docopt, pyds9' 
    echo '      (Be patient...)'
    echo ''
-   pip3 install docopt pandas numpy pyfits
+   pip3 install --upgrade docopt pandas numpy pyfits
    pip3 install git+https://github.com/ericmandel/pyds9.git#egg=pyds9
    mkdir atrack_tmp/
    cd atrack_tmp/

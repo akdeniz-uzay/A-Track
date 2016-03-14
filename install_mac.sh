@@ -31,14 +31,14 @@ atrack_install_dep(){
 	   brew install $pkg
        fi
    done
-   pip3 install numpy pandas pyfits docopt scipy matplotlib pillow
+   pip3 install --upgrade numpy pandas pyfits docopt scipy matplotlib pillow
    pip3 install git+https://github.com/ericmandel/pyds9.git#egg=pyds9
    mkdir atrack_tmp/
    cd atrack_tmp/
    echo ''
    echo '      Installing alipy.'
    echo ''
-   wget https://dl.dropboxusercontent.com/u/3985402/alipy.tar.gz
+   wget --no-check-certificate https://dl.dropboxusercontent.com/u/3985402/alipy.tar.gz
    tar -xvf alipy.tar.gz
    cd alipy
    python3 setup.py install
