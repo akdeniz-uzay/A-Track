@@ -12,19 +12,23 @@
 ### <a name="usage"></a> Usage
 
 ```bash
-Usage:
-  python3 atrack.py <fits_dir> [--ref=<ref_image>] [--skip-align]
-                               [--skip-cats] [--skip-pngs]
-                               [--skip-gif] [--help] [--version]
+usage: python3 atrack.py [-h] [--ref ref_image] [--skip-align] [--skip-cats]
+                         [--skip-pngs] [--skip-gif] [--version]
+                         fits_dir
 
-Options:
-  --help                Show this screen.
-  --version             Show version.
-  --ref=<ref_image>     Reference FITS image for alignment.
-  --skip-align          Skip alignment if alignment is already done.
-  --skip-cats           Skip creating catalog files if they are already created.
-  --skip-pngs           Skip creating PNGs.
-  --skip-gif            Skip creating animation file.
+A-Track.
+
+positional arguments:
+  fits_dir         FITS image directory.
+
+optional arguments:
+  -h, --help       show this help message and exit
+  --ref ref_image  Reference FITS image for alignment (with path).
+  --skip-align     Skip alignment if alignment is already done.
+  --skip-cats      Skip creating catalog files if they are already created.
+  --skip-pngs      Skip creating PNGs.
+  --skip-gif       Skip creating animation file.
+  --version        Show version.
 ```
 
 ### Installation
