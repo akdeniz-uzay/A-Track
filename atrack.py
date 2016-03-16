@@ -41,27 +41,27 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='python3 atrack.py',
                                      description='A-Track.')
     parser.add_argument('fits_dir',
-                        help='FITS image directory.')
+                        help='FITS image directory')
     parser.add_argument('--ref',
                         type=str,
                         metavar='ref_image',
-                        help='Reference FITS image for alignment (with path).')
+                        help='reference FITS image for alignment (with path)')
     parser.add_argument('--skip-align',
                         action='store_true',
-                        help='Skip alignment if alignment is already done.')
+                        help='skip alignment if alignment is already done')
     parser.add_argument('--skip-cats',
                         action='store_true',
-                        help='Skip creating catalog files ' +
-                        'if they are already created.')
+                        help='skip creating catalog files ' +
+                        'if they are already created')
     parser.add_argument('--skip-pngs',
                         action='store_true',
-                        help='Skip creating PNGs.')
+                        help='skip creating PNGs')
     parser.add_argument('--skip-gif',
                         action='store_true',
-                        help='Skip creating animation file.')
+                        help='skip creating animation file')
     parser.add_argument('--version',
                         action='version',
-                        help='Show version.',
+                        help='show version',
                         version='A-Track version 1.0')
 
     arguments = parser.parse_args()
@@ -128,15 +128,16 @@ if __name__ == '__main__':
         moving_objects = pd.DataFrame.from_records(moving_objects,
                                                    columns=COLUMNS)
         moving_objects = moving_objects.reindex_axis(NEWCOLS, axis=1)
-        print('\nMOVING OBJECTS:\n')
-        print(moving_objects)
         moving_objects[['FileID',
                         'Flags',
                         'ObjectID']] = moving_objects[['FileID',
                                                        'Flags',
                                                        'ObjectID']].astype(int)
         with open('{0}/results.txt'.format(outdir), 'w') as f:
-            s = moving_objects.to_string(justify='left', index=False)
+            s = moving_objects.to_string(justify='center', index=False)
+            print('\nMOVING OBJECTS:\n')
+            print(s)
+            f.write('MOVING OBJECTS:\n\n')
             f.write(s)
 
     if uncertain_objects.size:
@@ -144,8 +145,6 @@ if __name__ == '__main__':
         uncertain_objects = pd.DataFrame.from_records(uncertain_objects,
                                                       columns=COLUMNS)
         uncertain_objects = uncertain_objects.reindex_axis(NEWCOLS, axis=1)
-        print('\nUNCERTAIN OBJECTS:\n')
-        print(uncertain_objects)
         uncertain_objects[['FileID',
                            'Flags',
                            'ObjectID']] = uncertain_objects[[
@@ -154,7 +153,10 @@ if __name__ == '__main__':
                                'ObjectID']].astype(int)
         with open('{0}/results.txt'.format(outdir), 'a') as f:
             f.write('\n\n')
-            s = uncertain_objects.to_string(justify='left', index=False)
+            s = uncertain_objects.to_string(justify='center', index=False)
+            print('\nUNCERTAIN OBJECTS:\n')
+            print(s)
+            f.write('UNCERTAIN OBJECTS:\n\n')
             f.write(s)
 
     if not arguments.skip_pngs:
