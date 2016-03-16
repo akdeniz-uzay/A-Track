@@ -6,15 +6,15 @@
 
 # Variables to use
 
-DEPS_deb="python3 python3-dev python3-pip python3-scipy 
-python3-pil wget imagemagick libxt-dev git-all sextractor 
+DEPS_deb="python3 python3-dev python3-pip 
+wget imagemagick libxt-dev git-all sextractor 
 build-essential
 "
 
 DEPS_rpm="python3 python3-devel python3-pip 
-python3-scipy python3-pillow wget ImageMagick 
-libXt-devel git-all sextractor make automake 
-gcc gcc-c++ kernel-devel
+wget ImageMagick libXt-devel git-all 
+sextractor make automake gcc gcc-c++ 
+kernel-devel
 "
 
 ROOT_UID=0
@@ -57,10 +57,10 @@ atrack_dep_pip(){
    echo '      Installing dependencies via pip3.'
    echo ''
    echo ''
-   echo '      Installing pandas, numpy, pyfits, docopt, pyds9' 
+   echo '      Installing pandas, numpy, pyfits, pyds9' 
    echo '      (Be patient...)'
    echo ''
-   pip3 install --upgrade docopt pandas numpy pyfits
+   pip3 install --upgrade pandas numpy scipy pillow pyfits
    pip3 install git+https://github.com/ericmandel/pyds9.git#egg=pyds9
    mkdir atrack_tmp/
    cd atrack_tmp/
@@ -129,7 +129,7 @@ distro=$(cat /etc/issue| head -n1| awk '{print $1}')
 if [ $distro = "Debian" -o $distro = "Ubuntu" -o $distro = "Linux" ]; then
     echo ''
     echo 'The following extra packages will be installed for A-Track;'
-    echo 'docopt, pandas, numpy, pyfits, alipy, astroasciidata, pyds9'
+    echo 'pandas, numpy, pyfits, alipy, astroasciidata, pyds9'
     echo $DEPS_deb
     echo ''
     read -r -p "Do you want to proceed? [y/N] " response
@@ -145,7 +145,7 @@ if [ $distro = "Debian" -o $distro = "Ubuntu" -o $distro = "Linux" ]; then
 elif [ $distro = "Fedora" -o $distro = "CentOS" ]; then
     echo ''
     echo 'The following extra packages will be installed for A-Track;'
-    echo 'docopt, pandas, numpy, pyfits, alipy, astroasciidata, pyds9'
+    echo 'pandas, numpy, pyfits, alipy, astroasciidata, pyds9'
     echo $DEPS_rpm
     echo ''
     read -r -p "Do you want to proceed? [y/N] " response

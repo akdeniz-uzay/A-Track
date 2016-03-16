@@ -19,7 +19,7 @@ atrack_install_dep(){
    echo ''
    echo ''
    echo '      imagemagick, pandas, numpy, sextractor, pyfits'
-   echo '      pyfits, docopt, scipy, matplotlib, pyds9, alipy'
+   echo '      pyfits, scipy, matplotlib, pyds9, alipy'
    echo '      astroasciidata, f2n, pillow, wget;'
    echo '      will be installed. (Be patient...)'
    echo ''
@@ -31,7 +31,7 @@ atrack_install_dep(){
 	   brew install $pkg
        fi
    done
-   pip3 install --upgrade numpy pandas pyfits docopt scipy matplotlib pillow
+   pip3 install --upgrade numpy pandas pyfits scipy matplotlib pillow
    pip3 install git+https://github.com/ericmandel/pyds9.git#egg=pyds9
    mkdir atrack_tmp/
    cd atrack_tmp/
@@ -99,7 +99,7 @@ if [ "$(uname -s)" == "Darwin" ]; then
 	echo ''
 	echo 'The following extra packages will be installed for A-Track;'
 	echo 'imagemagick, pandas, numpy, sextractor, pyfits'
-	echo 'pyfits, docopt, scipy, matplotlib, pyds9, alipy'
+	echo 'pyfits, scipy, matplotlib, pyds9, alipy'
 	echo 'astroasciidata, f2n, pillow, wget.'
 	read -r -p "Do you want to proceed? [y/N] " response
 	case $response in
