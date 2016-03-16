@@ -8,7 +8,6 @@
 * [AliPy](http://obswww.unige.ch/~tewes/alipy/) 2.0.x or later.
 * [PyFITS](http://www.stsci.edu/institute/software_hardware/pyfits) 3.3.x or later.
 * [f2n](https://github.com/akdeniz-uzay/mod/tree/master/f2n) for Python 3
-* [docopt](https://github.com/docopt/docopt) for Python 3.
 
 ### <a name="usage"></a> Usage
 
@@ -45,12 +44,12 @@ To install A-Track on any OS, run the following commands:
 
 * ```brew install imagemagick git python3 sextractor```
 
-Numpy, Pandas, Scipy, pyFITS, and docopt can be installed with pip3 (GNU/Linux users! Don't forget the ```sudo```):
+Numpy, Pandas, Scipy, pyFITS and pillow can be installed with pip3 (GNU/Linux users! Don't forget the ```sudo```):
 
 ```bash
 
 cd ~
-pip3 install numpy pandas pyfits docopt scipy matplotlib
+pip3 install numpy pandas pyfits pillow scipy matplotlib
 
 git clone https://github.com/japs/alipy
 cd alipy
