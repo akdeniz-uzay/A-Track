@@ -2,30 +2,6 @@
 # Authors: Yücel Kılıç, Murat Kaplan, Nurdan Karapınar, Tolga Atay.
 # This is an open-source software licensed under GPLv3.
 
-"""A-Track.
-
-Usage:
-    atrack.py <fits_dir> [--ref=<ref_image>] [--skip-align]
-                                 [--skip-cats] [--skip-pngs]
-                                 [--skip-gif] [--help] [--version]
-
-Options:
-  --help                Show this screen.
-  --version             Show version.
-  --ref=<ref_image>     Reference FITS image for alignment.
-  --skip-align          Skip alignment if alignment is already done.
-  --skip-cats           Skip creating catalog files if they are
-                        already created.
-  --skip-pngs           Skip creating PNGs.
-  --skip-gif            Skip creating animation file.
-"""
-
-try:
-    from docopt import docopt, DocoptExit
-except:
-    print('Python cannot import docopt. Make sure docopt is installed.')
-    raise SystemExit
-
 try:
     import pandas as pd
 except ImportError:
@@ -56,26 +32,47 @@ except ImportError:
 import time
 import os
 import glob
+import argparse
 
 
 if __name__ == '__main__':
 
     start = time.time()
-    arguments = docopt(__doc__, version='A-Track 1.0')
-    print(arguments)
+    parser = argparse.ArgumentParser(prog='python3 atrack.py',
+                                     description='A-Track.')
+    parser.add_argument('fits_dir',
+                        help='FITS image directory.')
+    parser.add_argument('--ref',
+                        type=str,
+                        metavar='ref_image',
+                        help='Reference FITS image for alignment (with path).')
+    parser.add_argument('--skip-align',
+                        action='store_true',
+                        help='Skip alignment if alignment is already done.')
+    parser.add_argument('--skip-cats',
+                        action='store_true',
+                        help='Skip creating catalog files ' +
+                        'if they are already created.')
+    parser.add_argument('--skip-pngs',
+                        action='store_true',
+                        help='Skip creating PNGs.')
+    parser.add_argument('--skip-gif',
+                        action='store_true',
+                        help='Skip creating animation file.')
+    parser.add_argument('--version',
+                        action='version',
+                        help='Show version.',
+                        version='A-Track version 1.0')
 
-    try:
-        fitsdir, reference = arguments['<fits_dir>'], arguments['--ref']
-    except DocoptExit as e:
-        print('Usage error!')
-        print(e)
+    arguments = parser.parse_args()
+    fitsdir, reference = arguments.fits_dir, arguments.ref
 
     outdir = fitsdir + '/atrack'
 
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
 
-    if not arguments['--skip-align']:
+    if not arguments.skip_align:
         print('\nAligning images...', end=' ')
         sources.align(fitsdir, reference, outdir)
         elapsed = int(time.time() - start)
@@ -84,7 +81,7 @@ if __name__ == '__main__':
         print('Elapsed time: {0} min {1} sec.'
               .format(elapsed // 60, elapsed % 60))
 
-    if not arguments['--skip-cats']:
+    if not arguments.skip_cats:
         print('\nCreating catalog files...', end=' ')
         sources.make_catalog(outdir, outdir)
         elapsed = int(time.time() - start)
@@ -160,7 +157,7 @@ if __name__ == '__main__':
             s = uncertain_objects.to_string(justify='left', index=False)
             f.write(s)
 
-    if not arguments['--skip-pngs']:
+    if not arguments.skip_pngs:
         print('\nCreating PNG files...\n')
 
         if moving_objects.size and uncertain_objects.size:
@@ -183,7 +180,7 @@ if __name__ == '__main__':
         print('Elapsed Time: {0} min {1} sec.'
               .format(elapsed // 60, elapsed % 60))
 
-        if not arguments['--skip-gif']:
+        if not arguments.skip_gif:
             print('\nCreating GIF (animation) file...')
             os.popen('convert -delay 20 -loop 0 ' +
                      '{0}/*.png {0}/animation.gif'.format(outdir))
