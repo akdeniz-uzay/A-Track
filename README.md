@@ -19,16 +19,16 @@ usage: python3 atrack.py [-h] [--ref ref_image] [--skip-align] [--skip-cats]
 A-Track.
 
 positional arguments:
-  fits_dir         FITS image directory.
+  fits_dir         FITS image directory
 
 optional arguments:
   -h, --help       show this help message and exit
-  --ref ref_image  Reference FITS image for alignment (with path).
-  --skip-align     Skip alignment if alignment is already done.
-  --skip-cats      Skip creating catalog files if they are already created.
-  --skip-pngs      Skip creating PNGs.
-  --skip-gif       Skip creating animation file.
-  --version        Show version.
+  --ref ref_image  reference FITS image for alignment (with path)
+  --skip-align     skip alignment if alignment is already done
+  --skip-cats      skip creating catalog files if they are already created
+  --skip-pngs      skip creating PNGs
+  --skip-gif       skip creating animation file
+  --version        show version
 ```
 
 ### Installation
