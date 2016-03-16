@@ -48,7 +48,7 @@ def align(fitsdir, reference, outdir):
     if not reference:
         reference = images[0]
     else:
-        reference = reference[0]
+        reference = reference
 
     identifications = alipy.ident.run(reference, images, visu=False,
                                       sexkeepcat=False, verbose=False)
