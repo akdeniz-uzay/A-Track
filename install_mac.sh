@@ -20,7 +20,7 @@ atrack_install_dep(){
    echo ''
    echo '      imagemagick, pandas, numpy, sextractor, pyfits'
    echo '      pyfits, scipy, matplotlib, pyds9, alipy'
-   echo '      astroasciidata, f2n, pillow, wget;'
+   echo '      astroasciidata, f2n, pillow;'
    echo '      will be installed. (Be patient...)'
    echo ''
    brew update
@@ -38,15 +38,14 @@ atrack_install_dep(){
    echo ''
    echo '      Installing alipy.'
    echo ''
-   wget --no-check-certificate https://dl.dropboxusercontent.com/u/3985402/alipy.tar.gz
-   tar -xvf alipy.tar.gz
+   git clone https://github.com/akdeniz-uzay/alipy.git
    cd alipy
    python3 setup.py install
    cd ..
    echo ''
    echo '      Installing astroasciidata.'
    echo ''
-   git clone https://github.com/japs/astroasciidata
+   git clone https://github.com/japs/astroasciidata.git
    cd astroasciidata
    python3 setup.py install
    cd ../..
@@ -100,7 +99,7 @@ if [ "$(uname -s)" == "Darwin" ]; then
 	echo 'The following extra packages will be installed for A-Track;'
 	echo 'imagemagick, pandas, numpy, sextractor, pyfits'
 	echo 'pyfits, scipy, matplotlib, pyds9, alipy'
-	echo 'astroasciidata, f2n, pillow, wget.'
+	echo 'astroasciidata, f2n, pillow.'
 	read -r -p "Do you want to proceed? [y/N] " response
 	case $response in
 	    [yY][eE][sS]|[yY])

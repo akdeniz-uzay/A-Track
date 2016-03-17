@@ -7,12 +7,12 @@
 # Variables to use
 
 DEPS_deb="python3 python3-dev python3-pip 
-wget imagemagick libxt-dev git-all sextractor 
+imagemagick libxt-dev git-all sextractor 
 build-essential
 "
 
 DEPS_rpm="python3 python3-devel python3-pip 
-wget ImageMagick libXt-devel git-all 
+ImageMagick libXt-devel git-all 
 sextractor make automake gcc gcc-c++ 
 kernel-devel
 "
@@ -67,15 +67,14 @@ atrack_dep_pip(){
    echo ''
    echo '      Installing alipy.'
    echo ''
-   wget --no-check-certificate https://dl.dropboxusercontent.com/u/3985402/alipy.tar.gz
-   tar -xvf alipy.tar.gz
+   git clone https://github.com/akdeniz-uzay/alipy.git
    cd alipy
    python3 setup.py install
    cd ..
    echo ''
    echo '      Installing astroasciidata.'
    echo ''
-   git clone https://github.com/japs/astroasciidata
+   git clone https://github.com/japs/astroasciidata.git
    cd astroasciidata
    python3 setup.py install
    cd ../..

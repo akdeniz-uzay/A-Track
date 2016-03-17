@@ -55,7 +55,7 @@ Numpy, Pandas, Scipy, pyFITS and pillow can be installed with pip3 (GNU/Linux us
 cd ~
 pip3 install numpy pandas pyfits pillow scipy matplotlib
 
-git clone https://github.com/japs/alipy
+git clone https://github.com/akdeniz-uzay/alipy.git
 cd alipy
 python3 setup.py install
 
@@ -66,20 +66,6 @@ python3 setup.py install
 cd ..
 ```
 
-After installing Alipy, you should locate the built align.py file and change
-
-Line 51:
-```
-   tofits(alifilepath, data, hdr = None, verbose = verbose)
-```
-To:
-```
-   if hdr:
-       tofits(alifilepath, data, hdr = hdr, verbose = verbose)
-   else:
-       tofits(alifilepath, data, hdr = None, verbose = verbose)
-
-```
 Finally, you can download the A-Track files and install the f2n package:
 
 ```
