@@ -19,11 +19,11 @@ usage: python3 atrack.py [-h] [--ref ref_image] [--skip-align] [--skip-cats]
 A-Track.
 
 positional arguments:
-  fits_dir         FITS image directory
+  fits_dir         FITS image directory (full path)
 
 optional arguments:
   -h, --help       show this help message and exit
-  --ref ref_image  reference FITS image for alignment (with path)
+  --ref ref_image  reference FITS image for alignment (full path)
   --skip-align     skip alignment if alignment is already done
   --skip-cats      skip creating catalog files if they are already created
   --skip-pngs      skip creating PNGs
@@ -33,62 +33,71 @@ optional arguments:
 
 ### Installation
 
-A-Track is tested on Ubuntu 14.04 LTS, Fedora 22 and Mac OS X Yosemite.
+A-Track is tested on Ubuntu 14.04 LTS, Fedora 22 and Mac OS X Yosemite. If you want to use A-Track on Windows, you need to install SExtractor first! This is a bit tricky. Please see the [this thread](http://www.astromatic.net/forum/showthread.php?tid=948).
 
-To install A-Track on any OS, run the following commands:
+To install A-Track on Linux or Mac, you can simply download the A-Track package and run the installation scripts install_linux.sh (for Linux) or install_mac.sh (for Mac).
 
+<br>
+Alternatively, you can install A-Track manually following these steps:
 
-**Ubuntu:** ```sudo apt-get install python3 python3-pip imagemagick git-all sextractor```
+1. **Install Python3, pip3, imagemagick, git, and SExtractor:**
 
-**Fedora:** ```sudo dnf install python3-pip imagemagick git-all```
+  **Ubuntu:**  
+  `sudo apt-get install python3 python3-pip imagemagick git-all sextractor`
 
-* Install the latest SExtractor from [here](http://www.astromatic.net/download/sextractor/) (we suggest v2.19.5 as the older versions detect fewer objects).
+  **Fedora:**  
+  `sudo dnf install python3 python3-pip imagemagick git-all`  
+  Install the latest SExtractor from [here](http://www.astromatic.net/download/sextractor/) (we recommend v2.19.5 as the older versions detect fewer objects).
 
-**Mac OS X:** You need [Homebrew](http://brew.sh) to install the dependencies.
+  **Mac OS X:**  
+  `brew install python3 python3-pip imagemagick git-all sextractor`  
+  (You will need [Homebrew](http://brew.sh) to install the dependencies.)  
+  ` `
+  
+2. **Install Numpy, Pandas, Scipy, pyFITS, and pillow using pip3:**
 
-* ```brew install imagemagick git python3 sextractor```
+  `sudo pip3 install numpy pandas scipy pyfits pillow`  
+  (Mac users do not use `sudo`.)  
+  ` `
 
-Numpy, Pandas, Scipy, pyFITS and pillow can be installed with pip3 (GNU/Linux users! Don't forget the ```sudo```):
+3. **Download and install astroasciidata:**  
 
-```bash
+  `git clone https://github.com/japs/astroasciidata`  
+  `cd astroasciidata`  
+  `sudo python3 setup.py install`  
+  (Mac users do not use `sudo`.)  
+  ` `
 
-cd ~
-pip3 install numpy pandas pyfits pillow scipy matplotlib
+4. **Download and install Alipy:**  
 
-git clone https://github.com/japs/alipy
-cd alipy
-python3 setup.py install
+  `git clone https://github.com/japs/alipy`  
+  `cd alipy`  
+  `sudo python3 setup.py install`  
+  (Mac users do not use `sudo`.)  
 
-cd ..
-git clone https://github.com/japs/astroasciidata
-cd astroasciidata
-python3 setup.py install
-cd ..
+  After installing Alipy, you need to locate the built align.py file and change
+
+  Line 51:
+  
+  ```
+tofits(alifilepath, data, hdr=None, verbose=verbose)
 ```
 
-After installing Alipy, you should locate the built align.py file and change
-
-Line 51:
-```
-   tofits(alifilepath, data, hdr = None, verbose = verbose)
-```
-To:
-```
-   if hdr:
-       tofits(alifilepath, data, hdr = hdr, verbose = verbose)
-   else:
-       tofits(alifilepath, data, hdr = None, verbose = verbose)
-
-```
-Finally, you can download the A-Track files and install the f2n package:
-
-```
-cd ..
-git clone https://github.com/akdeniz-uzay/A-Track
-cd f2n
-python3 setup.py install
+  To:  
+  
+  ```
+  if hdr:
+       tofits(alifilepath, data, hdr=hdr, verbose=verbose)
+  else:
+       tofits(alifilepath, data, hdr=None, verbose=verbose)
 ```
 
-Now, you have A-Track! You can open a command-line interface in the A-Track directory and execute the file [atrack.py](#usage)!
+5. **Download the A-Track package and install f2n:**  
 
-**P.S.:** If you want to use A-Track on Windows, you need to install SExtractor first! This is a bit tricky. Please see the [link](http://www.astromatic.net/forum/showthread.php?tid=948).
+  `git clone https://github.com/akdeniz-uzay/A-Track`  
+  `cd A-Track/f2n`  
+  `sudo python3 setup.py install`  
+  (Mac users do not use `sudo`.)
+
+
+Now, you have A-Track! You can open a command-line interface in the A-Track directory and [run A-Track](#usage).
