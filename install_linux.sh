@@ -42,6 +42,7 @@ atrack_dep_deb(){
    echo '      Installing dependencies for A-Track.' 
    echo '      (Be patient...)'
    echo ''
+   apt-get update
    apt-get install --no-install-recommends -y $DEPS_deb
 }
 
