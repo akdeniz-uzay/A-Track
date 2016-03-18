@@ -11,7 +11,7 @@
 
 ### <a name="usage"></a> Usage
 
-```bash
+```
 usage: python3 atrack.py [-h] [--ref ref_image] [--skip-align] [--skip-cats]
                          [--skip-pngs] [--skip-gif] [--version]
                          fits_dir
