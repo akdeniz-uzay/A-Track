@@ -43,10 +43,10 @@ Alternatively, you can install A-Track manually following these steps:
 1. **Install Python3, pip3, imagemagick, git, and SExtractor:**
 
   **Ubuntu:**  
-  `sudo apt-get install python3 python3-pip imagemagick git-all sextractor`
+  `sudo apt-get install python3 python3-dev python3-pip imagemagick sextractor libxt-dev git build-essential`
 
   **Fedora:**  
-  `sudo dnf install python3 python3-pip imagemagick git-all`  
+  `sudo dnf install python3 python3-devel python3-pip imagemagick sextractor libXt-devel git make automake gcc gcc-c++ kernel-devel`  
   Install the latest SExtractor from [here](http://www.astromatic.net/download/sextractor/) (we recommend v2.19.5 as the older versions detect fewer objects).
 
   **Mac OS X:**  
@@ -56,7 +56,7 @@ Alternatively, you can install A-Track manually following these steps:
   
 2. **Install Numpy, Pandas, Scipy, pyFITS, and pillow using pip3:**
 
-  `sudo pip3 install numpy pandas scipy pyfits pillow`  
+  `sudo pip3 install scipy pandas numpy pyfits pillow`  
   (Mac users do not use `sudo`.)  
   ` `
 

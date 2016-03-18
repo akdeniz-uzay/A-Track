@@ -7,12 +7,12 @@
 # Variables to use
 
 DEPS_deb="python3 python3-dev python3-pip python3-numpy 
-python3-scipy python3-pil imagemagick libxt-dev git-all sextractor 
+python3-scipy python3-pil imagemagick libxt-dev git sextractor 
 build-essential
 "
 
 DEPS_rpm="python3 python3-devel python3-pip python3-numpy 
-python3-scipy python3-pillow ImageMagick libXt-devel git-all 
+python3-scipy python3-pillow ImageMagick libXt-devel git 
 sextractor make automake gcc gcc-c++ 
 kernel-devel
 "
