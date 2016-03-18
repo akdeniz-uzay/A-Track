@@ -95,9 +95,9 @@ atrack_post(){
    echo ''
    echo '      A-Track has been installed.'
    echo ''
-   echo '      Now, copy your FITS files into' 
-   echo '      a folder under A-Track/ then run it!'
-   echo '      Example: python3 atrack.py folder/'
+   echo '      You can open a command-line interface' 
+   echo '      in the A-Track directory and run A-Track.'
+   echo '      Example: python3 atrack.py fits_dir/'
    echo ''
 }
 
@@ -115,13 +115,13 @@ install_atrack_rpm(){
 
 fail_install(){
    echo ''
-   echo 'Do not you have required GNU/Linux Distro?'
+   echo 'Do you have the required GNU/Linux Distro?'
    echo '(Fedora, Ubuntu, Debian, LinuxMint, CentOS, RedHat)'
-   echo 'You need to install A-Track manually:('
+   echo 'You need to install A-Track manually :('
    echo ''
 }
 
-# Check which distro are we running and run the apropiate script.
+# Check which distro we are using and run the appropriate script.
 
 distro=$(cat /etc/issue| head -n1| awk '{print $1}')
 # LinuxMint => Linux
