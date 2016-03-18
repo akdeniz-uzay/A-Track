@@ -6,13 +6,13 @@
 
 # Variables to use
 
-DEPS_deb="python3 python3-dev python3-pip 
-imagemagick libxt-dev git-all sextractor 
+DEPS_deb="python3 python3-dev python3-pip python3-numpy 
+python3-scipy imagemagick libxt-dev git-all sextractor 
 build-essential
 "
 
-DEPS_rpm="python3 python3-devel python3-pip 
-ImageMagick libXt-devel git-all 
+DEPS_rpm="python3 python3-devel python3-pip python3-numpy 
+python3-scipy ImageMagick libXt-devel git-all 
 sextractor make automake gcc gcc-c++ 
 kernel-devel
 "
@@ -61,7 +61,7 @@ atrack_dep_pip(){
    echo '      Installing pandas, numpy, pyfits, pyds9' 
    echo '      (Be patient...)'
    echo ''
-   pip3 install --upgrade pandas numpy scipy pillow pyfits
+   pip3 install --upgrade pandas pillow pyfits
    pip3 install git+https://github.com/ericmandel/pyds9.git#egg=pyds9
    mkdir atrack_tmp/
    cd atrack_tmp/
