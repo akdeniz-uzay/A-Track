@@ -74,12 +74,11 @@ Alternatively, you can install A-Track manually following these steps:
   `cd alipy`  
   `sudo python3 setup.py install`  
   (Mac users do not use `sudo`.)  
-
-Finally, you can download the A-Track files and install the f2n package:
+  ` `
 
 5. **Download the A-Track package and install f2n:**  
 
-  `git clone https://github.com/akdeniz-uzay/A-Track`  
+  `git clone https://github.com/akdeniz-uzay/A-Track.git`  
   `cd A-Track/f2n`  
   `sudo python3 setup.py install`  
   (Mac users do not use `sudo`.)
