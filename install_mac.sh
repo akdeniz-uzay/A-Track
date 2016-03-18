@@ -65,9 +65,9 @@ atrack_post(){
    echo ''
    echo '      A-Track has been installed.'
    echo ''
-   echo '      Now, copy your FITS files into' 
-   echo '      a folder under A-Track/ then run it!'
-   echo '      Example: python3 atrack.py folder/'
+   echo '      You can open a command-line interface' 
+   echo '      in the A-Track directory and run A-Track.'
+   echo '      Example: python3 atrack.py fits_dir/'
    echo ''
 }
 
@@ -78,16 +78,16 @@ install_atrack(){
 
 fail_install(){
    echo ''
-   echo 'Do not you have required OS?'
-   echo 'If you have GNU/Linux, use install_linux.sh'
-   echo 'Otherwise, install A-Track manually:('
+   echo 'Do you have the required OS?'
+   echo 'If you have GNU/Linux, use install_linux.sh instead.'
+   echo 'Otherwise, install A-Track manually :('
    echo ''
 }
 
 fail_brew(){
    echo ''
-   echo 'Do not you have brew?'
-   echo 'Please visit and install: http://brew.sh'
+   echo 'Do you have brew?'
+   echo 'Please install brew: http://brew.sh'
    echo ''
 }
 
