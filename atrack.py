@@ -159,6 +159,11 @@ if __name__ == '__main__':
             f.write('UNCERTAIN OBJECTS:\n\n')
             f.write(s)
 
+    n_moving = len(moving_objects.ObjectID.unique())
+    n_uncertain = len(uncertain_objects.ObjectID.unique())
+    print('\nA-Track has detected', n_moving, 'moving objects and', n_uncertain,
+          'uncertain objects.')
+
     if not arguments.skip_pngs:
         print('\nCreating PNG files...\n')
 
