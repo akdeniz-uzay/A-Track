@@ -33,7 +33,7 @@ optional arguments:
 
 ### Installation
 
-A-Track is tested on Ubuntu 14.04 LTS, Fedora 22 and Mac OS X Yosemite. If you want to use A-Track on Windows, you need to install SExtractor first! This is a bit tricky. Please see the [this thread](http://www.astromatic.net/forum/showthread.php?tid=948).
+A-Track is tested on Ubuntu 14.04 LTS, Fedora 22 and Mac OS X Yosemite. If you want to use A-Track on Windows, you need to install SExtractor first! This is a bit tricky. Please see [this thread](http://www.astromatic.net/forum/showthread.php?tid=948).
 
 To install A-Track on Linux or Mac, you can simply download the A-Track package and run the installation scripts install_linux.sh (for Linux: `sudo sh install_linux.sh`) or install_mac.sh (for Mac: `sh install_mac.sh`).
 
