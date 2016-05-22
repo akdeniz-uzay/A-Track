@@ -29,7 +29,7 @@ else:
 
 
 def fits2png(fitsfile, outdir, asteroid=None,
-             SPEED_MIN=float(config.get('visuals', 'SPEED_MIN'))):
+             SPEED_MIN=float(config.get('asteroids', 'SPEED_MIN'))):
 
     '''
     Transforms FITS images into PNG files.
