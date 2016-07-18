@@ -453,8 +453,12 @@ def detect_lines(catdir, fitsdir):
     for i in range(nCPU):
         cmds.append(tuple([catdir, fitsdir, str(i)]))
 
-    with Pool(nCPU) as pool:
-        pool.map(detect_segments, cmds, 1)
+    try:
+        with Pool(nCPU) as pool:
+            pool.map(detect_segments, cmds, 1)
+
+    except IndexError:
+        detect_segments((catdir, fitsdir, 0))
 
     results = sorted(glob.glob(catdir + '/*.sgm'))
     segments = []
