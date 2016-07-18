@@ -159,8 +159,18 @@ if __name__ == '__main__':
             f.write('UNCERTAIN OBJECTS:\n\n')
             f.write(s)
 
-    n_moving = len(moving_objects.ObjectID.unique())
-    n_uncertain = len(uncertain_objects.ObjectID.unique())
+    try:
+        n_moving = len(moving_objects.ObjectID.unique())
+
+    except AttributeError:
+        n_moving = 0
+
+    try:
+        n_uncertain = len(uncertain_objects.ObjectID.unique())
+
+    except AttributeError:
+        n_uncertain = 0
+
     print('\nA-Track has detected', n_moving, 'moving objects and', n_uncertain,
           'uncertain objects.')
 
