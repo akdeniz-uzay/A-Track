@@ -110,9 +110,9 @@ NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
             root, extension = os.path.splitext(image_path)
             os.system(("rm -rf {0}-indx.png {0}-indx.xyls "
                       "{0}-ngc.png {0}-objs.png "
-                      "{0}.axy {0}.corr "
-                      "{0}.match {0}.rdls "
-                      "{0}.solved {0}.wcs").format(root))
+                       "{0}.axy {0}.corr "
+                       "{0}.match {0}.rdls "
+                       "{0}.solved {0}.wcs").format(root))
 
             if not os.path.exists(root + '.new'):
                 print(image_path + ' cannot be solved!')

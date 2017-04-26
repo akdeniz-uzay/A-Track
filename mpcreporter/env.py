@@ -24,8 +24,10 @@ class etc():
 
     def system_info(self):
         si = platform.uname()
-        return(("%s, %s, %s, %s"
-        % (si[0], si[2], si[5], self.user_name())))
+        return(("%s, %s, %s, %s" % (si[0],
+                                    si[2],
+                                    si[5],
+                                    self.user_name())))
 
     def caller_function(self, pri=True):
         curframe = inspect.currentframe()
@@ -68,14 +70,20 @@ class file_op():
 
     def read_file_as_array(self, file_name):
         try:
-            return(np.genfromtxt(file_name, comments='#', delimiter=' | ',
+            return(np.genfromtxt(file_name,
+                                 comments='#',
+                                 delimiter=' | ',
                                  dtype="U"))
         except Exception as e:
             self.eetc.print_if(e)
         
     def read_res(self, file_name):
         try:
-            return(np.genfromtxt(file_name, comments='#', delimiter=None,
+            return(np.genfromtxt(file_name,
+                                 comments='O',
+                                 skip_header=1,
+                                 invalid_raise=False,
+                                 delimiter=None,
                                  usecols=(0, 1, 3, 4, 5)))
         except Exception as e:
             self.eetc.print_if(e)
@@ -95,7 +103,11 @@ class file_op():
                 ln = i.replace("\n", "").split()
                 try:
                     if "(%s)" % idd == ln[21]:
-                        ret = ln[0]
+                        id_name = ln[0]
+                        if len(id_name) > 5:
+                            ret = "     " + id_name
+                        else:
+                            ret = id_name
                 except:
                     continue
             f.close()
@@ -111,8 +123,17 @@ class file_op():
             for i in f:
                 ln = i.replace("\n", "").split()
                 try:
-                    if "(%s)" % name == ln[22]:
-                        ret = ln[0]
+                    if len(ln[23]) < 8:
+                        combname = "{0} {1}".format(ln[22], ln[23])
+                    else:
+                        combname = ln[22]
+
+                    if name == combname:
+                        id_name = ln[0]
+                        if len(id_name) > 5:
+                            ret = "     " + id_name
+                        else:
+                            ret = id_name
                 except:
                     continue
             f.close()
