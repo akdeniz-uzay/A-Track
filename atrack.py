@@ -214,6 +214,7 @@ if __name__ == '__main__':
 
         my_files = efile_op.get_file_list(images_dir)
         res_file = efile_op.read_res(the_res_file)
+        print(res_file)
 
         ra = afits_op.get_header(my_files[0],
                                  config.get('mpcreport',

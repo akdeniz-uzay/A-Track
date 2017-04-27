@@ -80,8 +80,8 @@ class file_op():
     def read_res(self, file_name):
         try:
             return(np.genfromtxt(file_name,
-                                 comments='O',
-                                 skip_header=1,
+                                 comments='#',
+                                 skip_header=2,
                                  invalid_raise=False,
                                  delimiter=None,
                                  usecols=(0, 1, 3, 4, 5)))

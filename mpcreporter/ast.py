@@ -98,13 +98,14 @@ NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
                     dec=None):
     
         try:
-            os.system(("solve-field --no-fits2fits --no-plots --no-verify --tweak-order {0} "
+            os.system(("solve-field --no-fits2fits --no-plots "
+                       "--no-verify --tweak-order {0} "
                        "--downsample {1} --overwrite --radius {2} --no-tweak "
                        "--ra {3} --dec {4} {5}").format(tweak_order,
                                                         downsample,
                                                         radius,
-                                                        ra,
-                                                        dec,
+                                                        ra.replace(" ", ":"),
+                                                        dec.replace(" ", ":"),
                                                         image_path))
             # Cleaning
             root, extension = os.path.splitext(image_path)
@@ -134,6 +135,9 @@ class dt_op():
 
     def get_timestamp(self, dt, frmt="%Y-%m-%dT%H:%M:%S.%f"):
         try:
+            if len(dt) == 19:
+                frmt = "%Y-%m-%dT%H:%M:%S"
+            
             t = datetime.strptime(dt, frmt)
             return(t)
         except Exception as e:
