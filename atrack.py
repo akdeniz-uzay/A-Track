@@ -29,6 +29,12 @@ except ImportError:
           'the same folder as atrack.py.')
     raise SystemExit
 
+try:
+    import pyfits
+except ImportError:
+    print('Python cannot import pyfits. Make sure pyfits is installed.')
+    raise SystemExit
+
 import time
 import os
 import glob
@@ -214,7 +220,7 @@ if __name__ == '__main__':
 
         my_files = efile_op.get_file_list(images_dir)
         res_file = efile_op.read_res(the_res_file)
-        print(res_file)
+        # print(res_file)
 
         ra = afits_op.get_header(my_files[0],
                                  config.get('mpcreport',
@@ -223,18 +229,31 @@ if __name__ == '__main__':
                                   config.get('mpcreport',
                                              'DEC'))
 
-        solve_wcs = afits_op.solve_field(my_files[0],
-                                         ra=ra,
-                                         dec=dec)
+        try:
+            hdu1 = pyfits.open(my_files[0])
+            wsc_check = hdu1[0].header['ctype1']
+            wcs_file = my_files[0]
+        except:
+            solve_wcs = afits_op.solve_field(my_files[0],
+                                             ra=ra,
+                                             dec=dec,
+                                             downsample=2,
+                                             radius=0.5)
+            if not solve_wcs:
+                raise SystemExit
 
-        if not solve_wcs:
-            raise SystemExit
+            root, extension = os.path.splitext(my_files[0])
+            wcs_file = root + ".new"
 
-        root, extension = os.path.splitext(my_files[0])
-        wcs_file = root + ".new"
-
-        observer = afits_op.get_header(my_files[0],
-                                       config.get('mpcreport', 'OBSERVER'))
+        try:
+            # observer = afits_op.get_header(my_files[0],
+            #                               config.get('mpcreport',
+            #                                          'OBSERVER'))
+            observer = "N. Primak, A. Schultz, S. Watters, J. Thiel, T. Goggia"
+        
+        except:
+            pass
+        
         telescope = afits_op.get_header(my_files[0],
                                         config.get('mpcreport', 'TELESCOPE'))
         contact = config.get('mpcreport', 'CONTACT')
@@ -248,16 +267,24 @@ if __name__ == '__main__':
                                             catalog=catalog)
 
         out_file = open(output, "w")
-        out_file.write("%s\n" % (h))
+        out_file.write("{0}\n".format(h))
         print(h)
         for i in res_file:
             theid, frame, x, y, flux = i
 
             coors = afits_op.xy2sky(wcs_file, x, y)
-            coors2 = afits_op.xy2sky2(wcs_file, x, y)
-            coors2ra = coors2.ra.degree[0]
-            coors2dec = coors2.dec.degree[0]
 
+            if not coors:
+                coors = afits_op.xy2skywcs(wcs_file, x, y)
+
+            coors2 = afits_op.xy2sky2(wcs_file, x, y)
+
+            if not coors2:
+                coors2 = afits_op.xy2sky2wcs(wcs_file, x, y)
+
+            coors2ra = coors2.ra.degree
+            coors2dec = coors2.dec.degree
+            
             fltr = afits_op.get_header(my_files[int(frame)],
                                        "filter").replace(" ", "_")
 

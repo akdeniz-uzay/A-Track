@@ -29,7 +29,7 @@ class etc():
                                     si[5],
                                     self.user_name())))
 
-    def caller_function(self, pri=True):
+    def caller_function(self, pri=False):
         curframe = inspect.currentframe()
         calframe = inspect.getouterframes(curframe, 2)
         caller = calframe
@@ -79,12 +79,13 @@ class file_op():
         
     def read_res(self, file_name):
         try:
-            return(np.genfromtxt(file_name,
+            data = np.genfromtxt(file_name,
                                  comments='#',
                                  skip_header=2,
                                  invalid_raise=False,
                                  delimiter=None,
-                                 usecols=(0, 1, 3, 4, 5)))
+                                 usecols=(0, 1, 3, 4, 5))
+            return(data[~np.isnan(data).any(axis=1)])
         except Exception as e:
             self.eetc.print_if(e)
 

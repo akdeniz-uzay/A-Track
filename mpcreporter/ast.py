@@ -11,6 +11,7 @@ from datetime import timedelta
 
 import math
 import os
+import numpy as np
 
 from . import env
 
@@ -31,7 +32,7 @@ ACK MPCReport file updated %s
 AC2 %s
 NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
 
-        return head
+        return(head)
 
     def get_header(self, file_name, key):
         try:
@@ -39,7 +40,7 @@ NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
             dat = hdu[0].header[key]
             return(dat)
         except Exception as e:
-            self.eetc.print_if(e)
+            print(e)
 
     def radec2wcs(self, ra, dec):
         try:
@@ -49,21 +50,25 @@ NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
                                      unit='deg')
             return(c)
         except Exception as e:
-            self.eetc.print_if(e)
+            # print(e)
+            pass
 
     def xy2sky(self, file_name, x, y):
         try:
             header = fits.getheader(file_name)
             w = WCS(header)
+            # astcoords_deg = w.all_pix2world([[x, y]], 0)
             astcoords_deg = w.wcs_pix2world([[x, y]], 0)
-            astcoords = coordinates.SkyCoord(astcoords_deg * u.deg, frame='fk5')
+            astcoords = coordinates.SkyCoord(astcoords_deg * u.deg,
+                                             frame='fk5')
             alpha = ' '.join(astcoords.to_string(
                 style='hmsdms', sep=" ", precision=2)[0].split(" ")[:3])
             delta = ' '.join(astcoords.to_string(
                 style='hmsdms', sep=" ", precision=1)[0].split(" ")[3:])
-            return("%s %s" % (alpha, delta))
+            return("{0} {1}".format(alpha, delta))
         except Exception as e:
-            self.eetc.print_if(e)
+            # print(e)
+            pass
 
     def xy2sky2(self, file_name, x, y):
         try:
@@ -71,10 +76,65 @@ NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
             w = WCS(header)
             astcoords_deg = w.wcs_pix2world([[x, y]], 0)
             astcoords = coordinates.SkyCoord(
-                astcoords_deg * u.deg, frame='icrs')
-            return(astcoords)
+                astcoords_deg * u.deg, frame='fk5')
+            return(astcoords[0])
         except Exception as e:
-            self.eetc.print_if(e)
+            # print(e)
+            pass
+
+    def xy2skywcs(self, file_name, x, y):
+        try:
+            file_path, file_and_ext = os.path.split(file_name)
+            os.system("xy2sky {0} {1} {2} > {3}/coors".format(
+                file_name,
+                x,
+                y,
+                file_path))
+            coors = np.genfromtxt('{0}/coors'.format(file_path),
+                                  comments='#',
+                                  invalid_raise=False,
+                                  delimiter=None,
+                                  usecols=(0, 1),
+                                  dtype="U")
+
+            os.system("rm -rf {0}/coors".format(file_path))
+
+            c = coordinates.SkyCoord('{0} {1}'.format(coors[0], coors[1]),
+                                     unit=(u.hourangle, u.deg), frame='fk5')
+
+            alpha = c.to_string(style='hmsdms', sep=" ", precision=2)[:11]
+            delta = c.to_string(style='hmsdms', sep=" ", precision=1)[11:]
+            
+            return('{0} {1}'.format(alpha, delta))
+        
+        except Exception as e:
+            # print(e)
+            pass
+
+    def xy2sky2wcs(self, file_name, x, y):
+        try:
+            file_path, file_and_ext = os.path.split(file_name)
+            os.system("xy2sky {0} {1} {2} > {3}/coors".format(
+                file_name,
+                x,
+                y,
+                file_path))
+            coors = np.genfromtxt('{0}/coors'.format(file_path),
+                                  comments='#',
+                                  invalid_raise=False,
+                                  delimiter=None,
+                                  usecols=(0, 1),
+                                  dtype="U")
+
+            os.system("rm -rf {0}/coors".format(file_path))
+
+            c = coordinates.SkyCoord('{0} {1}'.format(coors[0], coors[1]),
+                                     unit=(u.hourangle, u.deg), frame='fk5')
+
+            return(c)
+        except Exception as e:
+            # self.eetc.print_if(e)
+            pass
 
     def center_finder(self, file_name):
         try:
