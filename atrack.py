@@ -245,15 +245,13 @@ if __name__ == '__main__':
             root, extension = os.path.splitext(my_files[0])
             wcs_file = root + ".new"
 
-        try:
-            # observer = afits_op.get_header(my_files[0],
-            #                               config.get('mpcreport',
-            #                                          'OBSERVER'))
-            observer = "N. Primak, A. Schultz, S. Watters, J. Thiel, T. Goggia"
-        
-        except:
-            pass
-        
+        observer = config.get('mpcreport', 'OBSERVER')
+
+        if observer == 'OBSERVER':
+            observer = afits_op.get_header(my_files[0],
+                                           config.get('mpcreport',
+                                                      'OBSERVER'))
+
         telescope = afits_op.get_header(my_files[0],
                                         config.get('mpcreport', 'TELESCOPE'))
         contact = config.get('mpcreport', 'CONTACT')
