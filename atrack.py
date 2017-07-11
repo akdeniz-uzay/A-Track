@@ -88,6 +88,10 @@ if __name__ == '__main__':
     arguments = parser.parse_args()
     fitsdir, reference = arguments.fits_dir, arguments.ref
 
+    if len(sorted(glob.glob(fitsdir + '/*.fit?'))) == 0:
+        print('No image FITS found in the {0}'.format(fitsdir))
+        raise SystemExit
+
     outdir = fitsdir + '/atrack'
 
     if not os.path.isdir(outdir):
