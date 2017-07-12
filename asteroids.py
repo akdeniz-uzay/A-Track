@@ -317,7 +317,10 @@ def detect_segments(CFP,
         hdu1 = pyfits.open(images[i])
         hdu2 = pyfits.open(images[j])
         hdu3 = pyfits.open(images[k])
-        xbin = hdu1[0].header['xbinning']
+        try:
+            xbin = hdu1[0].header['xbinning']
+        except:
+            xbin = 1
         obs_date1 = hdu1[0].header['date-obs']
         obs_date2 = hdu2[0].header['date-obs']
         obs_date3 = hdu3[0].header['date-obs']

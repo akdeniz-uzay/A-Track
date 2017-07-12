@@ -13,22 +13,24 @@
 
 ```
 usage: python3 atrack.py [-h] [--ref ref_image] [--skip-align] [--skip-cats]
-                         [--skip-pngs] [--skip-gif] [--version]
+                         [--skip-mpcreport] [--skip-pngs] [--skip-gif]
+                         [--version]
                          fits_dir
 
 A-Track.
 
 positional arguments:
-  fits_dir         FITS image directory (full path)
+  fits_dir          FITS image directory
 
 optional arguments:
-  -h, --help       show this help message and exit
-  --ref ref_image  reference FITS image for alignment (full path)
-  --skip-align     skip alignment if alignment is already done
-  --skip-cats      skip creating catalog files if they are already created
-  --skip-pngs      skip creating PNGs
-  --skip-gif       skip creating animation file
-  --version        show version
+  -h, --help        show this help message and exit
+  --ref ref_image   reference FITS image for alignment (with path)
+  --skip-align      skip alignment if alignment is already done
+  --skip-cats       skip creating catalog files if they are already created
+  --skip-mpcreport  skip creating MPC file
+  --skip-pngs       skip creating PNGs
+  --skip-gif        skip creating animation file
+  --version         show version
 ```
 
 ### Installation
