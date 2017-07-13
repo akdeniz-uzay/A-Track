@@ -44,10 +44,9 @@ NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
 
     def radec2wcs(self, ra, dec):
         try:
-            c = coordinates.SkyCoord(float(ra) * 15,
-                                     float(dec),
-                                     frame='icrs',
-                                     unit='deg')
+            c = coordinates.SkyCoord('{0} {1}'.format(ra, dec),
+                                     unit=(u.hourangle, u.deg), frame='fk5')
+
             return(c)
         except Exception as e:
             # print(e)
