@@ -12,25 +12,32 @@ from datetime import timedelta
 import math
 import os
 import numpy as np
+import glob
 
-from . import env
+from . import io
 
 
-class fits_op():
+class FitsOps:
 
-    def __init__(self, verb=True):
-        self.verb = verb
-        self.eetc = env.etc(verb=self.verb)
+    def __init__(self):
+        self.timeops = TimeOps()
 
     def return_out_file_header(self, obs="YK", tel="TUG 100", cod="A84",
-        contact="yucelkilic@myrafproject.org", catalog="GAIA"):
-        head = """COD %s
-OBS %s
-MEA %s
-TEL %s + CCD
-ACK MPCReport file updated %s
-AC2 %s
-NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
+                               contact="yucelkilic@myrafproject.org",
+                               catalog="GAIA"):
+        """
+
+        :type obs: object
+        """
+        head = """COD {0}
+OBS {1}
+MEA {2}
+TEL {3} + CCD
+ACK MPCReport file updated {4}
+AC2 {5}
+NET {6}""".format(cod, obs, obs, tel,
+                          self.timeops.time_stamp(),
+                          contact, catalog)
 
         return(head)
 
@@ -42,6 +49,47 @@ NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
         except Exception as e:
             print(e)
 
+
+class AstCalc:
+
+    def __init__(self):
+        self.fileops = io.FileOps()
+        self.fitsops = FitsOps()
+        self.timeops = TimeOps()
+
+    def is_object(self, coor1, coor2, max_dist=10, min_dist=0):
+        ret = coor1.separation(coor2)
+        return(min_dist <= ret.arcsecond <= max_dist)
+
+    def flux2mag(self, flux):
+        try:
+            mag = 25 - 2.5 * math.log10(flux)
+            return("{:.1f}".format(mag))
+        except Exception as e:
+            print(e)
+
+    def find_skybot_objects(self, dat, ra, dec, radius=16,
+                            limmag=20.5, observat="A84"):
+        try:
+            epoch = self.timeops.date2jd(dat)
+            bashcmd = ("wget -q \"http://vo.imcce.fr/webservices/skybot/"
+                       "skybotconesearch_query.php"
+                       "?-ep={0}&-ra={1}&-dec={2}&-rm={3}&-output=object&"
+                       "-loc={4}&-filter=120&-objFilter=120&-from="
+                       "SkybotDoc&-mime=text\" -O skybot.cat").format(epoch,
+                                                                      ra,
+                                                                      dec,
+                                                                      radius,
+                                                                      observat)
+
+            os.system(bashcmd)
+            skyresult = self.fileops.read_file_as_array("skybot.cat")
+            os.system('rm -rf skybot.cat')
+            return (skyresult)
+
+        except Exception as e:
+            print(e)
+
     def radec2wcs(self, ra, dec):
         try:
             c = coordinates.SkyCoord('{0} {1}'.format(ra, dec),
@@ -49,24 +97,23 @@ NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
 
             return(c)
         except Exception as e:
-            # print(e)
             pass
 
     def xy2sky(self, file_name, x, y):
         try:
             header = fits.getheader(file_name)
             w = WCS(header)
-            # astcoords_deg = w.all_pix2world([[x, y]], 0)
             astcoords_deg = w.wcs_pix2world([[x, y]], 0)
             astcoords = coordinates.SkyCoord(astcoords_deg * u.deg,
                                              frame='fk5')
             alpha = ' '.join(astcoords.to_string(
                 style='hmsdms', sep=" ", precision=2)[0].split(" ")[:3])
+
             delta = ' '.join(astcoords.to_string(
                 style='hmsdms', sep=" ", precision=1)[0].split(" ")[3:])
+
             return("{0} {1}".format(alpha, delta))
         except Exception as e:
-            # print(e)
             pass
 
     def xy2sky2(self, file_name, x, y):
@@ -74,11 +121,13 @@ NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
             header = fits.getheader(file_name)
             w = WCS(header)
             astcoords_deg = w.wcs_pix2world([[x, y]], 0)
+
             astcoords = coordinates.SkyCoord(
                 astcoords_deg * u.deg, frame='fk5')
+
             return(astcoords[0])
+
         except Exception as e:
-            # print(e)
             pass
 
     def xy2skywcs(self, file_name, x, y):
@@ -107,7 +156,6 @@ NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
             return('{0} {1}'.format(alpha, delta))
         
         except Exception as e:
-            # print(e)
             pass
 
     def xy2sky2wcs(self, file_name, x, y):
@@ -132,13 +180,13 @@ NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
 
             return(c)
         except Exception as e:
-            # self.eetc.print_if(e)
             pass
 
     def center_finder(self, file_name):
         try:
-            naxis1 = self.get_header(file_name, "naxis1")
-            naxis2 = self.get_header(file_name, "naxis2")
+            fitsops = FitsOps()
+            naxis1 = self.fitsops.get_header(file_name, "naxis1")
+            naxis2 = self.fitsops.get_header(file_name, "naxis2")
             x, y = [float(naxis1) / 2, float(naxis2) / 2]
             coor = self.xy2sky(file_name, x, y)
             ra = ' '.join(coor.split(" ")[:3])
@@ -146,7 +194,7 @@ NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
 
             return([ra, dec])
         except Exception as e:
-            self.eetc.print_if(e)
+            print(e)
 
     def solve_field(self,
                     image_path,
@@ -182,15 +230,13 @@ NET %s""" % (cod, obs, obs, tel, self.eetc.time_stamp(), contact, catalog)
                 return(True)
         
         except Exception as e:
-            self.eetc.print_if(e)
+            print(e)
 
 
-class dt_op():
+class TimeOps:
 
-    def __init__(self, verb=True):
-        self.verb = verb
-        self.eetc = env.etc(verb=self.verb)
-        self.ffit = fits_op(verb=self.verb)
+    def time_stamp(self):
+        return str(datetime.utcnow().strftime("%Y-%m-%IT%H:%M:%S"))
 
     def get_timestamp(self, dt, frmt="%Y-%m-%dT%H:%M:%S.%f"):
         try:
@@ -200,16 +246,17 @@ class dt_op():
             t = datetime.strptime(dt, frmt)
             return(t)
         except Exception as e:
-            self.eetc.print_if(e)
+            print(e)
 
     def get_timestamp_exp(self, file_name, dt="date-obs", exp="exptime"):
         try:
-            expt = self.ffit.get_header(file_name, exp)
-            dat = self.ffit.get_header(file_name, dt)
+            fitsops = FitsOps()
+            expt = fitsops.get_header(file_name, exp)
+            dat = fitsops.get_header(file_name, dt)
             tmstamp = self.get_timestamp(dat)
             ret = tmstamp + timedelta(seconds=float(expt) / 2)
         except Exception as e:
-            self.eetc.print_if(e)
+            print(e)
 
         return(ret)
 
@@ -219,7 +266,7 @@ class dt_op():
             date_t = str(dat).replace(" ", "T")
             t = Time(date_t, format='isot', scale='utc')
         except Exception as e:
-            self.eetc.print_if(e)
+            print(e)
 
         return(t.jd)
 
@@ -233,70 +280,14 @@ class dt_op():
             M = timestamp.minute
             s = timestamp.second
 
+            cday = d + float(h) / 24 + float(M) / 1440 + float(s) / 86400
+
             if d >= 10:
-                ret = "C%s %02.f %.5f" % (y, m,
-                    d + float(h) / 24 + float(M) / 1440 + float(s) / 86400)
+                ret = "C{} {:02.0f} {:.5f}".format(y, float(m), float(cday))
             else:
-                ret = "C%s %02.f 0%.5f" % (y, m,
-                    d + float(h) / 24 + float(M) / 1440 + float(s) / 86400)
+                ret = "C{} {:02.0f} 0{:.5f}".format(y, float(m), float(cday))
+
             return(ret)
+
         except Exception as e:
-            self.eetc.print_if(e)
-
-
-class linear_op():
-
-    def __init__(self, verb=True):
-        self.verb = verb
-        self.eetc = env.etc(verb=self.verb)
-
-    def is_object(self, coor1, coor2, max_dist=10, min_dist=0):
-        ret = coor1.separation(coor2)
-        # print(coor1, coor2, " => ", ret.arcsecond)
-        return(min_dist <= ret.arcsecond <= max_dist)
-
-
-class mag_op():
-
-    def __init__(self, verb=True):
-        self.verb = verb
-        self.eetc = env.etc(verb=self.verb)
-
-    def flux2mag(self, flux):
-        try:
-            mag = 25 - 2.5 * math.log10(flux)
-            return("%.1f" % mag)
-        except Exception as e:
-            self.eetc.print_if(e)
-
-
-class online_op():
-
-    def __init__(self, verb=True):
-        self.verb = verb
-        self.verb = verb
-        self.eetc = env.etc(verb=self.verb)
-        self.efile_op = env.file_op(verb=self.verb)
-        self.ddtop = dt_op(verb=self.verb)
-
-    def find_skybot_objects(self, dat, ra, dec, radius=16,
-                            limmag=20.5, observat="A84"):
-        try:
-            epoch = self.ddtop.date2jd(dat)
-            bashcmd = ("wget -q \"http://vo.imcce.fr/webservices/skybot/"
-                       "skybotconesearch_query.php"
-                       "?-ep={0}&-ra={1}&-dec={2}&-rm={3}&-output=object&"
-                       "-loc={4}&-filter=120&-objFilter=120&-from="
-                       "SkybotDoc&-mime=text\" -O skybot.cat").format(epoch,
-                                                                      ra,
-                                                                      dec,
-                                                                      radius,
-                                                                      observat)
-
-            os.system(bashcmd)
-            skyresult = self.efile_op.read_file_as_array("skybot.cat")
-            os.system('rm -rf skybot.cat')
-            return(skyresult)
-            
-        except Exception as e:
-            self.eetc.print_if(e)
+            print(e)
