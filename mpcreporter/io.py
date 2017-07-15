@@ -8,6 +8,14 @@ import numpy as np
 class FileOps:
 
     def read_file_as_array(self, file_name):
+
+        """
+        Reads text file into numpy array.
+        @param file_name: Text file name and path
+        @type file_name: str
+        @return: array
+        """
+
         try:
             return (np.genfromtxt(file_name,
                                   comments='#',
@@ -17,6 +25,14 @@ class FileOps:
             print(e)
 
     def read_res(self, file_name):
+
+        """
+        Reads A-Track result file into numpy array.
+        @param file_name: Text file name and path
+        @type file_name: str
+        @return: array
+        """
+
         try:
             data = np.genfromtxt(file_name,
                                  comments='#',
@@ -29,6 +45,14 @@ class FileOps:
             print(e)
 
     def get_file_list(self, dir_name):
+
+        """
+        List FITS images in a folder into a numpy array.
+        @param dir_name: Directory of FITS images
+        @type dir_name: str
+        @return: array
+        """
+
         try:
             images = sorted(glob.glob(dir_name + '/*.fit*'))
             return (images)
@@ -36,6 +60,16 @@ class FileOps:
             print(e)
 
     def find_if_in_database_id(self, database, idd):
+
+        """
+        Search detected asteroids ID in the MPCORB.DAT database for MPC report.
+        @param database: MPCORB.DAT path
+        @type database: str
+        @param idd: Asteroid's ID
+        @type idd: str
+        @return: str
+        """
+
         ret = ""
         try:
             f = open(database, "r")
@@ -57,6 +91,16 @@ class FileOps:
         return (ret)
 
     def find_if_in_database_name(self, database, name):
+
+        """
+        Search detected asteroids ID by the name in the MPCORB.DAT database for MPC report.
+        @param database: MPCORB.DAT path
+        @type database: str
+        @param name: Asteroid's name
+        @type name: str
+        @return: str
+        """
+
         ret = ""
         try:
             f = open(database, "r")

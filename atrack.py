@@ -260,8 +260,8 @@ if __name__ == '__main__':
 
         print("----------------MPC Report File-----------------------")
 
-        h = fitsops.return_out_file_header(obs=observer, tel=telescope,
-                                           cod=observatory,
+        h = fitsops.return_out_file_header(observer=observer, tel=telescope,
+                                           code=observatory,
                                            contact=contact,
                                            catalog=catalog)
 
