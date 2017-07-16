@@ -86,3 +86,14 @@ Alternatively, you can install A-Track manually following these steps:
   (Mac users do not use `sudo`.)
 
 Now, you have A-Track! You can open a command-line interface in the A-Track directory and [run A-Track](#usage).
+
+For academic use, please cite the paper:
+
+> Atay, T., Kaplan, M., Kilic, Y., Karapinar, N.,
+> 2016,
+> *A-Track: A new approach for detection of moving objects in FITS images*,
+> **Computer Physics Communications**, Volume 207, p. 524-530.
+
+[Bibtex@ADS](http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=2016CoPhC.207..524A&data_type=BIBTEX&db_key=PHY&nocookieset=1)
+| [CPC](http://www.sciencedirect.com/science/article/pii/S0010465516302119)
+| [doi:10.1016/j.cpc.2016.07.023](http://dx.doi.org/10.1016/j.cpc.2016.07.023)
