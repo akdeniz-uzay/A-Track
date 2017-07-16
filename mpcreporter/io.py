@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import glob
-
 import numpy as np
 
 
@@ -93,7 +92,9 @@ class FileOps:
     def find_if_in_database_name(self, database, name):
 
         """
-        Search detected asteroids ID by the name in the MPCORB.DAT database for MPC report.
+        Search detected asteroids ID by the name in the
+        MPCORB.DAT database for MPC report.
+
         @param database: MPCORB.DAT path
         @type database: str
         @param name: Asteroid's name

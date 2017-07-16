@@ -81,7 +81,9 @@ class AstCalc:
     def is_object(self, coor1, coor2, max_dist=10, min_dist=0):
 
         """
-        It checks whether the object being queried is the same in the database within the specified limit.
+        It checks whether the object being queried is the same in the
+        database within the specified limit.
+        
         @param coor1: Detected object's coordinate.
         @type coor1: coordinate
         @param coor2: Calculated object's coordinate.
@@ -111,10 +113,13 @@ class AstCalc:
         except Exception as e:
             print(e)
 
-    def find_skybot_objects(self, odate, ra, dec, radius=16, observatory="A84"):
+    def find_skybot_objects(self, odate, ra, dec, radius=16,
+                            observatory="A84"):
 
         """
-        Seek and identify all the known solar system objects in a field of view of a given size.
+        Seek and identify all the known solar system objects
+        in a field of view of a given size.
+        
         @param odate: Observation date.
         @type odate: date
         @param ra: RA of field center for search, format: degrees or hh:mm:ss
@@ -134,11 +139,12 @@ class AstCalc:
                        "skybotconesearch_query.php"
                        "?-ep={0}&-ra={1}&-dec={2}&-rm={3}&-output=object&"
                        "-loc={4}&-filter=120&-objFilter=120&-from="
-                       "SkybotDoc&-mime=text\" -O skybot.cat").format(epoch,
-                                                                      ra,
-                                                                      dec,
-                                                                      radius,
-                                                                      observatory)
+                       "SkybotDoc&-mime=text\" -O skybot.cat").format(
+                           epoch,
+                           ra,
+                           dec,
+                           radius,
+                           observatory)
 
             system(bashcmd)
             skyresult = self.fileops.read_file_as_array("skybot.cat")
@@ -225,7 +231,9 @@ class AstCalc:
     def xy2skywcs(self, file_name, x, y):
 
         """
-        Converts physical coordinates to WCS coordinates for STDOUT with wcstools' xy2sky.
+        Converts physical coordinates to WCS coordinates
+        for STDOUT with wcstools' xy2sky.
+
         @param file_name: FITS image file name with path.
         @type file_name: str
         @param x: x coordinate of object.
@@ -265,7 +273,9 @@ class AstCalc:
     def xy2sky2wcs(self, file_name, x, y):
 
         """
-        Converts physical coordinates to WCS coordinates for calculations with wcstools' xy2sky.
+        Converts physical coordinates to WCS coordinates for
+        calculations with wcstools' xy2sky.
+        
         @param file_name: FITS image file name with path.
         @type file_name: str
         @param x: x coordinate of object.
@@ -329,14 +339,18 @@ class AstCalc:
                     dec=None):
 
         """
-        The astrometry engine will take any image and return the astrometry world coordinate system (WCS).
+        The astrometry engine will take any image and return
+        the astrometry world coordinate system (WCS).
+        
         @param image_path: FITS image file name with path
         @type image_path: str
         @param tweak_order: Polynomial order of SIP WCS corrections
         @type tweak_order: integer
-        @param downsample: Downsample the image by factor int before running source extraction
+        @param downsample: Downsample the image by factor int before
+        running source extraction
         @type downsample: integer
-        @param radius: Only search in indexes within 'radius' of the field center given by --ra and --dec
+        @param radius: Only search in indexes within 'radius' of the
+        field center given by --ra and --dec
         @type radius: str
         @param ra: RA of field center for search, format: degrees or hh:mm:ss
         @type ra: str
@@ -347,21 +361,21 @@ class AstCalc:
     
         try:
             system(("solve-field --no-fits2fits --no-plots "
-                       "--no-verify --tweak-order {0} "
-                       "--downsample {1} --overwrite --radius {2} --no-tweak "
-                       "--ra {3} --dec {4} {5}").format(tweak_order,
-                                                        downsample,
-                                                        radius,
-                                                        ra.replace(" ", ":"),
-                                                        dec.replace(" ", ":"),
-                                                        image_path))
+                    "--no-verify --tweak-order {0} "
+                    "--downsample {1} --overwrite --radius {2} --no-tweak "
+                    "--ra {3} --dec {4} {5}").format(tweak_order,
+                                                     downsample,
+                                                     radius,
+                                                     ra.replace(" ", ":"),
+                                                     dec.replace(" ", ":"),
+                                                     image_path))
             # Cleaning
             root, extension = path.splitext(image_path)
             system(("rm -rf {0}-indx.png {0}-indx.xyls "
-                      "{0}-ngc.png {0}-objs.png "
-                       "{0}.axy {0}.corr "
-                       "{0}.match {0}.rdls "
-                       "{0}.solved {0}.wcs").format(root))
+                    "{0}-ngc.png {0}-objs.png "
+                    "{0}.axy {0}.corr "
+                    "{0}.match {0}.rdls "
+                    "{0}.solved {0}.wcs").format(root))
 
             if not path.exists(root + '.new'):
                 print(image_path + ' cannot be solved!')
