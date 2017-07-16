@@ -39,8 +39,8 @@ import time
 import os
 import glob
 import argparse
-from mpcreporter import ast
-from mpcreporter import env
+from mpcreporter import astronomy
+from mpcreporter import io
 
 from configparser import ConfigParser
 
@@ -203,13 +203,10 @@ if __name__ == '__main__':
           'uncertain objects.')
 
     if not arguments.skip_mpcreport:
-        efile_op = env.file_op(verb=True)
-
-        afile_tp = ast.dt_op(verb=True)
-        afits_op = ast.fits_op(verb=True)
-        amag_op = ast.mag_op(verb=True)
-        aonline_op = ast.online_op(verb=True)
-        alin_op = ast.linear_op(verb=True)
+        fileops = io.FileOps()
+        timeops = astronomy.TimeOps()
+        fitsops = astronomy.FitsOps()
+        astcalc = astronomy.AstCalc()
 
         images_dir = outdir
         the_res_file = "{0}/results.txt".format(outdir)
@@ -222,14 +219,14 @@ if __name__ == '__main__':
 
         print("Analysing A-Track result file...")
 
-        my_files = efile_op.get_file_list(images_dir)
-        res_file = efile_op.read_res(the_res_file)
+        my_files = fileops.get_file_list(images_dir)
+        res_file = fileops.read_res(the_res_file)
         # print(res_file)
 
-        ra = afits_op.get_header(my_files[0],
+        ra = fitsops.get_header(my_files[0],
                                  config.get('mpcreport',
                                             'RA'))
-        dec = afits_op.get_header(my_files[0],
+        dec = fitsops.get_header(my_files[0],
                                   config.get('mpcreport',
                                              'DEC'))
 
@@ -238,7 +235,7 @@ if __name__ == '__main__':
             wsc_check = hdu1[0].header['ctype1']
             wcs_file = my_files[0]
         except:
-            solve_wcs = afits_op.solve_field(my_files[0],
+            solve_wcs = astcalc.solve_field(my_files[0],
                                              ra=ra,
                                              dec=dec,
                                              downsample=2,
@@ -252,21 +249,21 @@ if __name__ == '__main__':
         observer = config.get('mpcreport', 'OBSERVER')
 
         if observer == 'OBSERVER':
-            observer = afits_op.get_header(my_files[0],
+            observer = fitsops.get_header(my_files[0],
                                            config.get('mpcreport',
                                                       'OBSERVER'))
 
-        telescope = afits_op.get_header(my_files[0],
+        telescope = fitsops.get_header(my_files[0],
                                         config.get('mpcreport', 'TELESCOPE'))
         contact = config.get('mpcreport', 'CONTACT')
         catalog = config.get('mpcreport', 'CATALOG')
 
         print("----------------MPC Report File-----------------------")
 
-        h = afits_op.return_out_file_header(obs=observer, tel=telescope,
-                                            cod=observatory,
-                                            contact=contact,
-                                            catalog=catalog)
+        h = fitsops.return_out_file_header(observer=observer, tel=telescope,
+                                           code=observatory,
+                                           contact=contact,
+                                           catalog=catalog)
 
         out_file = open(output, "w")
         out_file.write("{0}\n".format(h))
@@ -274,56 +271,57 @@ if __name__ == '__main__':
         for i in res_file:
             theid, frame, x, y, flux = i
 
-            coors = afits_op.xy2sky(wcs_file, x, y)
+            coors = astcalc.xy2sky(wcs_file, x, y)
 
             if not coors:
-                coors = afits_op.xy2skywcs(wcs_file, x, y)
+                coors = astcalc.xy2skywcs(wcs_file, x, y)
 
-            coors2 = afits_op.xy2sky2(wcs_file, x, y)
+            coors2 = astcalc.xy2sky2(wcs_file, x, y)
 
             if not coors2:
-                coors2 = afits_op.xy2sky2wcs(wcs_file, x, y)
+                coors2 = astcalc.xy2sky2wcs(wcs_file, x, y)
 
             coors2ra = coors2.ra.degree
             coors2dec = coors2.dec.degree
             
-            fltr = afits_op.get_header(my_files[int(frame)],
+            fltr = fitsops.get_header(my_files[int(frame)],
                                        "filter").replace(" ", "_")
 
-            tm = afile_tp.get_timestamp_exp(my_files[int(frame)])
-            tmm = afile_tp.convert_time_format(tm)
+            tm = timeops.get_timestamp_exp(my_files[int(frame)])
+            tmm = timeops.convert_time_format(tm)
 
-            mag = amag_op.flux2mag(flux)
+            mag = astcalc.flux2mag(flux)
 
             # ccoor = afits_op.center_finder(wcs_file)
 
-            namesky = aonline_op.find_skybot_objects(tm,
-                                                     coors2ra,
-                                                     coors2dec)
+            namesky = astcalc.find_skybot_objects(tm,
+                                                  coors2ra,
+                                                  coors2dec)
             # print(namesky)
 
             for u in range(len(namesky)):
                 # justID = namesky[u][0]
                 justname = namesky[u][1]
 
-                if alin_op.is_object(afits_op.radec2wcs(namesky[u][2],
-                                                        namesky[u][3]),
-                                     coors2):
-                    mpcname = efile_op.find_if_in_database_name(database,
+                if astcalc.is_object(astcalc.radec2wcs(namesky[u][2],
+                                                       namesky[u][3]),
+                                    coors2):
+                    mpcname = fileops.find_if_in_database_name(database,
                                                                 justname)
                     if len(mpcname) == 5:
                         spc = "         "
                     elif len(mpcname) > 5:
                         spc = "  "
 
-                    print("%s%s%s %s          %s %s      %s" % (mpcname,
-                                                                spc,
-                                                                tmm,
-                                                                coors,
-                                                                mag,
-                                                                fltr,
-                                                                observatory))
-                    out_file.write("%s%s%s %s          %s %s      %s\n" % (
+                    print("{0}{1}{2} {3}          {4} {5}      {6}".format(mpcname,
+                                                                           spc,
+                                                                           tmm,
+                                                                           coors,
+                                                                           mag,
+                                                                           fltr,
+                                                                           observatory))
+
+                    out_file.write("{0}{1}{2} {3}          {4} {5}      {6}\n".format(
                         mpcname,
                         spc,
                         tmm,
@@ -333,10 +331,17 @@ if __name__ == '__main__':
                         observatory))
                     break
                 else:
-                    p = "       NO%03.f* %s %s          %s %s      %s" % (
-                        theid, tmm, coors, mag, fltr, observatory)
+                    p = "       NO{:03.0f}* {} {}          {} {}      {}".format(
+                        theid,
+                        tmm,
+                        coors,
+                        mag,
+                        fltr,
+                        observatory)
+
                     print(p)
-                    out_file.write("%s\n" % (p))
+
+                    out_file.write("{0}\n".format(p))
                     break
         print("----- end -----")
         out_file.write("----- end -----")
