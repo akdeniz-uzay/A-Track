@@ -321,12 +321,29 @@ def detect_segments(CFP,
             xbin = hdu1[0].header['xbinning']
         except:
             xbin = 1
-        obs_date1 = hdu1[0].header['date-obs']
-        obs_date2 = hdu2[0].header['date-obs']
-        obs_date3 = hdu3[0].header['date-obs']
+
         exp_time1 = hdu1[0].header['exptime']
         exp_time2 = hdu2[0].header['exptime']
         exp_time3 = hdu3[0].header['exptime']
+
+        obs_date1 = hdu1[0].header['date-obs']
+        obs_date2 = hdu2[0].header['date-obs']
+        obs_date3 = hdu3[0].header['date-obs']
+
+        if "T" not in obs_date1:
+            time_obs1 = hdu1[0].header['time-obs']
+            obs_date1 = "{0}T{1}".format(obs_date1.strip(),
+                                         time_obs1.strip())
+
+        if "T" not in obs_date2:
+            time_obs2 = hdu2[0].header['time-obs']
+            obs_date2 = "{0}T{1}".format(obs_date2.strip(),
+                                         time_obs2.strip())
+
+        if "T" not in obs_date3:
+            time_obs3 = hdu3[0].header['time-obs']
+            obs_date3 = "{0}T{1}".format(obs_date3.strip(),
+                                         time_obs3.strip())
 
         try:
             obs_time1 = time.strptime(obs_date1, '%Y-%m-%dT%H:%M:%S.%f')
@@ -503,9 +520,20 @@ def results(fitsdir, lines,
         nmax = int(line[-1][0])
         hdu1 = pyfits.open(images[nmin])
         hdu2 = pyfits.open(images[nmax])
+
         obs_date1 = hdu1[0].header['date-obs']
+        if "T" not in obs_date1:
+            time_obs1 = hdu1[0].header['time-obs']
+            obs_date1 = "{0}T{1}".format(obs_date1.strip(),
+                                         time_obs1.strip())
         exp_time1 = hdu1[0].header['exptime']
+
+        # Second image
         obs_date2 = hdu2[0].header['date-obs']
+        if "T" not in obs_date2:
+            time_obs2 = hdu2[0].header['time-obs']
+            obs_date2 = "{0}T{1}".format(obs_date2.strip(),
+                                         time_obs2.strip())
         exp_time2 = hdu2[0].header['exptime']
 
         try:

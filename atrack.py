@@ -237,14 +237,12 @@ if __name__ == '__main__':
         except:
             solve_wcs = astcalc.solve_field(my_files[0],
                                              ra=ra,
-                                             dec=dec,
-                                             downsample=2,
-                                             radius=0.5)
+                                             dec=dec)
             if not solve_wcs:
                 raise SystemExit
 
             root, extension = os.path.splitext(my_files[0])
-            wcs_file = root + ".new"
+            wcs_file = root + "_new.fits"
 
         observer = config.get('mpcreport', 'OBSERVER')
 
@@ -283,9 +281,11 @@ if __name__ == '__main__':
 
             coors2ra = coors2.ra.degree
             coors2dec = coors2.dec.degree
-            
-            fltr = fitsops.get_header(my_files[int(frame)],
-                                       "filter").replace(" ", "_")
+
+            fltr = fitsops.get_header(my_files[0],
+                                      config.get('mpcreport',
+                                                   'FILTER'))
+            fltr = str(fltr).strip().replace(" ", "_")
 
             tm = timeops.get_timestamp_exp(my_files[int(frame)])
             tmm = timeops.convert_time_format(tm)

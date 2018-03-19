@@ -336,12 +336,14 @@ class AstCalc:
                     downsample=4,
                     radius=0.5,
                     ra=None,
-                    dec=None):
+                    dec=None,
+                    ra_keyword="objctra",
+                    dec_keyword="objctdec"):
 
         """
         The astrometry engine will take any image and return
         the astrometry world coordinate system (WCS).
-        
+
         @param image_path: FITS image file name with path
         @type image_path: str
         @param tweak_order: Polynomial order of SIP WCS corrections
@@ -356,18 +358,36 @@ class AstCalc:
         @type ra: str
         @param dec: DEC of field center for search, format: degrees or hh:mm:ss
         @type dec: str
+        @param ra_keyword: RA keyword in the FITS image header
+        @type ra_keyword: str
+        @param dec_keyword: DEC keyword in the FITS image header
+        @type dec_keyword: str
         @return: boolean
         """
-    
+
         try:
-            system(("solve-field --no-fits2fits --no-plots "
+            if ra is None and dec is None:
+                fo = FitsOps(image_path)
+                ra = fo.get_header(ra_keyword)
+                dec = fo.get_header(dec_keyword)
+                ra = ra.strip()
+                dec = dec.strip()
+                ra = ra.replace(" ", ":")
+                dec = dec.replace(" ", ":")
+            else:
+                ra = ra.strip()
+                dec = dec.strip()
+                ra = ra.replace(" ", ":")
+                dec = dec.replace(" ", ":")
+
+            system(("solve-field --no-plots "
                     "--no-verify --tweak-order {0} "
                     "--downsample {1} --overwrite --radius {2} --no-tweak "
                     "--ra {3} --dec {4} {5}").format(tweak_order,
                                                      downsample,
                                                      radius,
-                                                     ra.replace(" ", ":"),
-                                                     dec.replace(" ", ":"),
+                                                     ra,
+                                                     dec,
                                                      image_path))
             # Cleaning
             root, extension = path.splitext(image_path)
@@ -379,11 +399,12 @@ class AstCalc:
 
             if not path.exists(root + '.new'):
                 print(image_path + ' cannot be solved!')
-                return(False)
+                return (False)
             else:
-                print('Image has been solved!')
-                return(True)
-        
+                system("mv {0}.new {0}_new.fits".format(root))
+                print("{0}.fits --> {0}_new.fits: solved!".format(root))
+                return (True)
+
         except Exception as e:
             print(e)
 
