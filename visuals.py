@@ -4,9 +4,9 @@
 
 
 try:
-    import pyfits
+    from astropy.io import fits
 except ImportError:
-    print('Python cannot import pyfits. Make sure pyfits is installed.')
+    print('Python cannot import astropy. Make sure astropy is installed.')
     raise SystemExit
 
 try:
@@ -75,7 +75,7 @@ def fits2png(fitsfile, outdir, asteroid=None,
 
     fits_head = os.path.splitext(os.path.basename(fitsfile))[0]
 
-    hdu = pyfits.open(fitsfile)
+    hdu = fits.open(fitsfile)
     obs_date = hdu[0].header['date-obs']
     image.writeinfo([obs_date], colour=(255, 100, 0))
 

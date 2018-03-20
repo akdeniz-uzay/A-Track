@@ -4,9 +4,9 @@
 
 
 try:
-    import pyfits
+    from astropy.io import fits
 except ImportError:
-    print('Python cannot import pyfits. Make sure pyfits is installed.')
+    print('Python cannot import astropy. Make sure astropy is installed.')
     raise SystemExit
 
 try:
@@ -314,9 +314,9 @@ def detect_segments(CFP,
 
     for i, j, k in partition:
 
-        hdu1 = pyfits.open(images[i])
-        hdu2 = pyfits.open(images[j])
-        hdu3 = pyfits.open(images[k])
+        hdu1 = fits.open(images[i])
+        hdu2 = fits.open(images[j])
+        hdu3 = fits.open(images[k])
         try:
             xbin = hdu1[0].header['xbinning']
         except:
@@ -518,8 +518,8 @@ def results(fitsdir, lines,
         line = sorted(lines[i])
         nmin = int(line[0][0])
         nmax = int(line[-1][0])
-        hdu1 = pyfits.open(images[nmin])
-        hdu2 = pyfits.open(images[nmax])
+        hdu1 = fits.open(images[nmin])
+        hdu2 = fits.open(images[nmax])
 
         obs_date1 = hdu1[0].header['date-obs']
         if "T" not in obs_date1:
@@ -546,15 +546,27 @@ def results(fitsdir, lines,
             obs_time2 = time.strptime(obs_date2, '%Y-%m-%dT%H:%M:%S')
 
         length = distance(line[0][2:4], line[-1][2:4])
+        length_x = line[-1][2:4][0] - line[0][2:4][0]
+        length_y = line[-1][2:4][1] - line[0][2:4][1]
 
         try:
             speed = 60 * length / (time.mktime(obs_time2) + exp_time2 / 2 -
                                    time.mktime(obs_time1) - exp_time1 / 2)
+
+            speed_x = 60 * length_x / (time.mktime(obs_time2) + exp_time2 / 2 -
+                                   time.mktime(obs_time1) - exp_time1 / 2)
+
+            speed_y = 60 * length_y / (time.mktime(obs_time2) + exp_time2 / 2 -
+                                   time.mktime(obs_time1) - exp_time1 / 2)
         except:
             speed = 0
+            speed_x = 0
+            speed_y = 0
 
         info = np.concatenate((np.asarray(line),
                                np.asarray([[int(i) + 1] * len(line)]).T,
+                               np.asarray([[speed_x] * len(line)]).T,
+                               np.asarray([[speed_y] * len(line)]).T,
                                np.asarray([[speed] * len(line)]).T),
                               axis=1)
 

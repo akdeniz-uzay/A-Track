@@ -367,9 +367,9 @@ class AstCalc:
 
         try:
             if ra is None and dec is None:
-                fo = FitsOps(image_path)
-                ra = fo.get_header(ra_keyword)
-                dec = fo.get_header(dec_keyword)
+                fo = FitsOps()
+                ra = fo.get_header(image_path, ra_keyword)
+                dec = fo.get_header(image_path, dec_keyword)
                 ra = ra.strip()
                 dec = dec.strip()
                 ra = ra.replace(" ", ":")

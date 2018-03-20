@@ -30,9 +30,9 @@ except ImportError:
     raise SystemExit
 
 try:
-    import pyfits
+    from astropy.io import fits
 except ImportError:
-    print('Python cannot import pyfits. Make sure pyfits is installed.')
+    print('Python cannot import astropy. Make sure astropy is installed.')
     raise SystemExit
 
 import time
@@ -140,9 +140,9 @@ if __name__ == '__main__':
     moving_objects, uncertain_objects = asteroids.results(fitsdir, lines)
     pd.set_option('expand_frame_repr', False)
     COLUMNS = ['FileID', 'Flags', 'x', 'y', 'Flux', 'Background', 'ObjectID',
-               'Speed(px/min)']
+               'Speed_X(px/min)', 'Speed_Y(px/min)', 'Speed(px/min)']
     NEWCOLS = ['ObjectID', 'FileID', 'Flags', 'x', 'y', 'Flux', 'Background',
-               'Speed(px/min)']
+               'Speed_X(px/min)', 'Speed_Y(px/min)', 'Speed(px/min)']
 
     elapsed = int(time.time() - start)
     print('\nMoving object detection completed.')
@@ -152,7 +152,7 @@ if __name__ == '__main__':
 
         moving_objects = pd.DataFrame.from_records(moving_objects,
                                                    columns=COLUMNS)
-        moving_objects = moving_objects.reindex_axis(NEWCOLS, axis=1)
+        moving_objects = moving_objects.reindex(NEWCOLS, axis=1)
         moving_objects[['FileID',
                         'Flags',
                         'ObjectID']] = moving_objects[['FileID',
@@ -223,21 +223,17 @@ if __name__ == '__main__':
         res_file = fileops.read_res(the_res_file)
         # print(res_file)
 
-        ra = fitsops.get_header(my_files[0],
-                                 config.get('mpcreport',
-                                            'RA'))
-        dec = fitsops.get_header(my_files[0],
-                                  config.get('mpcreport',
-                                             'DEC'))
-
         try:
-            hdu1 = pyfits.open(my_files[0])
+            hdu1 = fits.open(my_files[0])
             wsc_check = hdu1[0].header['ctype1']
             wcs_file = my_files[0]
         except:
             solve_wcs = astcalc.solve_field(my_files[0],
-                                             ra=ra,
-                                             dec=dec)
+                                            ra_keyword=str(config.get('mpcreport',
+                                                                      'RA')),
+                                            dec_keyword=str(config.get('mpcreport',
+                                                                      'DEC')),
+                                            )
             if not solve_wcs:
                 raise SystemExit
 
