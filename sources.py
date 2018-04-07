@@ -43,7 +43,13 @@ def align(fitsdir, reference, outdir):
     @type outdir: string
     '''
 
-    images = sorted(glob.glob(fitsdir + '/*.fits'))
+
+    types = (fitsdir + '/*.fits', fitsdir + '/*.fit', fitsdir + '/*.fts')  # the tuple of file types
+    fits_grabbed = []
+    for fits_files in types:
+        fits_grabbed.extend(glob.glob(fits_files))
+
+    images = sorted(fits_grabbed)
 
     if not reference:
         reference = images[0]

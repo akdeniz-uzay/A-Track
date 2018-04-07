@@ -87,8 +87,14 @@ if __name__ == '__main__':
 
     arguments = parser.parse_args()
     fitsdir, reference = arguments.fits_dir, arguments.ref
+    fits_grabbed = []
 
-    if len(sorted(glob.glob(fitsdir + '/*.fit?'))) == 0:
+    types = (fitsdir + '/*.fits', fitsdir + '/*.fit', fitsdir + '/*.fts')  # the tuple of file types
+    fits_grabbed = []
+    for fits_files in types:
+        fits_grabbed.extend(glob.glob(fits_files))
+
+    if len(sorted(fits_grabbed)) == 0:
         print('No image FITS found in the {0}'.format(fitsdir))
         raise SystemExit
 

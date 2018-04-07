@@ -295,7 +295,13 @@ def detect_segments(CFP,
     '''
 
     catdir, fitsdir, processor = CFP[0], CFP[1], CFP[2]
-    images = sorted(glob.glob(fitsdir + '/*.fits'))
+
+    types = (fitsdir + '/*.fits', fitsdir + '/*.fit', fitsdir + '/*.fts')  # the tuple of file types
+    fits_grabbed = []
+    for fits_files in types:
+        fits_grabbed.extend(glob.glob(fits_files))
+
+    images = sorted(fits_grabbed)
     files = sorted(glob.glob(catdir + '/*affineremap.cnd'))
     fileids = list(range(len(files)))
     workload = list(it.combinations(fileids, 3))
