@@ -60,34 +60,52 @@ if __name__ == '__main__':
                                      description='A-Track.')
     parser.add_argument('fits_dir',
                         help='FITS image directory')
-    parser.add_argument('--ref',
+    parser.add_argument('-r', '--ref',
                         type=str,
                         metavar='ref_image',
                         help='reference FITS image for alignment (with path)')
-    parser.add_argument('--skip-align',
+    parser.add_argument( '-a', '--skip-align',
                         action='store_true',
                         help='skip alignment if alignment is already done')
-    parser.add_argument('--skip-cats',
+    parser.add_argument( '-c', '--skip-cats',
                         action='store_true',
                         help='skip creating catalog files ' +
                         'if they are already created')
-    parser.add_argument('--skip-mpcreport',
+    parser.add_argument( '-m', '--skip-mpcreport',
                         action='store_true',
                         help='skip creating MPC file')
-    parser.add_argument('--skip-pngs',
+    parser.add_argument( '-i', '--skip-pngs',
                         action='store_true',
                         help='skip creating PNGs')
-    parser.add_argument('--skip-gif',
+    parser.add_argument( '-g', '--skip-gif',
                         action='store_true',
                         help='skip creating animation file')
-    parser.add_argument('--version',
+    parser.add_argument('-p', '--plot-objects',
+                        type=str,
+                        metavar='catalog_file',
+                        help='plot all sources on FITS image')
+    parser.add_argument( '-v', '--version',
                         action='version',
                         help='show version',
                         version='A-Track version 1.0')
 
     arguments = parser.parse_args()
+
+    """
+    This section will be applied if there is a catalog file in atrack directory.
+    """
+    if arguments.plot_objects:
+        print(arguments.plot_objects)
+        catalog_file = arguments.plot_objects
+        cathead, catextension = os.path.splitext(catalog_file)
+        visuals.object_plot("{0}.fits".format(cathead),
+                            catalog_file)
+        raise SystemExit
+    """
+    This section will be applied if there is a catalog file in atrack directory.
+    """
+
     fitsdir, reference = arguments.fits_dir, arguments.ref
-    fits_grabbed = []
 
     types = (fitsdir + '/*.fits', fitsdir + '/*.fit', fitsdir + '/*.fts')  # the tuple of file types
     fits_grabbed = []
@@ -377,5 +395,6 @@ if __name__ == '__main__':
             os.popen('convert -delay 20 -loop 0 ' +
                      '{0}/*.png {0}/animation.gif'.format(outdir))
             print('{0}/animation.gif created.'.format(outdir))
+
     print('Elapsed Time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
     print()
