@@ -32,7 +32,7 @@ optional arguments:
   -i, --skip-pngs       skip creating PNGs
   -g, --skip-gif        skip creating animation file
   -p catalog_file, --plot-objects catalog_file
-                        plot all sources on FITS image
+                        plot all objects in the catalog file on FITS file.
   -v, --version         show version
 ```
 
