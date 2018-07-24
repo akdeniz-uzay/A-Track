@@ -83,7 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--plot-objects',
                         type=str,
                         metavar='catalog_file',
-                        help='plot all sources on FITS image')
+                        help='plot all objects in the catalog file on FITS file.')
     parser.add_argument( '-v', '--version',
                         action='version',
                         help='show version',
