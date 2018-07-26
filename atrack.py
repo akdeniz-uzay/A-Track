@@ -124,6 +124,11 @@ if __name__ == '__main__':
     if not arguments.skip_align:
         print('\nAligning images...', end=' ')
         sources.align(fitsdir, reference, outdir)
+        count_aligned = len(glob.glob("{0}/*affineremap.fits".format(outdir)))
+        if count_aligned < 3:
+            print('Could not aligned at least 3 FITS images!')
+            print('A-Track can not proceed!')
+            raise SystemExit
         elapsed = int(time.time() - start)
         print('Complete!')
         print('Aligned images are saved as *affineremap.fits.')
