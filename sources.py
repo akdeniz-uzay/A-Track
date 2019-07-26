@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Authors: Yücel Kılıç, Murat Kaplan, Nurdan Karapınar, Tolga Atay.
 # This is an open-source software licensed under GPLv3.
-
+from os import path
 
 try:
     import numpy as np
@@ -19,6 +19,9 @@ except ImportError:
 import glob
 import os
 from configparser import ConfigParser
+from astropy.io import fits
+
+from astrolib import astronomy
 
 config = ConfigParser()
 
@@ -65,6 +68,18 @@ def align(fitsdir, reference, outdir):
             alipy.align.affineremap(idn.ukn.filepath, idn.trans,
                                     shape=outshape, outdir=outdir,
                                     makepng=False, verbose=False)
+
+    if config.get('sources', 'solve_field') == "True":
+        wcs_images = sorted(glob.glob(outdir + "/*affineremap.fits"))
+
+        for fits in wcs_images:
+            # check wCS info
+            fo = astronomy.FitsOps(fits)
+            ac = astronomy.AstCalc()
+            print(">>> solve_field is working for {0}".format(fits))
+            ac.solve_field(fits, radius=2, ra_keyword=config.get('mpcreport', 'RA'),
+                           dec_keyword=config.get('mpcreport', 'DEC'),
+                           overwrite=True)
 
 
 def make_catalog(fitsdir, outdir,
@@ -158,7 +173,9 @@ def make_catalog(fitsdir, outdir,
                              'VERBOSE_TYPE': 'QUIET'},
                   params=['FLAGS', 'X_IMAGE', 'Y_IMAGE', 'FLUX_AUTO',
                           'BACKGROUND', 'FWHM_IMAGE', 'ELONGATION',
-                          'FLUXERR_AUTO'],
+                          'FLUXERR_AUTO', "MAG_AUTO", "MAGERR_AUTO",
+                          "ALPHA_J2000",
+                          "DELTA_J2000"],
                   rerun=rerun, keepcat=keepcat, catdir=outdir)
 
 
@@ -178,3 +195,104 @@ def make_master(catdir):
         for catfile in catfiles:
             catalog = np.genfromtxt(catfile, delimiter=None, comments='#')
             np.savetxt(outfile, catalog, delimiter=' ')
+
+
+def get_header(file_name, keyword):
+
+    """
+    Extracts requested keyword from FITS header.
+
+    @param key: Requested keyword.
+    @type key: str
+    @return: str
+    """
+
+    try:
+        hdu = fits.open(file_name)
+        header_key = hdu[0].header[keyword]
+        ret = header_key
+    except Exception as e:
+        ret = False
+
+    return ret
+
+
+def solve_field(image_path,
+                tweak_order=2,
+                downsample=4,
+                radius=0.2,
+                ra=None,
+                dec=None,
+                ra_keyword="objctra",
+                dec_keyword="objctdec"):
+
+    """
+    The astrometry engine will take any image and return
+    the astrometry world coordinate system (WCS).
+
+    @param image_path: FITS image file name with path
+    @type image_path: str
+    @param tweak_order: Polynomial order of SIP WCS corrections
+    @type tweak_order: integer
+    @param downsample: Downsample the image by factor int before
+    running source extraction
+    @type downsample: integer
+    @param radius: Only search in indexes within 'radius' of the
+    field center given by --ra and --dec
+    @type radius: str
+    @param ra: RA of field center for search, format: degrees or hh:mm:ss
+    @type ra: str
+    @param dec: DEC of field center for search, format: degrees or hh:mm:ss
+    @type dec: str
+    @param ra_keyword: RA keyword in the FITS image header
+    @type ra_keyword: str
+    @param dec_keyword: DEC keyword in the FITS image header
+    @type dec_keyword: str
+    @return: boolean
+    """
+
+    try:
+        if ra is None and dec is None:
+            ra = get_header(ra_keyword)
+            dec = get_header(dec_keyword)
+            ra = ra.strip()
+            dec = dec.strip()
+            ra = ra.replace(" ", ":")
+            dec = dec.replace(" ", ":")
+        else:
+            ra = ra.strip()
+            dec = dec.strip()
+            ra = ra.replace(" ", ":")
+            dec = dec.replace(" ", ":")
+
+        os.system(("solve-field --no-plots "
+                "--no-verify --tweak-order {0} "
+                "--downsample {1} --overwrite --radius {2} --no-tweak "
+                "--ra {3} --dec {4} {5}").format(tweak_order,
+                                                 downsample,
+                                                 radius,
+                                                 ra,
+                                                 dec,
+                                                 image_path))
+        # Cleaning
+        if ".gz" in image_path:
+            root = '.'.join(image_path.split('.')[:-2])
+        else:
+            root, extension = path.splitext(image_path)
+
+        os.system(("rm -rf {0}-indx.png {0}-indx.xyls "
+                "{0}-ngc.png {0}-objs.png "
+                "{0}.axy {0}.corr "
+                "{0}.match {0}.rdls "
+                "{0}.solved {0}.wcs").format(root))
+
+        if not path.exists(root + '.new'):
+            print(image_path + ' cannot be solved!')
+            return (False)
+        else:
+            os.system("mv {0}.new {0}_new.fits".format(root))
+            print("{0}.fits --> {0}_new.fits: solved!".format(root))
+            return (True)
+
+    except Exception as e:
+        print(e)

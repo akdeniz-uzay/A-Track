@@ -21,6 +21,8 @@ except ImportError:
     print('Python cannot import pandas. Make sure pandas is installed.')
     raise SystemExit
 
+import ast
+import re
 import math
 import glob
 import os
@@ -198,7 +200,8 @@ def detect_candidates(CMO,
 
     masterF = np.genfromtxt(master, delimiter=None, comments='#')
     COLUMNS = ['flags', 'x', 'y', 'flux', 'background', 'fwhm', 'elongation',
-               'fluxerr']
+               'fluxerr', 'mag_auto', 'magerr_auto',
+               "alpha_J2000", "delta_J2000"]
     FWHM_MAX = np.mean(masterF[:, 5]) * FWHM_COEFFICIENT
     masterF = pd.DataFrame.from_records(masterF, columns=COLUMNS)
     masterF = masterF[
@@ -209,6 +212,23 @@ def detect_candidates(CMO,
         (masterF.flux > masterF.background) &
         (masterF.flux / masterF.fluxerr > SNR_MIN) &
         (masterF.elongation <= ELONGATION_MAX)]
+
+    reject_area = config.get('sources', 'reject_area')
+
+    if reject_area != "False":
+        for bad_area in reject_area.split(";"):
+            bad_area = re.findall(r'"\s*([^"]*?)\s*"', bad_area)
+            x_range, y_range  = bad_area[0], bad_area[1]
+            x_min, x_max = x_range.split(":")
+            x_min, x_max = float(x_min), float(x_max)
+            y_min, y_max = y_range.split(":")
+            y_min, y_max = float(y_min), float(y_max)
+
+            masterF = masterF[(masterF.x < x_min) |
+                          (masterF.x > x_max) |
+                          (masterF.y < y_min) |
+                          (masterF.y > y_max)]
+
     masterF = masterF[COLUMNS[:5]].reset_index(drop=True)
 
     for catalog in catalogs:
@@ -224,6 +244,21 @@ def detect_candidates(CMO,
             (catalogF.flux > catalogF.background) &
             (catalogF.flux / catalogF.fluxerr > SNR_MIN) &
             (catalogF.elongation <= ELONGATION_MAX)]
+
+
+        if reject_area != "False":
+            for bad_area in reject_area.split(";"):
+                bad_area = re.findall(r'"\s*([^"]*?)\s*"', bad_area)
+                x_range, y_range  = bad_area[0], bad_area[1]
+                x_min, x_max = x_range.split(":")
+                x_min, x_max = float(x_min), float(x_max)
+                y_min, y_max = y_range.split(":")
+                y_min, y_max = float(y_min), float(y_max)
+                
+                catalogF = catalogF[(catalogF.x < x_min) |
+                                    (catalogF.x > x_max) |
+                                    (catalogF.y < y_min) |
+                                    (catalogF.y > y_max)]
 
         catalogF = catalogF[COLUMNS[:5]].reset_index(drop=True)
 

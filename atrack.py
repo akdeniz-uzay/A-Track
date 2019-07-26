@@ -112,7 +112,7 @@ if __name__ == '__main__':
     for fits_files in types:
         fits_grabbed.extend(glob.glob(fits_files))
 
-    if len(sorted(fits_grabbed)) < 4:
+    if len(sorted(fits_grabbed)) < 3:
         print('Please provide at least 3 FITS images to the {0}'.format(fitsdir))
         raise SystemExit
 
