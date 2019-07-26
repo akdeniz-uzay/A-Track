@@ -64,27 +64,27 @@ if __name__ == '__main__':
                         type=str,
                         metavar='ref_image',
                         help='reference FITS image for alignment (with path)')
-    parser.add_argument( '-a', '--skip-align',
+    parser.add_argument('-a', '--skip-align',
                         action='store_true',
                         help='skip alignment if alignment is already done')
-    parser.add_argument( '-c', '--skip-cats',
+    parser.add_argument('-c', '--skip-cats',
                         action='store_true',
                         help='skip creating catalog files ' +
                         'if they are already created')
-    parser.add_argument( '-m', '--skip-mpcreport',
+    parser.add_argument('-m', '--skip-mpcreport',
                         action='store_true',
                         help='skip creating MPC file')
-    parser.add_argument( '-i', '--skip-pngs',
+    parser.add_argument('-i', '--skip-pngs',
                         action='store_true',
                         help='skip creating PNGs')
-    parser.add_argument( '-g', '--skip-gif',
+    parser.add_argument('-g', '--skip-gif',
                         action='store_true',
                         help='skip creating animation file')
     parser.add_argument('-p', '--plot-objects',
                         type=str,
                         metavar='catalog_file',
                         help='plot all objects in the catalog file on FITS file.')
-    parser.add_argument( '-v', '--version',
+    parser.add_argument('-v', '--version',
                         action='version',
                         help='show version',
                         version='A-Track version 1.0')
@@ -107,7 +107,8 @@ if __name__ == '__main__':
 
     fitsdir, reference = arguments.fits_dir, arguments.ref
 
-    types = (fitsdir + '/*.fits', fitsdir + '/*.fit', fitsdir + '/*.fts')  # the tuple of file types
+    types = (fitsdir + '/*.fits', fitsdir + '/*.fit',
+             fitsdir + '/*.fts')  # the tuple of file types
     fits_grabbed = []
     for fits_files in types:
         fits_grabbed.extend(glob.glob(fits_files))
@@ -261,7 +262,7 @@ if __name__ == '__main__':
                                             ra_keyword=str(config.get('mpcreport',
                                                                       'RA')),
                                             dec_keyword=str(config.get('mpcreport',
-                                                                      'DEC')),
+                                                                       'DEC')),
                                             )
             if not solve_wcs:
                 raise SystemExit
@@ -273,11 +274,11 @@ if __name__ == '__main__':
 
         if observer == 'OBSERVER':
             observer = fitsops.get_header(my_files[0],
-                                           config.get('mpcreport',
-                                                      'OBSERVER'))
+                                          config.get('mpcreport',
+                                                     'OBSERVER'))
 
         telescope = fitsops.get_header(my_files[0],
-                                        config.get('mpcreport', 'TELESCOPE'))
+                                       config.get('mpcreport', 'TELESCOPE'))
         contact = config.get('mpcreport', 'CONTACT')
         catalog = config.get('mpcreport', 'CATALOG')
 
@@ -309,7 +310,7 @@ if __name__ == '__main__':
 
             fltr = fitsops.get_header(my_files[0],
                                       config.get('mpcreport',
-                                                   'FILTER'))
+                                                 'FILTER'))
             fltr = str(fltr).strip().replace(" ", "_")
 
             tm = timeops.get_timestamp_exp(my_files[int(frame)])
@@ -330,9 +331,9 @@ if __name__ == '__main__':
 
                 if astcalc.is_object(astcalc.radec2wcs(namesky[u][2],
                                                        namesky[u][3]),
-                                    coors2):
+                                     coors2):
                     mpcname = fileops.find_if_in_database_name(database,
-                                                                justname)
+                                                               justname)
                     if len(mpcname) == 5:
                         spc = "         "
                     elif len(mpcname) > 5:
