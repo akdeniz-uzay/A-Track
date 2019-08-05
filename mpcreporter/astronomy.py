@@ -455,8 +455,13 @@ class TimeOps:
 
         fitsops = FitsOps()
         expt = fitsops.get_header(file_name, exp)
-        dat = fitsops.get_header(file_name, dt)
-        tmstamp = self.get_timestamp(dat)
+
+        if "T" not in dt:
+            date_obs = fitsops.get_header(file_name, dt)
+            time_obs = fitsops.get_header(file_name, "time-obs")
+            date_obs = date_obs + "T" + time_obs
+
+        tmstamp = self.get_timestamp(date_obs)
         ret = tmstamp + timedelta(seconds=float(expt) / 2)
 
         return(ret)
