@@ -66,7 +66,7 @@ def fits2png(fitsfile, outdir, asteroid=None,
 
             x = asteroid.iloc[i]['x']
             y = asteroid.iloc[i]['y']
-            speed = asteroid.iloc[i]['Speed(px/min)']
+            speed = asteroid.iloc[i]['Sky Motion ("/min)']
             label = '{0}'.format(int(asteroid.iloc[i]['ObjectID']))
 
             if speed >= SPEED_MIN:
