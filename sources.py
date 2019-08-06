@@ -171,11 +171,8 @@ def make_catalog(fitsdir, outdir,
                              'BACK_FILTERSIZE': BACK_FILTERSIZE,
                              'FILTER': 'Y',
                              'VERBOSE_TYPE': 'QUIET'},
-                  params=['FLAGS', 'X_IMAGE', 'Y_IMAGE', 'FLUX_AUTO',
-                          'BACKGROUND', 'FWHM_IMAGE', 'ELONGATION',
-                          'FLUXERR_AUTO', "MAG_AUTO", "MAGERR_AUTO",
-                          "ALPHA_J2000",
-                          "DELTA_J2000"],
+                  params=['FLAGS', 'X_IMAGE', 'Y_IMAGE', 'ALPHA_J2000', 'DELTA_J2000', 'FLUX_AUTO', 'FLUXERR_AUTO',
+                          'BACKGROUND', 'MAG_AUTO', 'MAGERR_AUTO', 'FWHM_IMAGE', 'ELONGATION'],
                   rerun=rerun, keepcat=keepcat, catdir=outdir)
 
 

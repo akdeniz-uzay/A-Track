@@ -199,9 +199,8 @@ def detect_candidates(CMO,
     catalogs, master, outdir = CMO[0], CMO[1], CMO[2]
 
     masterF = np.genfromtxt(master, delimiter=None, comments='#')
-    COLUMNS = ['flags', 'x', 'y', 'flux', 'background', 'fwhm', 'elongation',
-               'fluxerr', 'mag_auto', 'magerr_auto',
-               "alpha_J2000", "delta_J2000"]
+    COLUMNS = ['flags', 'x', 'y', 'alpha_J2000', 'delta_J2000',
+               'flux', 'fluxerr', 'background', 'mag_auto', 'magerr_auto', 'fwhm', 'elongation']
     FWHM_MAX = np.mean(masterF[:, 5]) * FWHM_COEFFICIENT
     masterF = pd.DataFrame.from_records(masterF, columns=COLUMNS)
     masterF = masterF[
@@ -229,7 +228,8 @@ def detect_candidates(CMO,
                           (masterF.y < y_min) |
                           (masterF.y > y_max)]
 
-    masterF = masterF[COLUMNS[:5]].reset_index(drop=True)
+    # masterF = masterF[COLUMNS[:5]].reset_index(drop=True)
+    masterF = masterF[COLUMNS].reset_index(drop=True)
 
     for catalog in catalogs:
 
@@ -260,9 +260,11 @@ def detect_candidates(CMO,
                                     (catalogF.y < y_min) |
                                     (catalogF.y > y_max)]
 
-        catalogF = catalogF[COLUMNS[:5]].reset_index(drop=True)
+        # catalogF = catalogF[COLUMNS[:5]].reset_index(drop=True)
+        catalogF = catalogF[COLUMNS].reset_index(drop=True)
 
-        candidates = pd.DataFrame(columns=COLUMNS[:5])
+        # candidates = pd.DataFrame(columns=COLUMNS[:5])
+        candidates = pd.DataFrame(columns=COLUMNS)
 
         for i in range(len(catalogF.x)):
 
@@ -344,9 +346,9 @@ def detect_segments(CFP,
     catalogs = []
 
     for file in files:
-
         catalog = pd.read_csv(file, sep=',',
-                              names=['flags', 'x', 'y', 'flux', 'background'],
+                              names=['flags', 'x', 'y', 'alpha_J2000', 'delta_J2000',
+                                     'flux', 'fluxerr', 'background', 'mag_auto', 'magerr_auto', 'fwhm', 'elongation'],
                               header=0)
         catalogs.append(catalog.values)
 
@@ -431,23 +433,13 @@ def detect_segments(CFP,
                 LENGTH = distance(points[0], points[1])
 
                 if LENGTH > TRAVEL_MIN * 2 and HEIGHT < HEIGHT_MAX:
-                    segments.append([[i,
-                                      catalogs[i][p1][0], catalogs[i][p1][1],
-                                      catalogs[i][p1][2], catalogs[i][p1][3],
-                                      catalogs[i][p1][4]],
-                                     [j,
-                                      catalogs[j][p2][0], catalogs[j][p2][1],
-                                      catalogs[j][p2][2], catalogs[j][p2][3],
-                                      catalogs[j][p2][4]],
-                                     [k,
-                                      catalogs[k][p3][0], catalogs[k][p3][1],
-                                      catalogs[k][p3][2], catalogs[k][p3][3],
-                                      catalogs[k][p3][4]]])
+                    segments.append([np.insert(catalogs[i][p1], 0, i).tolist(),
+                                     np.insert(catalogs[j][p2], 0, j).tolist(),
+                                     np.insert(catalogs[k][p3], 0, k).tolist()])
+
 
     with open(catdir + '/Processor{0}.sgm'.format(processor), 'wb') as result:
         pk.dump(segments, result)
-
-    print('Processor {0} complete.'.format(processor))
 
 
 def merge_segments(segments):
@@ -592,31 +584,24 @@ def results(fitsdir, lines,
             obs_time2 = time.strptime(obs_date2, '%Y-%m-%dT%H:%M:%S')
 
         length = distance(line[0][2:4], line[-1][2:4])
-        length_x = line[-1][2:4][0] - line[0][2:4][0]
-        length_y = line[-1][2:4][1] - line[0][2:4][1]
 
         try:
             speed = 60 * length / (time.mktime(obs_time2) + exp_time2 / 2 -
                                    time.mktime(obs_time1) - exp_time1 / 2)
-
-            speed_x = 60 * length_x / (time.mktime(obs_time2) + exp_time2 / 2 -
-                                   time.mktime(obs_time1) - exp_time1 / 2)
-
-            speed_y = 60 * length_y / (time.mktime(obs_time2) + exp_time2 / 2 -
-                                   time.mktime(obs_time1) - exp_time1 / 2)
         except:
             speed = 0
-            speed_x = 0
-            speed_y = 0
+
+        pixel_scale = float(config.get('sources', 'PIXEL_SCALE'))
+
+
+        speed_in_min = speed * pixel_scale
 
         info = np.concatenate((np.asarray(line),
                                np.asarray([[int(i) + 1] * len(line)]).T,
-                               np.asarray([[speed_x] * len(line)]).T,
-                               np.asarray([[speed_y] * len(line)]).T,
-                               np.asarray([[speed] * len(line)]).T),
+                               np.asarray([[speed_in_min] * len(line)]).T),
                               axis=1)
 
-        if speed >= SPEED_MIN:
+        if speed_in_min >= SPEED_MIN:
             moving_objects.append(info)
         else:
             uncertain_objects.append(info)

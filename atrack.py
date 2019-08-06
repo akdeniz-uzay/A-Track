@@ -169,10 +169,19 @@ if __name__ == '__main__':
 
     moving_objects, uncertain_objects = asteroids.results(fitsdir, lines)
     pd.set_option('expand_frame_repr', False)
-    COLUMNS = ['FileID', 'Flags', 'x', 'y', 'Flux', 'Background', 'ObjectID',
-               'Speed_X(px/min)', 'Speed_Y(px/min)', 'Speed(px/min)']
-    NEWCOLS = ['ObjectID', 'FileID', 'Flags', 'x', 'y', 'Flux', 'Background',
-               'Speed_X(px/min)', 'Speed_Y(px/min)', 'Speed(px/min)']
+
+    wcs_status = config.get('sources', 'solve_field')
+
+    ['flags', 'x', 'y', 'alpha_J2000', 'delta_J2000',
+     'flux', 'fluxerr', 'background', 'mag_auto', 'magerr_auto', 'fwhm', 'elongation']
+
+    COLUMNS = ['FileID', 'Flags', 'x', 'y', 'R.A. (J2000)', 'Decl.', 'Flux', 'FluxErr',
+               'Background', 'Mag', 'MagErr', 'FWHM', 'Elongation', 'ObjectID',
+               'Sky Motion ("/min)']
+
+    NEWCOLS = ['ObjectID', 'FileID', 'Flags', 'x', 'y', 'R.A. (J2000)', 'Decl.', 'Flux', 'FluxErr',
+               'Background', 'Mag', 'MagErr', 'FWHM', 'Elongation', 'Sky Motion ("/min)']
+
 
     elapsed = int(time.time() - start)
     print('\nMoving object detection completed.')
