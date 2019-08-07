@@ -31,6 +31,11 @@ except ImportError:
 
 try:
     from astropy.io import fits
+    from astropy.table import Table, vstack
+    from astropy.table import QTable
+    from astropy.coordinates import SkyCoord
+    import astropy.units as u
+    from astropy.io import ascii
 except ImportError:
     print('Python cannot import astropy. Make sure astropy is installed.')
     raise SystemExit
@@ -177,10 +182,10 @@ if __name__ == '__main__':
 
     COLUMNS = ['FileID', 'Flags', 'x', 'y', 'R.A. (J2000)', 'Decl.', 'Flux', 'FluxErr',
                'Background', 'Mag', 'MagErr', 'FWHM', 'Elongation', 'ObjectID',
-               'Sky Motion ("/min)']
+               'Sky Motion']
 
     NEWCOLS = ['ObjectID', 'FileID', 'Flags', 'x', 'y', 'R.A. (J2000)', 'Decl.', 'Flux', 'FluxErr',
-               'Background', 'Mag', 'MagErr', 'FWHM', 'Elongation', 'Sky Motion ("/min)']
+               'Background', 'Mag', 'MagErr', 'FWHM', 'Elongation', 'Sky Motion']
 
 
     elapsed = int(time.time() - start)
@@ -197,13 +202,46 @@ if __name__ == '__main__':
                         'ObjectID']] = moving_objects[['FileID',
                                                        'Flags',
                                                        'ObjectID']].astype(int)
+
+        moving_objects = QTable.from_pandas(moving_objects)
+
+        p = SkyCoord(moving_objects['R.A. (J2000)'] * u.degree, moving_objects['Decl.'] * u.degree)
+
+        moving_objects['R.A. (J2000)'].unit = "hourangle"
+        moving_objects['R.A. (J2000)'] = p.ra.to_string(u.hour, sep=":")
+
+        moving_objects['Decl.'].unit = "deg"
+        moving_objects['Decl.'] = p.dec.to_string(u.deg, sep=":", alwayssign=True)
+
+        moving_objects['x'].unit = "pixel"
+        moving_objects['x'].info.format = '0.4f'
+        moving_objects['y'].unit = "pixel"
+        moving_objects['y'].info.format = '0.4f'
+        moving_objects['Background'].unit = "count"
+        moving_objects['Background'].info.format = '0.3f'
+        moving_objects['Mag'].unit = "mag"
+        moving_objects['Mag'].info.format = '0.4f'
+        moving_objects['MagErr'].unit = "mag"
+        moving_objects['MagErr'].info.format = '0.4f'
+        moving_objects['Flux'].unit = "count"
+        moving_objects['Flux'].info.format = '0.3f'
+        moving_objects['FluxErr'].unit = "count"
+        moving_objects['FluxErr'].info.format = '0.3f'
+        moving_objects['Elongation'].info.format = '0.3f'
+        moving_objects['FWHM'].unit = 'pixel'
+        moving_objects['FWHM'].info.format = '0.2f'
+        moving_objects['Sky Motion'].unit = '"/min'
+        moving_objects['Sky Motion'].info.format = '0.2f'
+
+
+
         with open('{0}/results.txt'.format(outdir), 'w') as f:
-            s = moving_objects.to_string(justify='center', index=False)
+            f.seek(0, os.SEEK_END)
             print('========================================================\n')
             print('MOVING OBJECTS:\n')
-            print(s)
+            print(moving_objects)
             f.write('# MOVING OBJECTS:\n')
-            f.write(s)
+            ascii.write(moving_objects, f)
 
     if uncertain_objects.size:
 
