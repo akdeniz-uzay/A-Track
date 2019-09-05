@@ -177,9 +177,6 @@ if __name__ == '__main__':
 
     wcs_status = config.get('sources', 'solve_field')
 
-    ['flags', 'x', 'y', 'alpha_J2000', 'delta_J2000',
-     'flux', 'fluxerr', 'background', 'mag_auto', 'magerr_auto', 'fwhm', 'elongation']
-
     COLUMNS = ['FileID', 'Flags', 'x', 'y', 'R.A. (J2000)', 'Decl.', 'Flux', 'FluxErr',
                'Background', 'Mag', 'MagErr', 'FWHM', 'Elongation', 'ObjectID',
                'Sky Motion']
@@ -247,6 +244,7 @@ if __name__ == '__main__':
 
         uncertain_objects = pd.DataFrame.from_records(uncertain_objects,
                                                       columns=COLUMNS)
+
         uncertain_objects = uncertain_objects.reindex_axis(NEWCOLS, axis=1)
         uncertain_objects[['FileID',
                            'Flags',
@@ -254,13 +252,45 @@ if __name__ == '__main__':
                                'FileID',
                                'Flags',
                                'ObjectID']].astype(int)
-        with open('{0}/results.txt'.format(outdir), 'a') as f:
-            f.write('\n\n')
-            s = uncertain_objects.to_string(justify='center', index=False)
-            print('\nUNCERTAIN OBJECTS:\n')
-            print(s)
+
+        uncertain_objects = QTable.from_pandas(uncertain_objects)
+
+        p = SkyCoord(uncertain_objects['R.A. (J2000)'] * u.degree, uncertain_objects['Decl.'] * u.degree)
+
+        uncertain_objects['R.A. (J2000)'].unit = "hourangle"
+        uncertain_objects['R.A. (J2000)'] = p.ra.to_string(u.hour, sep=":")
+
+        uncertain_objects['Decl.'].unit = "deg"
+        uncertain_objects['Decl.'] = p.dec.to_string(u.deg, sep=":", alwayssign=True)
+
+        uncertain_objects['x'].unit = "pixel"
+        uncertain_objects['x'].info.format = '0.4f'
+        uncertain_objects['y'].unit = "pixel"
+        uncertain_objects['y'].info.format = '0.4f'
+        uncertain_objects['Background'].unit = "count"
+        uncertain_objects['Background'].info.format = '0.3f'
+        uncertain_objects['Mag'].unit = "mag"
+        uncertain_objects['Mag'].info.format = '0.4f'
+        uncertain_objects['MagErr'].unit = "mag"
+        uncertain_objects['MagErr'].info.format = '0.4f'
+        uncertain_objects['Flux'].unit = "count"
+        uncertain_objects['Flux'].info.format = '0.3f'
+        uncertain_objects['FluxErr'].unit = "count"
+        uncertain_objects['FluxErr'].info.format = '0.3f'
+        uncertain_objects['Elongation'].info.format = '0.3f'
+        uncertain_objects['FWHM'].unit = 'pixel'
+        uncertain_objects['FWHM'].info.format = '0.2f'
+        uncertain_objects['Sky Motion'].unit = '"/min'
+        uncertain_objects['Sky Motion'].info.format = '0.2f'
+
+
+        with open('{0}/results.txt'.format(outdir), 'w') as f:
+            f.seek(0, os.SEEK_END)
+            print('========================================================\n')
+            print('UNCERTAIN OBJECTS:\n')
+            print(uncertain_objects)
             f.write('# UNCERTAIN OBJECTS:\n')
-            f.write(s)
+            ascii.write(uncertain_objects, f)
 
     try:
         n_moving = len(moving_objects.ObjectID.unique())
@@ -423,12 +453,12 @@ if __name__ == '__main__':
     if not arguments.skip_pngs:
         print('\nCreating PNG files...\n')
 
-        if moving_objects.size and uncertain_objects.size:
+        if len(moving_objects) > 0 and len(uncertain_objects) > 0:
             objects = pd.concat((moving_objects, uncertain_objects), axis=0,
                                 ignore_index=True)
-        elif not moving_objects.size and uncertain_objects.size:
+        elif not len(moving_objects) > 0 and len(uncertain_objects) > 0:
             objects = uncertain_objects
-        elif not uncertain_objects.size and moving_objects.size:
+        elif not len(uncertain_objects) and len(moving_objects) > 0:
             objects = moving_objects
 
         images = sorted(glob.glob(outdir + '/*affineremap.fits'))

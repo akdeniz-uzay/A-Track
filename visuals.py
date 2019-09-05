@@ -60,14 +60,14 @@ def fits2png(fitsfile, outdir, asteroid=None,
     image.setzscale('auto', 'auto')
     image.makepilimage('log', negative=False)
 
-    if asteroid.size:
+    if len(asteroid) > 0:
 
         for i in range(len(asteroid)):
 
-            x = asteroid.iloc[i]['x']
-            y = asteroid.iloc[i]['y']
-            speed = asteroid.iloc[i]['Sky Motion ("/min)']
-            label = '{0}'.format(int(asteroid.iloc[i]['ObjectID']))
+            x = float(asteroid['x'][i].value)
+            y = float(asteroid['y'][i].value)
+            speed = float(asteroid['Sky Motion'][i].value)
+            label = '{0}'.format(int(asteroid['ObjectID'][i]))
 
             if speed >= SPEED_MIN:
                 color = (0, 255, 0)
