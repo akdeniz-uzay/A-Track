@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-A
 # Authors: Yücel Kılıç, Murat Kaplan, Nurdan Karapınar, Tolga Atay.
 # This is an open-source software licensed under GPLv3.
 
@@ -119,7 +119,8 @@ if __name__ == '__main__':
         fits_grabbed.extend(glob.glob(fits_files))
 
     if len(sorted(fits_grabbed)) < 3:
-        print('Please provide at least 3 FITS images to the {0}'.format(fitsdir))
+        print(
+            'Please provide at least 3 FITS images to the {0}'.format(fitsdir))
         raise SystemExit
 
     outdir = fitsdir + '/atrack'
@@ -184,7 +185,6 @@ if __name__ == '__main__':
     NEWCOLS = ['ObjectID', 'FileID', 'Flags', 'x', 'y', 'R.A. (J2000)', 'Decl.', 'Flux', 'FluxErr',
                'Background', 'Mag', 'MagErr', 'FWHM', 'Elongation', 'Sky Motion']
 
-
     elapsed = int(time.time() - start)
     print('\nMoving object detection completed.')
     print('Elapsed time: {0} min {1} sec.'.format(elapsed // 60, elapsed % 60))
@@ -202,13 +202,15 @@ if __name__ == '__main__':
 
         moving_objects = QTable.from_pandas(moving_objects)
 
-        p = SkyCoord(moving_objects['R.A. (J2000)'] * u.degree, moving_objects['Decl.'] * u.degree)
+        p = SkyCoord(moving_objects['R.A. (J2000)'] *
+                     u.degree, moving_objects['Decl.'] * u.degree)
 
         moving_objects['R.A. (J2000)'].unit = "hourangle"
         moving_objects['R.A. (J2000)'] = p.ra.to_string(u.hour, sep=":")
 
         moving_objects['Decl.'].unit = "deg"
-        moving_objects['Decl.'] = p.dec.to_string(u.deg, sep=":", alwayssign=True)
+        moving_objects['Decl.'] = p.dec.to_string(
+            u.deg, sep=":", alwayssign=True)
 
         moving_objects['x'].unit = "pixel"
         moving_objects['x'].info.format = '0.4f'
@@ -227,10 +229,8 @@ if __name__ == '__main__':
         moving_objects['Elongation'].info.format = '0.3f'
         moving_objects['FWHM'].unit = 'pixel'
         moving_objects['FWHM'].info.format = '0.2f'
-        moving_objects['Sky Motion'].unit = '"/min'
+        moving_objects['Sky Motion'].unit = u.arcsec/u.min
         moving_objects['Sky Motion'].info.format = '0.2f'
-
-
 
         with open('{0}/results.txt'.format(outdir), 'w') as f:
             f.seek(0, os.SEEK_END)
@@ -245,7 +245,7 @@ if __name__ == '__main__':
         uncertain_objects = pd.DataFrame.from_records(uncertain_objects,
                                                       columns=COLUMNS)
 
-        uncertain_objects = uncertain_objects.reindex_axis(NEWCOLS, axis=1)
+        uncertain_objects = uncertain_objects.reindex(NEWCOLS, axis=1)
         uncertain_objects[['FileID',
                            'Flags',
                            'ObjectID']] = uncertain_objects[[
@@ -255,13 +255,15 @@ if __name__ == '__main__':
 
         uncertain_objects = QTable.from_pandas(uncertain_objects)
 
-        p = SkyCoord(uncertain_objects['R.A. (J2000)'] * u.degree, uncertain_objects['Decl.'] * u.degree)
+        p = SkyCoord(uncertain_objects['R.A. (J2000)'] *
+                     u.degree, uncertain_objects['Decl.'] * u.degree)
 
         uncertain_objects['R.A. (J2000)'].unit = "hourangle"
         uncertain_objects['R.A. (J2000)'] = p.ra.to_string(u.hour, sep=":")
 
         uncertain_objects['Decl.'].unit = "deg"
-        uncertain_objects['Decl.'] = p.dec.to_string(u.deg, sep=":", alwayssign=True)
+        uncertain_objects['Decl.'] = p.dec.to_string(
+            u.deg, sep=":", alwayssign=True)
 
         uncertain_objects['x'].unit = "pixel"
         uncertain_objects['x'].info.format = '0.4f'
@@ -280,11 +282,10 @@ if __name__ == '__main__':
         uncertain_objects['Elongation'].info.format = '0.3f'
         uncertain_objects['FWHM'].unit = 'pixel'
         uncertain_objects['FWHM'].info.format = '0.2f'
-        uncertain_objects['Sky Motion'].unit = '"/min'
+        uncertain_objects['Sky Motion'].unit = u.arcsec/u.min
         uncertain_objects['Sky Motion'].info.format = '0.2f'
 
-
-        with open('{0}/results.txt'.format(outdir), 'w') as f:
+        with open('{0}/results.txt'.format(outdir), 'a') as f:
             f.seek(0, os.SEEK_END)
             print('========================================================\n')
             print('UNCERTAIN OBJECTS:\n')
@@ -454,8 +455,8 @@ if __name__ == '__main__':
         print('\nCreating PNG files...\n')
 
         if len(moving_objects) > 0 and len(uncertain_objects) > 0:
-            objects = pd.concat((moving_objects, uncertain_objects), axis=0,
-                                ignore_index=True)
+            objects = vstack([moving_objects, uncertain_objects],
+                             metadata_conflicts='silent')
         elif not len(moving_objects) > 0 and len(uncertain_objects) > 0:
             objects = uncertain_objects
         elif not len(uncertain_objects) and len(moving_objects) > 0:

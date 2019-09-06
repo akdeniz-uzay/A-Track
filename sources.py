@@ -34,7 +34,6 @@ else:
 
 
 def align(fitsdir, reference, outdir):
-
     '''
     Aligns the given FITS images using alipy.
 
@@ -46,8 +45,8 @@ def align(fitsdir, reference, outdir):
     @type outdir: string
     '''
 
-
-    types = (fitsdir + '/*.fits', fitsdir + '/*.fit', fitsdir + '/*.fts')  # the tuple of file types
+    types = (fitsdir + '/*.fits', fitsdir + '/*.fit',
+             fitsdir + '/*.fts')  # the tuple of file types
     fits_grabbed = []
     for fits_files in types:
         fits_grabbed.extend(glob.glob(fits_files))
@@ -72,12 +71,12 @@ def align(fitsdir, reference, outdir):
     if config.get('sources', 'solve_field') == "True":
         wcs_images = sorted(glob.glob(outdir + "/*affineremap.fits"))
 
-        for fits in wcs_images:
+        for fits_image in wcs_images:
             # check wCS info
-            fo = astronomy.FitsOps(fits)
             ac = astronomy.AstCalc()
-            print(">>> solve_field is working for {0}".format(fits))
-            ac.solve_field(fits, radius=2, ra_keyword=config.get('mpcreport', 'RA'),
+            print(">>> solve_field is working for {0}".format(fits_image))
+            ac.solve_field(fits_image, radius=2,
+                           ra_keyword=config.get('mpcreport', 'RA'),
                            dec_keyword=config.get('mpcreport', 'DEC'),
                            overwrite=True)
 
@@ -100,7 +99,6 @@ def make_catalog(fitsdir, outdir,
                  rerun=config.get('sources', 'rerun'),
                  keepcat=config.get('sources', 'keepcat'),
                  verbose=config.get('sources', 'verbose')):
-
     '''
     Creates SExtractor catalogs from FITS files.
 
@@ -177,7 +175,6 @@ def make_catalog(fitsdir, outdir,
 
 
 def make_master(catdir):
-
     '''
     Combines all catalog files in a given directory into one master file named
     'master.pysexcat'.
@@ -195,7 +192,6 @@ def make_master(catdir):
 
 
 def get_header(file_name, keyword):
-
     """
     Extracts requested keyword from FITS header.
 
@@ -222,7 +218,6 @@ def solve_field(image_path,
                 dec=None,
                 ra_keyword="objctra",
                 dec_keyword="objctdec"):
-
     """
     The astrometry engine will take any image and return
     the astrometry world coordinate system (WCS).
@@ -263,14 +258,14 @@ def solve_field(image_path,
             dec = dec.replace(" ", ":")
 
         os.system(("solve-field --no-plots "
-                "--no-verify --tweak-order {0} "
-                "--downsample {1} --overwrite --radius {2} --no-tweak "
-                "--ra {3} --dec {4} {5}").format(tweak_order,
-                                                 downsample,
-                                                 radius,
-                                                 ra,
-                                                 dec,
-                                                 image_path))
+                   "--no-verify --tweak-order {0} "
+                   "--downsample {1} --overwrite --radius {2} --no-tweak "
+                   "--ra {3} --dec {4} {5}").format(tweak_order,
+                                                    downsample,
+                                                    radius,
+                                                    ra,
+                                                    dec,
+                                                    image_path))
         # Cleaning
         if ".gz" in image_path:
             root = '.'.join(image_path.split('.')[:-2])
@@ -278,10 +273,10 @@ def solve_field(image_path,
             root, extension = path.splitext(image_path)
 
         os.system(("rm -rf {0}-indx.png {0}-indx.xyls "
-                "{0}-ngc.png {0}-objs.png "
-                "{0}.axy {0}.corr "
-                "{0}.match {0}.rdls "
-                "{0}.solved {0}.wcs").format(root))
+                   "{0}-ngc.png {0}-objs.png "
+                   "{0}.axy {0}.corr "
+                   "{0}.match {0}.rdls "
+                   "{0}.solved {0}.wcs").format(root))
 
         if not path.exists(root + '.new'):
             print(image_path + ' cannot be solved!')
